@@ -290,6 +290,7 @@ details.disc li b { color: var(--text); font-weight: 500; }
 .mej-legend i.celda { border: 1.5px dashed #f59e0b; background: transparent; }
 .leaflet-tooltip.lote-lbl { background: rgb(9 9 11 / 0.72); color: #fafafa; border: 0; box-shadow: none; border-radius: 6px; padding: 2px 7px; font: 500 12px/1.3 var(--font); white-space: nowrap; }
 .leaflet-tooltip.lote-lbl::before { display: none; }
+.crop-map-label { background: #0b3d91; color: #fff; border: 2px solid #fff; border-radius: 7px; box-shadow: 0 2px 8px rgb(0 0 0 / .35); padding: 4px 7px; font: 600 11px/1.25 var(--font); white-space: nowrap; }
 .leaflet-container { font-family: var(--font); }
 .map-ctl .sep { width: 1px; background: rgb(255 255 255 / 0.25); margin: 4px 2px; }
 #map.dibujando, #map.dibujando .leaflet-interactive { cursor: crosshair; }
@@ -1053,7 +1054,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       return r.mejor ? { delta: r.mejor.score - r.rotaciones[0].score, mejor: r.mejor, actual: r.rotaciones[0] } : null;
     } catch (e) { return null; }
   }
-  const mapa = { m: null, capas: {}, modo: 'campo', campo: null };
+  const mapa = { m: null, capas: {}, cultivo: null, modo: 'campo', campo: null };
   function initMapa() {
     if (!window.L) { $('map').innerHTML = '<div class="map-off">El mapa necesita conexión a internet.</div>'; document.querySelector('.map-ctl').hidden = true; return; }
     const m = L.map('map', { scrollWheelZoom: false }).setView(actual().campo.centro, 13);
@@ -1062,7 +1063,8 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     const nombres = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
       { maxZoom: 18 }).addTo(m);
     const calles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' });
-    L.control.layers({ 'Satélite': sat, 'Mapa': calles }, { 'Nombres': nombres }, { position: 'bottomright' }).addTo(m);
+    mapa.cultivo = L.layerGroup().addTo(m);
+    L.control.layers({ 'Satélite': sat, 'Mapa': calles }, { 'Nombres': nombres, 'Cultivo recomendado': mapa.cultivo }, { position: 'bottomright' }).addTo(m);
     Object.keys(M.ZONAS).forEach(zid => {
       const z = M.ZONAS[zid];
       L.rectangle(celdaPower(z), { color: '#f59e0b', weight: 2, dashArray: '6 6', fill: false, interactive: false }).addTo(m);
@@ -1108,6 +1110,17 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       p.setStyle({ fillColor: MEJ_COL[r ? nivelMejora(r.delta) : 0], color: sel ? '#fff' : 'rgba(255,255,255,.7)', weight: sel ? 3.5 : 1.5, fillOpacity: sel ? .5 : .32 });
       p.setTooltipContent(esc(l.nombre.replace(/^Lote /, '')) + (r && r.delta > .5 ? ' · +' + Math.round(r.delta) : ''));
       if (sel) p.bringToFront();
+    });
+    mapa.cultivo.clearLayers();
+    lotesPlano.forEach(({ campo: c, lote: l }) => {
+      let rec;
+      try { rec = M.recomendar(inputEsc(c, l), M.parseFecha(state.siembra), state.cosecha ? M.parseFecha(state.cosecha) : null, state.pesos, 1).top[0]; }
+      catch (e) { rec = null; }
+      const pts = poligono(c, l.geo), centro = [pts.reduce((s, p) => s + p[0], 0) / pts.length, pts.reduce((s, p) => s + p[1], 0) / pts.length];
+      const texto = rec ? esc(rec.nombre) : 'Sin cultivo viable';
+      const etiqueta = L.marker(centro, { interactive: true, keyboard: false, icon: L.divIcon({ className: '', html: '<span class="crop-map-label">' + texto + '</span>', iconSize: null, iconAnchor: [0, 0] }) });
+      etiqueta.bindTooltip('<b>' + esc(l.nombre) + '</b><br>Recomendado para sembrar el ' + fmtF(state.siembra) + ': <b>' + texto + '</b>' + (rec ? '<br>Aptitud ' + Math.round(rec.aptitud_pct) + ' % · ' + Math.round(rec.score) + '/100' : '') + '<br><span class="hint">Estimación del prototipo; verificar datos de suelo en campo.</span>');
+      mapa.cultivo.addLayer(etiqueta);
     });
     analizarArea();
   }
