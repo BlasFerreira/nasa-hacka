@@ -90,6 +90,7 @@ a.lote-btn { color: inherit; text-decoration: none; }
 
 /* Navegación del menú */
 .nav { display: grid; gap: 2px; }
+.recorrido-frame { display: block; width: 100%; height: calc(100vh - 150px); min-height: 520px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
 .nav-label { font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0.02em; text-transform: uppercase; padding: 14px 8px 4px; }
 .nav-ctx { font-size: 12px; color: var(--muted); padding: 0 8px 4px; }
 .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px; min-height: 38px; border-radius: 8px; border: 1px solid transparent; color: inherit; text-decoration: none; font-weight: 500; }
@@ -280,6 +281,26 @@ details.disc li b { color: var(--text); font-weight: 500; }
 .map-ctl button { border: 0; background: transparent; color: #e4e4e7; border-radius: 7px; padding: 5px 10px; font-size: 12px; font-weight: 500; cursor: pointer; min-height: 28px; }
 .map-ctl button[aria-pressed="true"] { background: #ffffff; color: #0b3d91; }
 #btn-area[aria-pressed="true"] { background: #fc3d21; color: #ffffff; }
+#btn-ha[aria-pressed="true"] { background: #22c55e; color: #052e16; }
+.mapcard.ha-on #map { height: 480px; }
+@media (max-width: 560px) { .mapcard.ha-on #map { height: 400px; } }
+.ha-panel { display: grid; gap: 8px; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--surface-2); }
+.ha-panel[hidden] { display: none; }
+.ha-capas { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.ha-capas span { font-size: 12px; color: var(--muted); margin-right: 4px; }
+.ha-capas button { border: 1px solid var(--border); background: var(--surface); border-radius: 999px; padding: 3px 10px; font-size: 12px; cursor: pointer; }
+.ha-capas button[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+.ha-ley { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--muted); align-items: center; }
+.ha-ley span { display: inline-flex; align-items: center; gap: 6px; }
+.ha-ley i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; border: 1px solid rgb(0 0 0 / .2); }
+.ha-ley .grad { width: 120px; height: 10px; border-radius: 5px; }
+.ha-res { font-size: 13px; }
+.leaflet-tooltip.ha-tip { font: 500 12px/1.35 var(--font); }
+.ha-pop { font: 13px/1.45 var(--font); min-width: 220px; }
+.ha-pop b { font-weight: 600; }
+.ha-pop .sub { color: #71717a; font-size: 12px; }
+.ha-pop .row { display: flex; justify-content: space-between; gap: 10px; }
+.ha-pop .al { margin-top: 6px; padding: 4px 8px; border-left: 3px solid #f59e0b; background: #fef3c7; border-radius: 4px; font-size: 12px; }
 .map-foot { display: grid; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); }
 .map-info { font-size: 14px; }
 .mej-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); align-items: center; }
@@ -384,7 +405,8 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
     <span class="pill">Clima: NASA POWER</span>
-    <span class="pill sim">Catálogo ilustrativo</span>
+    <span class="pill">Rendimientos y precios: MAGyP</span>
+    <span class="pill sim">Suelo y coberturas ilustrativos</span>
     <span class="pill">MVP · Nivel 1</span>
   </div>
 </header>
@@ -416,11 +438,18 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
           <button type="button" data-modo="zona" aria-pressed="false">¿De dónde sale el clima?</button>
           <span class="sep" aria-hidden="true"></span>
           <button type="button" id="btn-area" aria-pressed="false">Seleccionar área</button>
+          <button type="button" id="btn-ha" aria-pressed="false" hidden>Ver por hectárea</button>
         </div>
       </div>
       <div class="map-foot">
         <p class="map-info" id="map-info"></p>
         <div class="area-res" id="area-res" aria-live="polite" hidden></div>
+        <div class="ha-panel" id="ha-panel" aria-live="polite" hidden>
+          <div class="ha-capas" id="ha-capas" role="group" aria-label="Qué mostrar en cada hectárea"></div>
+          <div class="ha-ley" id="ha-ley"></div>
+          <div class="ha-res" id="ha-res"></div>
+          <p class="hint">Cada cuadro es una hectárea (100 × 100 m) del lote real. La variación de suelo entre hectáreas es <b>ilustrativa</b>: parte de los parámetros del lote y cambia de forma suave. El clima (NASA POWER) y los rendimientos, precios y costos (MAGyP) son reales. Tocá un cuadro para ver el detalle.</p>
+        </div>
         <div class="mej-legend"><span>Mejora posible frente a la rotación actual:</span>
           <span><i style="background:#22c55e"></i>hasta 5 pts</span><span><i style="background:#f59e0b"></i>5 a 15 pts</span><span><i style="background:#ef4444"></i>más de 15 pts</span>
           <span><i class="celda"></i>zona del dato de clima (NASA POWER)</span></div>
@@ -496,6 +525,11 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       </div>
     </div>
     </div>
+
+    <!-- Recorrido: el campo de 60 ha, paso a paso. Es mundo.html embebido, para no salir de la app. -->
+    <div class="stack" id="view-recorrido" hidden>
+      <iframe id="recorrido-frame" title="Recorrido: el campo hectárea por hectárea" class="recorrido-frame"></iframe>
+    </div>
   </main>
 </div>
 
@@ -560,7 +594,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
   }
 
   /* ---------- rutas ----------
-     #/inicio · #/campo/<campo> · #/rotaciones/<lote> · #/cultivo/<lote>
+     #/inicio · #/campo/<campo> · #/rotaciones/<lote> · #/cultivo/<lote> · #/recorrido
      Van en el hash para que funcionen el botón atrás, los links directos y GitHub Pages sin servidor. */
   const VISTAS_LOTE = { rotaciones: 'Comparar rotaciones', cultivo: 'Próximo cultivo' };
   const esLote = v => v === 'rotaciones' || v === 'cultivo';
@@ -574,6 +608,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     const [v, id] = location.hash.replace(/^#\/?/, '').split('/');
     if (esLote(v) && lotesPlano.some(x => x.lote.id === id)) return { vista: v, sel: id };
     if (v === 'campo' && campoDe(id)) return { vista: 'campo', campo: id };
+    if (v === 'recorrido') return { vista: 'recorrido' };
     return { vista: 'inicio' };
   }
   function aplicarRuta(enfocar) {
@@ -600,10 +635,12 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     rotaciones: ic('<path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 21v-5h-5"/>'),
     cultivo: ic('<path d="M12 21V8"/><path d="M12 13c-4 0-6-2-6-6 4 0 6 2 6 6Z"/><path d="M12 10c0-3 2-5 6-5 0 4-2 5-6 5Z"/>'),
     chev: ic('<path d="M6 9l6 6 6-6"/>'),
+    recorrido: ic('<path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="m3 13 9 5 9-5"/>'),
   };
   function renderMenu() {
     const v = state.vista, av = vistaAnalisis(), pag = c => c ? ' aria-current="page"' : '';
     let h = '<a class="nav-item" href="#/inicio"' + pag(v === 'inicio') + '>' + ICON.inicio + '<span>Resumen general</span></a>';
+    h += '<a class="nav-item" href="#/recorrido"' + pag(v === 'recorrido') + '>' + ICON.recorrido + '<span>Recorrido: el campo hectárea por hectárea<small>60 ha, paso a paso</small></span></a>';
     h += '<div class="nav-label">Mis campos</div>';
     h += CAMPOS.map(c => {
       const abierto = state.expand[c.id] !== false;
@@ -662,7 +699,12 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     '<button type="button" class="btn" data-wp="' + k + '" aria-pressed="' + (state.wPreset === k) + '">' + WEIGHT_PRESETS[k].t + '</button>').join('');
   function renderCtx() {
     let k, h1, sub, der;
-    if (esLote(state.vista)) {
+    if (state.vista === 'recorrido') {
+      k = migas([['Resumen general', '#/inicio'], ['Recorrido']]);
+      h1 = 'El campo, hectárea por hectárea';
+      sub = '60 ha de ejemplo en la Pampa húmeda · clima NASA POWER, rendimientos y precios MAGyP · suelo ilustrativo';
+      der = '<a class="btn" href="mundo.html" target="_blank" rel="noopener">Abrir en pantalla completa</a>';
+    } else if (esLote(state.vista)) {
       const { campo, lote } = actual(), otra = state.vista === 'rotaciones' ? 'cultivo' : 'rotaciones';
       k = migas([['Resumen general', '#/inicio'], [campo.nombre, '#/campo/' + campo.id], [VISTAS_LOTE[state.vista]]]);
       h1 = lote.nombre;
@@ -806,6 +848,9 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     const b = e.balance;
     const evid = [
       ['Clima del ciclo', 'NASA POWER', e.apt.tMedia.toFixed(1) + ' °C medios y ' + Math.round(e.apt.precip) + ' mm en el ciclo. Climatología mensual ' + M.FUENTE_CLIMA.periodo + ' (T2M y PRECTOTCORR) en un punto de referencia de la zona.'],
+      ['Rendimiento base', e.rend_fuente && e.rend_fuente.indexOf('MAGyP') >= 0 ? 'observado · MAGyP' : 'supuesto',
+        e.rend_fuente && e.rend_fuente.indexOf('MAGyP') >= 0 ? 'Media de las últimas 10 campañas (superficie cosechada) de los departamentos de la zona, MAGyP Estimaciones Agrícolas.' + (e.rend_fuente.indexOf('tardío') >= 0 ? ' MAGyP no separa maíz temprano de tardío: el ajuste para tardío es un supuesto.' : '') : 'Valor del catálogo ilustrativo; no hay serie oficial para este cultivo.'],
+      ['Precio y costo', e.econ_fuente === 'observado · MAGyP' ? 'observado · MAGyP' : 'supuesto', e.econ_fuente === 'observado · MAGyP' ? 'Precio a cosecha (futuros de la Bolsa de Cereales de Buenos Aires, fin de septiembre 2026) y gastos directos de la región, informe de Resultados Agrícolas de MAGyP, campaña 2026/27. Margen bruto de campo propio: no incluye arrendamiento ni estructura.' : 'Valores del catálogo ilustrativo; no hay informe oficial para este cultivo.'],
       ['Requisitos del cultivo', 'supuesto', 'Catálogo ilustrativo, a validar con EcoCrop (FAO) e INTA.'],
       ['Parámetros del lote', 'productor / dataset', 'El origen de cada uno está en el panel de parámetros.'],
     ].map(([d, o, t]) => '<div><span class="tag">' + o + '</span><b>' + d + '</b><span class="sub">' + esc(t) + '</span></div>').join('');
@@ -824,7 +869,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       '<tr><td>P</td><td class="mono">' + b.p_extraido + '</td><td class="mono">' + b.p_a_reponer + '</td></tr>' +
       '<tr><td>K</td><td class="mono">' + b.k_extraido + '</td><td class="mono">' + b.k_a_reponer + '</td></tr></tbody></table>' +
       '<p class="hint" style="margin-top:6px">N aportado: ' + Math.round(b.n_aportado) + ' kg/ha (suelo, fijación y antecesor). La rotación reduce el fertilizante, pero P y K que salen con la cosecha igual hay que reponerlos.</p></div></div>' +
-      '<div class="kv"><span>Rend. relativo <b>' + e.rend_relativo_t_ha + ' t/ha</b></span><span>Margen ilustrativo <b>' + (e.margen_usd_ha < 0 ? '−' : '') + 'USD ' + Math.abs(e.margen_usd_ha) + '/ha</b></span>' +
+      '<div class="kv"><span>Rend. relativo <b>' + e.rend_relativo_t_ha + ' t/ha</b></span><span>Margen ' + (e.econ_fuente === 'observado · MAGyP' ? 'bruto' : 'ilustrativo') + ' <b>' + (e.margen_usd_ha < 0 ? '−' : '') + 'USD ' + Math.abs(e.margen_usd_ha) + '/ha</b></span>' +
       Object.keys(COL).map(k => '<span>' + M.COMPONENTES_NOMBRE[k] + ' <b>' + Math.round(e.componentes[k]) + '</b></span>').join('') + '</div>' +
       '<div class="ev"><h4 class="section-label">Evidencia</h4>' + evid + '</div></div></article>';
   }
@@ -843,8 +888,9 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       lista + desc +
       '<section class="card foot"><b>Qué hay detrás de estos números</b><ul>' +
       '<li>Clima: promedio mensual ' + M.FUENTE_CLIMA.periodo + ' de NASA POWER (temperatura a 2 m y precipitación) en un punto de referencia por zona. Es climatología, no el pronóstico de esta campaña. SMAP y MODIS/Landsat están planificados.</li>' +
-      '<li>Catálogo de cultivos ilustrativo, a validar con EcoCrop (FAO) e INTA.</li>' +
-      '<li>Los rendimientos son índices relativos para comparar cultivos, no pronósticos.</li>' +
+      '<li>Rendimientos: media de las últimas 10 campañas de los departamentos de la zona (MAGyP Estimaciones Agrícolas). Donde no hay serie oficial (centeno, avena, vicia, mijo, crotalaria) el valor es ilustrativo.</li>' +
+      '<li>Precios y costos: informe de Resultados Agrícolas de MAGyP, campaña 2026/27 (septiembre 2026). Margen bruto de campo propio, sin arrendamiento. Son precios de un momento: cambian.</li>' +
+      '<li>Requisitos de cultivo y suelo del lote siguen siendo ilustrativos, a validar con EcoCrop (FAO) e INTA.</li>' +
       '<li>Reglas de cumplimiento ilustrativas, sin revisión humana.</li>' +
       '<li>El score apoya la decisión del productor. No la reemplaza.</li></ul></section>';
     $('results').querySelectorAll('button.top').forEach(b => b.addEventListener('click', () => {
@@ -926,7 +972,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       '<div class="seq">' + seq + add + '</div>' + timelineHTML(e, color) +
       '<div class="stackbar" role="img" aria-label="Aporte de cada componente al puntaje">' + barra + '</div>' +
       '<div class="kv"><span>Suelo cubierto <b>' + I.cobertura_pct + ' %</b></span><span>Barbecho <b>' + I.barbecho_dias + ' días</b></span>' +
-      '<span>Cultivos por año <b>' + I.cultivos_anio + '</b></span><span>Margen ilustrativo <b>USD ' + I.margen_anual + '/ha/año</b></span>' +
+      '<span>Cultivos por año <b>' + I.cultivos_anio + '</b></span><span>Margen bruto <b>USD ' + I.margen_anual + '/ha/año</b></span>' +
       '<span>N a reponer <b>' + I.n_anual + ' kg/ha/año</b></span></div>' +
       difs + (alertas ? '<div class="alerts">' + alertas + '</div>' : '') + '</article>';
   }
@@ -948,12 +994,13 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     const filas = [
       ['Clima de cada campaña', 'NASA POWER', 'Temperatura y lluvia mensual ' + M.FUENTE_CLIMA.periodo + ' en un punto de referencia de la zona: el promedio o una campaña real (seca o húmeda). No es un pronóstico. GPM IMERG y SMAP están planificados.'],
       ['Requisitos y ventanas de siembra', 'supuesto', 'Catálogo ilustrativo, a validar con EcoCrop (FAO) e INTA.'],
-      ['Márgenes', 'supuesto', 'Precios y costos de ejemplo. Referencia fija: USD ' + M.REF_MARGEN_ANUAL + '/ha/año equivale a 100.'],
+      ['Rendimientos', 'observado · MAGyP', 'Media de las últimas 10 campañas por zona (MAGyP Estimaciones Agrícolas). En campañas reales, maíz (ambas zonas) y soja (Pampa) usan un modelo clima-rendimiento validado dejando un año afuera (R² 0,30 a 0,61); el resto, el índice de aptitud. El modelo acierta qué años son malos pero subestima cuánto caen.'],
+      ['Márgenes', 'observado · MAGyP', 'Precios a cosecha y gastos directos del informe de Resultados Agrícolas de MAGyP (septiembre 2026). Margen bruto de campo propio, sin arrendamiento. Coberturas: costo ilustrativo. Referencia fija: USD ' + M.REF_MARGEN_ANUAL + '/ha/año equivale a 100. No hay precio separado para soja de segunda.'],
       ['Parámetros del lote', 'dataset / productor', 'El origen de cada uno está en el panel de parámetros.'],
       ['Alternativas A y B', 'supuesto', 'Rotaciones de ejemplo armadas por el equipo. Se pueden editar arriba.'],
     ].map(([d, o, t]) => '<div><b>' + d + '</b><span class="sub"><span class="tag">' + o + '</span>' + esc(t) + '</span></div>').join('');
     return '<section class="card card-pad"><div class="rank-head"><h2>Evidencia e incertidumbre</h2></div><div class="evid">' + filas + '</div>' +
-      '<div class="conf"><span>Confianza: <b>baja</b> (catálogo de cultivos y precios de ejemplo)</span><span class="sub">Requiere validación local: demanda de agua de cada cultivo, nutrientes del suelo, mercado y maquinaria.</span></div></section>';
+      '<div class="conf"><span>Confianza: <b>media-baja</b> (rendimientos y precios oficiales por zona; suelo, requisitos de cultivo y coberturas ilustrativos)</span><span class="sub">Requiere validación local: demanda de agua de cada cultivo, nutrientes del suelo, mercado y maquinaria.</span></div></section>';
   }
 
   const inputEsc = (campo, lote) => Object.assign(input(campo, lote), { escenario: state.escenario });
@@ -1077,6 +1124,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     mapa.m = m;
     document.querySelectorAll('.map-ctl button[data-modo]').forEach(b => b.addEventListener('click', () => { mapa.modo = b.dataset.modo; encuadrar(true); }));
     initArea(m);
+    initHa();
   }
   const campoMapa = () => state.vista === 'campo' ? campoDe(state.campo) : actual().campo;
   function encuadrar(animar) {
@@ -1108,6 +1156,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       if (sel) p.bringToFront();
     });
     analizarArea();
+    actualizarHa();
   }
 
   /* ---------- selección de un área en el mapa (suelo SIMULADO) ----------
@@ -1345,6 +1394,215 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     tip.style.top = Math.max(8, e.clientY - 34) + 'px';
   });
 
+
+  /* ---------- el lote hectárea por hectárea ----------
+     Grilla de 100 × 100 m sobre el contorno real del lote. La variación de suelo dentro del lote es ILUSTRATIVA
+     (suave, determinística, centrada en los parámetros del lote); clima, rendimientos, precios y costos son reales. */
+  const HA_CULT = { soja: '#84cc16', maiz_temprano: '#fde047', maiz_tardio: '#ca8a04', girasol: '#fb923c', sorgo: '#c2410c', trigo: '#d9b86c',
+    cebada: '#b99b6b', centeno: '#94a3b8', avena: '#cbd5e1', vicia: '#a78bfa', mijo: '#2dd4bf', crotalaria: '#5eead4' };
+  const HA_ROT = ['#94a3b8', '#f59e0b', '#2dd4bf'];
+  const HA_CAPAS = { margen: 'Margen bruto', malo: 'Año malo', cultivo: 'Mejor cultivo hoy', rotacion: 'Mejor rotación' };
+  const DREN_ORD = ['excesivo', 'bueno', 'moderado', 'pobre'];
+  const hect = { on: false, capa: 'margen', grupo: null, key: null, loteId: null, celdas: [], rango: { margen: [0, 0], malo: [0, 0] }, t: null };
+  const entre = (x, a, b) => Math.max(a, Math.min(b, x));
+  const q10 = a => { const b = a.slice().sort((x, y) => x - y), i = .1 * (b.length - 1), lo = Math.floor(i);
+    return lo + 1 < b.length ? b[lo] + (b[lo + 1] - b[lo]) * (i - lo) : b[lo]; };
+  function enPoligono(pt, poly) {
+    let dentro = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const [yi, xi] = poly[i], [yj, xj] = poly[j];
+      if (((yi > pt[0]) !== (yj > pt[0])) && (pt[1] < (xj - xi) * (pt[0] - yi) / (yj - yi) + xi)) dentro = !dentro;
+    }
+    return dentro;
+  }
+  function recortar(poly, y0, x0, y1, x1) {   // polígono del lote recortado contra el rectángulo [y0,y1] × [x0,x1]
+    const lados = [[p => p[1] >= x0, (a, b) => [a[0] + (b[0] - a[0]) * (x0 - a[1]) / (b[1] - a[1]), x0]],
+      [p => p[1] <= x1, (a, b) => [a[0] + (b[0] - a[0]) * (x1 - a[1]) / (b[1] - a[1]), x1]],
+      [p => p[0] >= y0, (a, b) => [y0, a[1] + (b[1] - a[1]) * (y0 - a[0]) / (b[0] - a[0])]],
+      [p => p[0] <= y1, (a, b) => [y1, a[1] + (b[1] - a[1]) * (y1 - a[0]) / (b[0] - a[0])]]];
+    let out = poly.slice();
+    for (const [dentro, corte] of lados) {
+      const inp = out; out = [];
+      for (let i = 0; i < inp.length; i++) {
+        const a = inp[(i + inp.length - 1) % inp.length], b = inp[i];
+        if (dentro(b)) { if (!dentro(a)) out.push(corte(a, b)); out.push(b); } else if (dentro(a)) out.push(corte(a, b));
+      }
+      if (!out.length) break;
+    }
+    return out;
+  }
+  function superficieHa(pts) {   // superficie en hectáreas (aproximación plana, alcanza a escala de lote)
+    if (pts.length < 3) return 0;
+    const lat = pts.reduce((a, p) => a + p[0], 0) / pts.length, ky = 110.574, kx = 111.320 * Math.cos(lat * Math.PI / 180);
+    let s2 = 0; for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; s2 += a[1] * kx * b[0] * ky - b[1] * kx * a[0] * ky; }
+    return Math.abs(s2) / 2 * 100;
+  }
+  function grillaHa(poly) {
+    const la = poly.map(p => p[0]), lo = poly.map(p => p[1]);
+    const la0 = Math.min(...la), la1 = Math.max(...la), lo0 = Math.min(...lo), lo1 = Math.max(...lo);
+    const dLa = .1 * KM_LAT, dLo = .1 * kmLon((la0 + la1) / 2), out = [];
+    for (let y = la1; y > la0; y -= dLa) for (let x = lo0; x < lo1; x += dLo) {
+      const pts = recortar(poly, y - dLa, x, y, x + dLo), ha = superficieHa(pts);
+      if (ha < .12) continue;   // astillas del borde: se descartan
+      const c = [pts.reduce((a, p) => a + p[0], 0) / pts.length, pts.reduce((a, p) => a + p[1], 0) / pts.length];
+      out.push({ n: out.length + 1, pts, ha, c, u: (c[1] - lo0) / ((lo1 - lo0) || 1), v: (c[0] - la0) / ((la1 - la0) || 1) });
+    }
+    return out;
+  }
+  function sueloCelda(base, cel, semilla) {
+    const s = hashNum(semilla) * 6.283;
+    const f = Math.sin(cel.u * 3.1 + s) * Math.cos(cel.v * 2.7 + s * .7) + .35 * Math.sin(cel.u * 7 + cel.v * 5 + s);
+    const g = Math.cos(cel.u * 2.3 - s) * Math.sin(cel.v * 3.3 + s * .4);
+    const t0 = Math.max(0, M.TEXTURAS.indexOf(base.textura)), d0 = Math.max(0, DREN_ORD.indexOf(base.drenaje));
+    const ti = entre(t0 + Math.round(f * .8), 0, M.TEXTURAS.length - 1);
+    const di = entre(d0 + Math.round(g * .8 + (ti - t0) * .5), 0, DREN_ORD.length - 1);
+    return Object.assign({}, base, { textura: M.TEXTURAS[ti], drenaje: DREN_ORD[di],
+      ph: Math.round(entre(base.ph + .25 * f, 4.5, 8.5) * 10) / 10, pendiente: Math.round(Math.max(0, base.pendiente + .6 * g) * 10) / 10 });
+  }
+  function calcularHa(campo, lote) {
+    const base = inputEsc(campo, lote), f = M.parseFecha(state.siembra), cos = state.cosecha ? M.parseFecha(state.cosecha) : null;
+    const rots = rotacionesDe(lote), camps = Object.keys(M.ESCENARIOS[campo.zona] || {}).filter(k => /^c\d{4}$/.test(k));
+    for (const cel of hect.celdas) {
+      const l = sueloCelda(base, cel, lote.id), r = M.recomendar(l, f, cos, state.pesos, 3), top = r.top[0] || null;
+      const x = { suelo: l, top: r.top, cult: top ? top.cultivo : null, margen: top ? top.margen_usd_ha : null, medio: null, malo: null, rot: null };
+      if (top && camps.length) {
+        const ms = camps.map(k => {
+          const rr = M.recomendar(Object.assign({}, l, { escenario: k, pisoClima: M.PISO_CLIMA }), f, cos, state.pesos, 30);
+          const e = rr.ranking.find(z => z.cultivo === top.cultivo);
+          return e ? e.margen_usd_ha : Math.round(M.margenUsd(top.cultivo, l.zona, 0));
+        });
+        x.medio = Math.round(ms.reduce((a, v) => a + v, 0) / ms.length); x.malo = Math.round(q10(ms));
+      }
+      const cr = M.compararRotaciones(l, rots, f, state.pesos);
+      if (cr.mejor && cr.rotaciones[0].pasos) x.rot = { mejor: cr.mejor, actual: cr.rotaciones[0], idx: Math.max(0, rots.findIndex(z => z.id === cr.mejor.id)),
+        delta: cr.mejor.indicadores.margen_anual - cr.rotaciones[0].indicadores.margen_anual };
+      cel.res = x;
+    }
+  }
+  const RAMPA_HA = [[-60, '#dc2626'], [0, '#f97316'], [150, '#eab308'], [350, '#84cc16'], [700, '#16a34a']];
+  function rampaHa(v) {
+    const hx = c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)), mix = (a, b, t) => '#' + hx(a).map((v2, k) => Math.round(v2 + (hx(b)[k] - v2) * t).toString(16).padStart(2, '0')).join('');
+    if (v <= RAMPA_HA[0][0]) return RAMPA_HA[0][1];
+    for (let k = 1; k < RAMPA_HA.length; k++) if (v <= RAMPA_HA[k][0]) return mix(RAMPA_HA[k - 1][1], RAMPA_HA[k][1], (v - RAMPA_HA[k - 1][0]) / (RAMPA_HA[k][0] - RAMPA_HA[k - 1][0]));
+    return RAMPA_HA[RAMPA_HA.length - 1][1];
+  }
+  // Margen y año malo: escala relativa al lote (rojo = la peor hectárea, verde = la mejor) para que se vean las diferencias.
+  const ESCALA = ['#dc2626', '#f97316', '#eab308', '#84cc16', '#16a34a'];
+  function rangoHa(k) { const v = hect.celdas.map(c => c.res && c.res[k]).filter(x => x !== null && x !== undefined); return v.length ? [Math.min(...v), Math.max(...v)] : [0, 0]; }
+  function escalaHa(v, [a, b]) {
+    const t = b > a ? (v - a) / (b - a) : .5, k = Math.min(ESCALA.length - 2, Math.floor(t * (ESCALA.length - 1))), f = t * (ESCALA.length - 1) - k;
+    const hx = c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16));
+    return '#' + hx(ESCALA[k]).map((x, i) => Math.round(x + (hx(ESCALA[k + 1])[i] - x) * f).toString(16).padStart(2, '0')).join('');
+  }
+  function colorHa(cel) {
+    const r = cel.res; if (!r) return '#71717a';
+    if (hect.capa === 'cultivo') return r.cult ? HA_CULT[r.cult] || '#71717a' : '#3f3f46';
+    if (hect.capa === 'margen') return r.margen === null ? '#3f3f46' : escalaHa(r.margen, hect.rango.margen);
+    if (hect.capa === 'malo') return r.malo === null ? '#3f3f46' : escalaHa(r.malo, hect.rango.malo);
+    return r.rot ? HA_ROT[r.rot.idx] || '#71717a' : '#3f3f46';
+  }
+  const usdHa = v => (v < 0 ? '−' : '') + 'USD ' + Math.abs(Math.round(v)).toLocaleString('es-AR');
+  function tipHa(cel) {
+    const r = cel.res; if (!r || !r.top[0]) return 'Hectárea ' + cel.n + ': ningún cultivo entra en esta fecha';
+    return '<b>Ha ' + cel.n + '</b> · ' + esc(r.top[0].nombre) + ' · ' + usdHa(r.margen) + '/ha';
+  }
+  function popupHa(cel, campo) {
+    const r = cel.res, l = r.suelo, top = r.top[0], rots = rotacionesDe(actual().lote);
+    let h = '<div class="ha-pop"><b>Cuadro ' + cel.n + '</b> <span class="sub">· ' + cel.ha.toLocaleString('es-AR', { maximumFractionDigits: 2 }) + ' ha · suelo ilustrativo</span>' +
+      '<div class="sub">' + NOMBRE_TEX[l.textura] + ' · pH ' + l.ph + ' · drenaje ' + NOMBRE_DREN[l.drenaje].toLowerCase() + ' · pendiente ' + l.pendiente + ' %</div>';
+    if (top) {
+      h += '<div style="margin-top:6px"><b>' + esc(top.nombre) + '</b> · score ' + Math.round(top.score) + (r.top[1] ? ' <span class="sub">(sigue ' + esc(r.top[1].nombre) + ' ' + Math.round(r.top[1].score) + ')</span>' : '') + '</div>' +
+        '<div class="row"><span>Margen bruto hoy</span><b>' + usdHa(r.margen) + '/ha</b></div>' +
+        (r.malo !== null ? '<div class="row"><span>Promedio de campañas reales</span><b>' + usdHa(r.medio) + '/ha</b></div><div class="row"><span>Año malo (1 de cada 10)</span><b>' + usdHa(r.malo) + '/ha</b></div>' : '');
+      if (top.alertas && top.alertas[0]) h += '<div class="al">' + esc(top.alertas[0]) + '</div>';
+    } else h += '<div style="margin-top:6px">Ningún cultivo del catálogo entra en esta fecha.</div>';
+    if (r.rot) h += '<div style="margin-top:6px;border-top:1px solid #e4e4e7;padding-top:6px"><b>Rotación a 3 años:</b> ' +
+      (r.rot.mejor.id === r.rot.actual.id ? 'conviene mantener la actual.' : 'mejor «' + esc(r.rot.mejor.nombre) + '» (' + (r.rot.delta >= 0 ? '+' : '−') + usdHa(Math.abs(r.rot.delta)).replace('USD', 'USD') + '/ha/año de margen frente a la actual).') + '</div>';
+    return h + '</div>';
+  }
+  function leyendaHa() {
+    let h = '';
+    if (hect.capa === 'cultivo') {
+      const u = [...new Set(hect.celdas.map(c => c.res && c.res.cult).filter(Boolean))];
+      h = u.map(k => '<span><i style="background:' + HA_CULT[k] + '"></i>' + esc(M.CULTIVOS[k].nombre) + '</span>').join('');
+    } else if (hect.capa === 'rotacion') {
+      h = rotacionesDe(actual().lote).map((r, i) => '<span><i style="background:' + HA_ROT[i] + '"></i>' + esc(i === 0 ? 'Mantener la actual' : r.nombre) + '</span>').join('');
+    } else {
+      const [a, b] = hect.rango[hect.capa];
+      h = '<span>' + (hect.capa === 'malo' ? 'Margen bruto en un año malo (1 de cada 10 campañas reales), por hectárea' : 'Margen bruto del mejor cultivo de hoy, por hectárea') + '</span>' +
+        '<span><span class="mono">' + usdHa(a) + '</span><i class="grad" style="background:linear-gradient(90deg,' + ESCALA.join(',') + ')"></i><span class="mono">' + usdHa(b) + '</span></span>';
+    }
+    $('ha-ley').innerHTML = h;
+  }
+  function resumenHa(lote) {
+    const cs = hect.celdas.filter(c => c.res), n = cs.length;
+    if (!n) { $('ha-res').innerHTML = ''; return; }
+    const cuenta = {}; cs.forEach(c => { if (c.res.cult) cuenta[c.res.cult] = (cuenta[c.res.cult] || 0) + c.ha; });
+    const lista = Object.keys(cuenta).sort((a, b) => cuenta[b] - cuenta[a]).map(k => '<b>' + Math.round(cuenta[k]) + ' ha</b> ' + esc(M.CULTIVOS[k].nombre.toLowerCase())).join(' · ');
+    const conM = cs.filter(c => c.res.margen !== null), tot = conM.reduce((a, c) => a + c.res.margen * c.ha, 0);
+    const conMalo = cs.filter(c => c.res.malo !== null), totMalo = conMalo.reduce((a, c) => a + c.res.malo * c.ha, 0);
+    const cambian = cs.filter(c => c.res.rot && c.res.rot.mejor.id !== c.res.rot.actual.id), dRot = cambian.reduce((a, c) => a + c.res.rot.delta * c.ha, 0);
+    const sup = cs.reduce((a, c) => a + c.ha, 0);
+    $('ha-res').innerHTML = '<b>' + n + ' cuadros</b>, ' + sup.toLocaleString('es-AR', { maximumFractionDigits: 0 }) + ' ha medidas sobre el contorno (el lote declara ' + lote.superficie + ' ha). ' + (lista || 'Ningún cultivo entra en esta fecha.') +
+      (conM.length ? '<br>Margen bruto del lote hoy: <b>' + usdHa(tot) + '</b>' + (conMalo.length ? ' · en un año malo: <b>' + usdHa(totMalo) + '</b>' : '') + '.' : '') +
+      (cambian.length ? '<br>En <b>' + Math.round(cambian.reduce((a, c) => a + c.ha, 0)) + ' ha</b> conviene otra rotación (' + (dRot >= 0 ? '+' : '−') + usdHa(Math.abs(dRot)) + ' de margen por año en esas hectáreas, eligiendo por puntaje y no solo por plata).' : '<br>En todas las hectáreas conviene mantener la rotación actual.');
+  }
+  function capasHa() {
+    $('ha-capas').innerHTML = '<span>Ver:</span>' + Object.keys(HA_CAPAS).map(k => '<button type="button" data-capa="' + k + '" aria-pressed="' + (hect.capa === k) + '">' + HA_CAPAS[k] + '</button>').join('');
+  }
+  function actualizarHa() {
+    const enLote = esLote(state.vista), btn = $('btn-ha');
+    btn.hidden = !enLote;
+    const on = hect.on && enLote && !!mapa.m;
+    $('mapcard').classList.toggle('ha-on', on);
+    $('ha-panel').hidden = !on;
+    if (hect.grupo) { hect.grupo.remove(); hect.grupo = null; }
+    if (!on) return;
+    const { campo, lote } = actual(), poly = poligono(campo, lote.geo);
+    const key = JSON.stringify([lote.id, inputEsc(campo, lote), state.siembra, state.cosecha, state.pesos, rotacionesDe(lote).map(r => r.seq)]);
+    if (hect.loteId !== lote.id) { hect.celdas = grillaHa(poly); hect.loteId = lote.id; hect.key = null; hect.rango = { margen: [0, 0], malo: [0, 0] }; }
+    if (hect.key !== key) {
+      // El cálculo de todas las hectáreas tarda ~1 s: se agrupa (mientras se mueven los controles) y no bloquea cada cambio.
+      clearTimeout(hect.t);
+      $('ha-res').innerHTML = '<span class="hint">Calculando cada hectárea…</span>';
+      hect.t = setTimeout(() => {
+        const { campo: c2, lote: l2 } = actual();
+        if (l2.id !== lote.id) return;
+        calcularHa(c2, l2); hect.key = key; hect.rango = { margen: rangoHa('margen'), malo: rangoHa('malo') };
+        actualizarHa();
+      }, hect.key === null && !hect.celdas.some(c => c.res) ? 30 : 350);
+      if (!hect.celdas.some(c => c.res)) return;
+    }
+    mapa.capas[lote.id].setStyle({ fillOpacity: 0 });
+    const g = L.layerGroup();
+    for (const cel of hect.celdas) {
+      const rect = L.polygon(cel.pts, { color: 'rgba(255,255,255,.65)', weight: .8, fillColor: colorHa(cel), fillOpacity: .78 });
+      rect.bindTooltip(tipHa(cel), { sticky: true, className: 'ha-tip' });
+      rect.on('click', ev => { L.popup({ maxWidth: 320 }).setLatLng(ev.latlng).setContent(popupHa(cel, campo)).openOn(mapa.m); });
+      g.addLayer(rect);
+    }
+    hect.grupo = g.addTo(mapa.m);
+    capasHa(); leyendaHa(); resumenHa(lote);
+  }
+  function initHa() {
+    $('btn-ha').addEventListener('click', () => {
+      hect.on = !hect.on;
+      $('btn-ha').setAttribute('aria-pressed', String(hect.on));
+      $('btn-ha').textContent = hect.on ? 'Ver lotes' : 'Ver por hectárea';
+      if (area.activo) setDibujo(false);
+      actualizarHa();
+      if (mapa.m) {
+        mapa.m.invalidateSize(false);
+        const { campo, lote } = actual();
+        if (hect.on) mapa.m.fitBounds(L.latLngBounds(poligono(campo, lote.geo)), { padding: [24, 24] }); else encuadrar(true);
+      }
+    });
+    $('ha-capas').addEventListener('click', e => {
+      const b = e.target.closest('button[data-capa]'); if (!b) return;
+      hect.capa = b.dataset.capa; actualizarHa();
+    });
+  }
+
   /* ---------- render general ---------- */
   function renderResults() {
     if (state.vista === 'rotaciones') renderRotaciones(); else renderCultivo();
@@ -1357,6 +1615,15 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     updateMapa();
   }
   function render() {
+    const rec = state.vista === 'recorrido';
+    $('view-recorrido').hidden = !rec;
+    if (rec) {
+      if (!$('recorrido-frame').getAttribute('src')) $('recorrido-frame').setAttribute('src', 'mundo.html?embebido=1');
+      $('map-holder').appendChild($('mapcard'));
+      $('view-dash').hidden = true; $('view-lote').hidden = true;
+      renderMenu(); renderCtx();
+      return;
+    }
     const dash = !esLote(state.vista);
     // El resumen se vuelve a generar entero: antes se rescata el mapa para no destruir el de Leaflet.
     if (dash) $('map-holder').appendChild($('mapcard'));

@@ -129,6 +129,49 @@
     ESCENARIOS[zid] = esc;
   }
 
+  /* Rendimientos oficiales de MAGyP (Estimaciones Agrícolas) agregados por zona, y resultado del gate de ML:
+     rendimiento medio de las últimas 10 campañas sobre superficie cosechada (t/ha) y, si el clima de la ventana
+     crítica pasó la validación dejando un año afuera, la anomalía de rendimiento prevista para cada año. */
+  /* BEGIN REND_MAGYP (generado por field-shift/scripts/export_rend_magyp.py; no editar a mano) */
+  const REND_MAGYP = {"pampa_humeda":{"soja":{"t_ha":3.59,"t_ha_sembrada":3.51,"p10_rel":0.89,"n":24,"desde":2000,"hasta":2023,"r2_loyo":0.3,"pasa_gate":true,"resid_sd":0.139,"anomalia_prevista":{"1991":-0.099,"1992":-0.067,"1993":-0.05,"1994":0.009,"1995":-0.056,"1996":0.006,"1997":0.17,"1998":-0.048,"1999":0.032,"2000":-0.038,"2001":0.045,"2002":0.062,"2003":-0.082,"2004":0.047,"2005":0.041,"2006":0.028,"2007":0.005,"2008":-0.147,"2009":0.032,"2010":0.105,"2011":0.033,"2012":0.163,"2013":0.188,"2014":0.015,"2015":-0.009,"2016":0.003,"2017":-0.092,"2018":0.149,"2019":-0.101,"2020":-0.02,"2021":0.111,"2022":-0.36,"2023":-0.179,"2024":-0.106}},"maiz":{"t_ha":8.8,"t_ha_sembrada":8.05,"p10_rel":0.77,"n":24,"desde":2000,"hasta":2023,"r2_loyo":0.5,"pasa_gate":true,"resid_sd":0.11,"anomalia_prevista":{"1991":0.178,"1992":0.087,"1993":-0.002,"1994":-0.023,"1995":-0.148,"1996":0.071,"1997":0.155,"1998":0.04,"1999":-0.153,"2000":0.098,"2001":-0.004,"2002":0.024,"2003":-0.02,"2004":0.152,"2005":0.001,"2006":0.07,"2007":-0.061,"2008":-0.156,"2009":0.327,"2010":-0.027,"2011":-0.193,"2012":0.05,"2013":-0.1,"2014":0.155,"2015":-0.112,"2016":0.125,"2017":-0.085,"2018":0.229,"2019":0.039,"2020":-0.102,"2021":-0.203,"2022":-0.205,"2023":-0.001,"2024":-0.138}},"girasol":{"t_ha":2.85,"t_ha_sembrada":2.84,"p10_rel":0.88,"n":24,"desde":2000,"hasta":2023,"r2_loyo":0.03,"pasa_gate":false,"resid_sd":0.104},"sorgo":{"t_ha":6.17,"t_ha_sembrada":5.69,"p10_rel":0.88,"n":24,"desde":2000,"hasta":2023,"r2_loyo":0.0,"pasa_gate":false,"resid_sd":0.125},"trigo":{"t_ha":4.22,"t_ha_sembrada":4.06,"p10_rel":0.69,"n":24,"desde":2000,"hasta":2023,"r2_loyo":-0.16,"pasa_gate":false,"resid_sd":0.205},"cebada":{"t_ha":3.99,"t_ha_sembrada":3.57,"p10_rel":0.58,"n":24,"desde":2000,"hasta":2023},"avena":{"t_ha":2.88,"t_ha_sembrada":1.36,"p10_rel":0.66,"n":24,"desde":2000,"hasta":2023}},"entre_rios":{"soja":{"t_ha":2.26,"t_ha_sembrada":2.15,"p10_rel":0.63,"n":24,"desde":2000,"hasta":2023,"r2_loyo":0.16,"pasa_gate":false,"resid_sd":0.19},"maiz":{"t_ha":5.84,"t_ha_sembrada":5.02,"p10_rel":0.76,"n":24,"desde":2000,"hasta":2023,"r2_loyo":0.61,"pasa_gate":true,"resid_sd":0.128,"anomalia_prevista":{"1991":0.173,"1992":0.159,"1993":-0.089,"1994":-0.08,"1995":-0.227,"1996":-0.203,"1997":0.385,"1998":-0.088,"1999":-0.121,"2000":0.043,"2001":-0.083,"2002":0.116,"2003":-0.119,"2004":0.115,"2005":-0.17,"2006":0.245,"2007":-0.014,"2008":-0.296,"2009":0.269,"2010":-0.086,"2011":-0.218,"2012":0.128,"2013":-0.212,"2014":0.137,"2015":-0.127,"2016":0.215,"2017":-0.173,"2018":0.255,"2019":0.278,"2020":0.126,"2021":-0.195,"2022":-0.309,"2023":0.066,"2024":-0.138}},"girasol":{"t_ha":1.93,"t_ha_sembrada":1.91,"p10_rel":0.8,"n":24,"desde":2000,"hasta":2023,"r2_loyo":-0.09,"pasa_gate":false,"resid_sd":0.147},"sorgo":{"t_ha":4.71,"t_ha_sembrada":4.13,"p10_rel":0.82,"n":24,"desde":2000,"hasta":2023,"r2_loyo":-0.05,"pasa_gate":false,"resid_sd":0.128},"trigo":{"t_ha":3.1,"t_ha_sembrada":3.03,"p10_rel":0.74,"n":24,"desde":2000,"hasta":2023,"r2_loyo":0.06,"pasa_gate":false,"resid_sd":0.21},"cebada":{"t_ha":3.23,"t_ha_sembrada":2.79,"p10_rel":0.79,"n":15,"desde":2008,"hasta":2023},"avena":{"t_ha":1.74,"t_ha_sembrada":0.24,"p10_rel":0.89,"n":24,"desde":2000,"hasta":2023}}};
+  /* END REND_MAGYP */
+  for (const z of Object.keys(REND_MAGYP)) if (ZONAS[z]) ZONAS[z].rend = REND_MAGYP[z];
+  /* Precios a cosecha y costos directos por región: informe de Resultados Agrícolas de MAGyP (campaña 2026/27,
+     septiembre 2026). Precios = cotizaciones a futuro de la Bolsa de Cereales de Buenos Aires. Margen bruto de
+     campo propio (sin arrendamiento ni estructura): MB = rinde x precio x (1 - c_com) - gastos_dir. */
+  /* BEGIN ECON_MAGYP (generado por field-shift/scripts/export_econ_magyp.py; no editar a mano) */
+  const ECON_MAGYP = {"pampa_humeda":{"trigo":{"precio_usd_t":226.0,"rinde_ref_t_ha":4.18,"c_com":0.2712,"gastos_dir_usd_ha":449.2,"mb_informe_usd_ha":239.9,"estructura_usd_ha":95.5},"maiz":{"precio_usd_t":205.5,"rinde_ref_t_ha":8.08,"c_com":0.2967,"gastos_dir_usd_ha":617.3,"mb_informe_usd_ha":551.1,"estructura_usd_ha":238.7},"soja":{"precio_usd_t":360.0,"rinde_ref_t_ha":3.65,"c_com":0.2205,"gastos_dir_usd_ha":319.5,"mb_informe_usd_ha":703.9,"estructura_usd_ha":238.7},"girasol":{"precio_usd_t":400.0,"rinde_ref_t_ha":2.81,"c_com":0.1953,"gastos_dir_usd_ha":376.3,"mb_informe_usd_ha":527.6,"estructura_usd_ha":238.7},"cebada":{"precio_usd_t":225.0,"rinde_ref_t_ha":4.13,"c_com":0.272,"gastos_dir_usd_ha":381.1,"mb_informe_usd_ha":295.1,"estructura_usd_ha":95.5},"sorgo":{"precio_usd_t":198.0,"rinde_ref_t_ha":5.92,"c_com":0.3039,"gastos_dir_usd_ha":479.2,"mb_informe_usd_ha":337.4,"estructura_usd_ha":238.7}},"entre_rios":{"trigo":{"precio_usd_t":226.0,"rinde_ref_t_ha":2.97,"c_com":0.2949,"gastos_dir_usd_ha":357.0,"mb_informe_usd_ha":116.5,"estructura_usd_ha":44.1},"maiz":{"precio_usd_t":205.5,"rinde_ref_t_ha":5.53,"c_com":0.3226,"gastos_dir_usd_ha":577.8,"mb_informe_usd_ha":191.4,"estructura_usd_ha":110.2},"soja":{"precio_usd_t":360.0,"rinde_ref_t_ha":2.49,"c_com":0.2353,"gastos_dir_usd_ha":291.5,"mb_informe_usd_ha":393.1,"estructura_usd_ha":110.2},"girasol":{"precio_usd_t":400.0,"rinde_ref_t_ha":1.94,"c_com":0.1954,"gastos_dir_usd_ha":331.7,"mb_informe_usd_ha":292.7,"estructura_usd_ha":110.2},"cebada":{"precio_usd_t":225.0,"rinde_ref_t_ha":3.28,"c_com":0.2956,"gastos_dir_usd_ha":315.7,"mb_informe_usd_ha":204.1,"estructura_usd_ha":44.1},"sorgo":{"precio_usd_t":198.0,"rinde_ref_t_ha":4.6,"c_com":0.3308,"gastos_dir_usd_ha":410.5,"mb_informe_usd_ha":198.5,"estructura_usd_ha":110.2}}};
+  /* END ECON_MAGYP */
+  for (const z of Object.keys(ECON_MAGYP)) if (ZONAS[z]) ZONAS[z].econ = ECON_MAGYP[z];
+  const MAGYP_DE = { soja: 'soja', maiz_temprano: 'maiz', maiz_tardio: 'maiz', girasol: 'girasol', sorgo: 'sorgo',
+    trigo: 'trigo', cebada: 'cebada' };
+  const FACTOR_MAIZ_TARDIO = 0.83; // = 7,5 / 9 del catálogo ilustrativo; MAGyP no separa maíz temprano de tardío (supuesto)
+  /* Margen bruto USD/ha para un rendimiento dado: con precios y costos oficiales si existen; si no, el catálogo. */
+  function econDe(cid, zona) {
+    const z = ZONAS[zona] || ZONAS.pampa_humeda, k = MAGYP_DE[cid];
+    return (k && z.econ && z.econ[k]) || null;
+  }
+  function margenUsd(cid, zona, rend) {
+    const c = CULTIVOS[cid], e = econDe(cid, zona);
+    return e ? rend * e.precio_usd_t * (1 - e.c_com) - e.gastos_dir_usd_ha : rend * c.precio_usd_t - c.costo_usd_ha;
+  }
+  /* Rendimiento base del cultivo en la zona: observado (MAGyP) si existe; si no, el del catálogo (ilustrativo). */
+  function rendBase(cid, zona) {
+    const c = CULTIVOS[cid], z = ZONAS[zona] || ZONAS.pampa_humeda, k = MAGYP_DE[cid], r = k && z.rend && z.rend[k];
+    if (!r) return { t_ha: c.rend_t_ha, fuente: 'ilustrativo', modelo: null };
+    if (cid === 'maiz_tardio') return { t_ha: r.t_ha * FACTOR_MAIZ_TARDIO, fuente: 'observado · MAGyP (ajuste supuesto para tardío)', modelo: null, r };
+    return { t_ha: r.t_ha, fuente: 'observado · MAGyP', r,
+      modelo: r.pasa_gate && r.anomalia_prevista ? { anomalia_prevista: r.anomalia_prevista, r2_loyo: r.r2_loyo } : null };
+  }
+
+  /* Año de la campaña real que se está simulando (null = clima promedio). */
+  function anioEscenario(lote) {
+    const zz = ZONAS[lote.zona] ? lote.zona : 'pampa_humeda', e = lote.escenario && ESCENARIOS[zz] && ESCENARIOS[zz][lote.escenario];
+    if (!e || lote.escenario === 'promedio' || !e.campania) return null;
+    const y = parseInt(String(e.campania).slice(0, 4), 10);
+    return isFinite(y) ? y : null;
+  }
+
   const FACTORES_ORDEN = ['epoca', 'cosecha', 'temperatura', 'agua', 'ph', 'textura', 'drenaje', 'pendiente'];
   const FACTORES_NOMBRE = {
     epoca: 'época de siembra', cosecha: 'ventana de cosecha', temperatura: 'temperatura del ciclo',
@@ -299,8 +342,18 @@
     const c = CULTIVOS[cid], apt = aptitud(cid, lote, siembra, cosechaLimite);
     const base = { cultivo: cid, nombre: c.nombre, tipo: c.tipo, apt };
     if (apt.descartado) { base.descartado = true; return base; }
-    const rend = c.rend_t_ha * apt.indice;
-    const margen = rend * c.precio_usd_t - c.costo_usd_ha;
+    // Rendimiento base oficial (MAGyP) si existe. En una campaña real, si el cultivo tiene el modelo clima->rendimiento
+    // validado, la anomalía del año sale del modelo y no del índice de aptitud.
+    const rb = rendBase(cid, lote.zona), anioEsc = anioEscenario(lote);
+    let rend = rb.t_ha * apt.indice, rendModelo = false;
+    if (anioEsc !== null && rb.modelo && rb.modelo.anomalia_prevista[anioEsc] !== undefined) {
+      const aptN = aptitud(cid, Object.assign({}, lote, { escenario: null, pisoClima: null }), siembra, cosechaLimite);
+      if (!aptN.descartado) { rend = rb.t_ha * aptN.indice * (1 + rb.modelo.anomalia_prevista[anioEsc]); rendModelo = true; }
+    }
+    const margen = margenUsd(cid, lote.zona, rend);
+    const ec = econDe(cid, lote.zona);
+    Object.assign(base, { rend_fuente: rb.fuente, rend_modelo: rendModelo, econ_fuente: ec ? 'observado · MAGyP' : 'ilustrativo',
+      estructura_usd_ha: ec ? ec.estructura_usd_ha : null });
     const bal = balanceNutrientes(cid, lote);
     const [salud, notaDiv] = saludSuelo(cid, lote);
     const [cumpl, motivos] = cumplimiento(c, cid, lote.historial, lote.pendiente);
@@ -338,6 +391,9 @@
     if (f.cosecha < 1) out.push('La fecha de cosecha elegida deja poco margen para completar el ciclo.');
     for (const m of e.motivos) out.push(m);
     if (f.agua < .6) out.push('Agua esperada del ciclo en el borde del rango: riesgo hídrico.');
+    if (e.estructura_usd_ha != null && e.margen_usd_ha < e.estructura_usd_ha)
+      out.push('Margen bruto bajo: USD ' + Math.round(e.margen_usd_ha) + '/ha no cubre los gastos de estructura que MAGyP estima en USD ' +
+        Math.round(e.estructura_usd_ha) + '/ha. El margen neto sería negativo, y más con arrendamiento.');
     return out;
   }
 
@@ -519,8 +575,8 @@
       'Menos diversidad: ' + I.familias + ' familias botánicas (actual: ' + B.familias + ').');
     add(B.n_anual - I.n_anual, 15, 'Menos nitrógeno a reponer: ~' + I.n_anual + ' kg/ha/año (actual: ' + B.n_anual + ').',
       'Más nitrógeno a reponer: ~' + I.n_anual + ' kg/ha/año (actual: ' + B.n_anual + ').');
-    add(I.margen_anual - B.margen_anual, 50, 'Mayor margen ilustrativo: USD ' + I.margen_anual + '/ha/año (actual: ' + B.margen_anual + ').',
-      'Menor margen ilustrativo: USD ' + I.margen_anual + '/ha/año (actual: ' + B.margen_anual + ').');
+    add(I.margen_anual - B.margen_anual, 50, 'Mayor margen bruto: USD ' + I.margen_anual + '/ha/año (actual: ' + B.margen_anual + ').',
+      'Menor margen bruto: USD ' + I.margen_anual + '/ha/año (actual: ' + B.margen_anual + ').');
     add(100 * (r.comp.resiliencia - base.comp.resiliencia), 5, 'Cultivos más tolerantes a la sequía y al anegamiento de este lote.',
       'Cultivos menos tolerantes a la sequía y al anegamiento de este lote.');
     add(100 * (r.comp.cumplimiento - base.comp.cumplimiento), 5, 'Evita repetir el mismo cultivo.', 'Repite el mismo cultivo.');
@@ -568,6 +624,6 @@
   }
 
   const API = { ESCENARIOS, ESCENARIOS_ORDEN, PISO_CLIMA, compararEscenarios, CULTIVOS, ZONAS, FUENTE_CLIMA, TEXTURAS, DRENAJES, PESOS_DEFECTO, PESO_MAX, COMPONENTES_NOMBRE, COMPONENTES_DESC, FACTORES_NOMBRE,
-    HORIZONTE_ANIOS, REF_MARGEN_ANUAL, recomendar, evaluarRotacion, compararRotaciones, normalizarPesos, parseFecha, fmtISO, addDias };
+    HORIZONTE_ANIOS, REF_MARGEN_ANUAL, recomendar, evaluarRotacion, compararRotaciones, normalizarPesos, parseFecha, fmtISO, addDias, margenUsd, rendBase, econDe };
   if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.Motor = API;
 })(typeof window !== 'undefined' ? window : globalThis);

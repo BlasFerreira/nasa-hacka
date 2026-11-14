@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Field Shift · Tu campo, hectárea por hectárea</title>
+<meta name="description" content="Recorré un campo de 60 hectáreas y mirá qué conviene hacer en cada una, con clima real de NASA POWER y rendimientos y precios oficiales de MAGyP.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #fafafa; --surface: #ffffff; --surface-2: #f4f4f5; --border: #e4e4e7;
+  --text: #09090b; --muted: #71717a; --primary: #18181b; --on-primary: #fafafa;
+  --good: #15803d; --warn: #b45309; --bad: #b91c1c; --stage: #e9efe4;
+  --font: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'Geist Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  color-scheme: light;
+}
+/* Siempre claro, como el asistente. */
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+h1, h2, h3, p { margin: 0; }
+button { font: inherit; color: inherit; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+.top { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 16px;
+  background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); }
+.brand { font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; }
+.src { font-size: 11px; color: var(--muted); text-align: right; line-height: 1.3; }
+.src b { color: var(--text); font-weight: 500; }
+
+.world { display: block; }
+/* Embebida en el asistente (#/recorrido): sin encabezado propio, el asistente ya tiene el suyo. */
+.embebido .top { display: none; }
+.embebido .stage { top: 0; }
+@media (min-width: 900px) { .embebido .stage { top: 0; height: 100vh; } }
+.stage { position: sticky; top: 49px; z-index: 10; height: 46vh; min-height: 280px; background: var(--stage); border-bottom: 1px solid var(--border); overflow: hidden; }
+#map { width: 100%; height: 100%; display: block; }
+#cam { transform-origin: 0 0; transition: transform 1s cubic-bezier(.22,.61,.36,1); }
+.cell { cursor: pointer; outline: none; }
+.cell .top-face { transition: fill .7s ease, opacity .5s ease; stroke: rgba(0,0,0,.28); stroke-width: .8; }
+.cell:hover .top-face, .cell:focus-visible .top-face { stroke: var(--text); stroke-width: 1.6; }
+.cell.sel .top-face { stroke: #fff; stroke-width: 2.6; }
+.cell .furrow { stroke: rgba(0,0,0,.26); stroke-width: 1; transition: opacity .6s; }
+.cell .water { fill: rgba(56,130,246,.55); transition: opacity .7s; }
+.cell .num { font-family: var(--mono); font-size: 10px; fill: rgba(255,255,255,.85); text-anchor: middle; pointer-events: none; transition: opacity .5s; paint-order: stroke; stroke: rgba(0,0,0,.5); stroke-width: 2px; }
+.dim .top-face { opacity: .55; }
+
+.hud { position: absolute; z-index: 5; }
+#toolbar { top: 8px; left: 8px; right: 8px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; pointer-events: none; opacity: 0; transition: opacity .5s; }
+#toolbar.on { opacity: 1; pointer-events: auto; }
+.chips { display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.chips > span { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-right: 2px; }
+.chip { border: 1px solid var(--border); border-radius: 999px; padding: 2px 9px; font-size: 11px; background: color-mix(in srgb, var(--surface) 90%, transparent); cursor: pointer; line-height: 1.5; }
+.chip[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+#legend { left: 8px; bottom: 8px; max-width: calc(100% - 16px); display: flex; flex-wrap: wrap; gap: 3px 10px; font-size: 11px; color: var(--text);
+  background: color-mix(in srgb, var(--surface) 86%, transparent); border: 1px solid var(--border); border-radius: 8px; padding: 5px 8px; transition: opacity .4s; }
+#legend .muted { color: var(--muted); }
+#legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; border: 1px solid rgba(0,0,0,.25); }
+#legend .grad { width: 110px; height: 8px; border-radius: 4px; display: inline-block; vertical-align: 0; margin: 0 6px; }
+#legend.off { opacity: 0; pointer-events: none; }
+
+#clim { right: 8px; top: 8px; width: min(64%, 360px); background: color-mix(in srgb, var(--surface) 90%, transparent); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px;
+  opacity: 0; pointer-events: none; transition: opacity .6s; }
+#clim.on { opacity: 1; }
+#clim .t { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+#clim svg { width: 100%; height: auto; display: block; }
+#clim .k { font-size: 11px; margin-top: 4px; color: var(--muted); }
+#clim .k b { color: var(--text); font-weight: 500; }
+
+.rain { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .8s; overflow: hidden; z-index: 3; }
+.rain.on { opacity: 1; }
+.rain i { position: absolute; top: -12%; width: 1px; height: 14%; background: linear-gradient(to bottom, transparent, rgba(120,170,255,.8)); animation: fall linear infinite; }
+@keyframes fall { to { transform: translateY(125vh) translateX(-18px); } }
+
+#info { left: 8px; right: 8px; bottom: 8px; max-height: 56%; overflow: auto; background: color-mix(in srgb, var(--surface) 96%, transparent); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; font-size: 12px; z-index: 8; box-shadow: 0 6px 24px rgba(0,0,0,.25); }
+#info[hidden] { display: none; }
+#info h3 { font-size: 13px; font-weight: 600; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+#info .x { border: 0; background: transparent; cursor: pointer; font-size: 18px; line-height: 1; color: var(--muted); padding: 0 2px; }
+#info .sub { color: var(--muted); margin: 1px 0 6px; }
+#info .best { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+#info .sw { width: 12px; height: 12px; border-radius: 3px; flex: none; border: 1px solid rgba(0,0,0,.25); }
+#info .row { display: flex; justify-content: space-between; gap: 8px; }
+#info .alt { color: var(--muted); }
+#info .al { margin-top: 6px; padding: 4px 8px; border-left: 3px solid var(--warn); background: color-mix(in srgb, var(--warn) 10%, transparent); border-radius: 4px; }
+#info .rot { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border); }
+#info b { font-weight: 500; }
+
+.dots { position: absolute; right: 8px; bottom: 8px; z-index: 4; display: flex; flex-direction: column; gap: 5px; }
+.dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: background .3s, transform .3s; }
+.dots i.on { background: var(--primary); transform: scale(1.5); }
+
+.steps { padding: 0 16px 20vh; }
+.step { min-height: 72vh; display: flex; align-items: center; padding: 6vh 0; }
+.step .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 16px 14px; max-width: 460px; box-shadow: 0 2px 14px rgba(0,0,0,.06); }
+.step .kick { font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 6px; display: block; }
+.step h2 { font-size: 22px; line-height: 1.15; letter-spacing: -0.02em; margin-bottom: 8px; text-wrap: balance; }
+.step p + p { margin-top: 8px; }
+.step .muted { color: var(--muted); }
+.step .dyn { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 13px; }
+.step .dyn b { font-weight: 600; }
+.step .big { font-family: var(--mono); font-size: 18px; font-weight: 500; }
+.step .tag { display: inline-block; font-family: var(--mono); font-size: 10px; border: 1px solid var(--border); border-radius: 6px; padding: 0 6px; color: var(--muted); vertical-align: 1px; }
+.step .tag.real { color: var(--good); border-color: color-mix(in srgb, var(--good) 45%, var(--border)); }
+.step .tag.ilus { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, var(--border)); }
+.step ul { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 3px; font-size: 13px; }
+.cta { margin-top: 10px; display: inline-flex; gap: 6px; align-items: center; border: 1px solid var(--primary); background: var(--primary); color: var(--on-primary); border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 13px; }
+.foot { padding: 28px 16px 60px; color: var(--muted); font-size: 12px; max-width: 760px; margin: 0 auto; }
+.foot h3 { color: var(--text); font-size: 14px; margin-bottom: 6px; }
+.foot ul { padding-left: 18px; display: grid; gap: 4px; }
+
+@media (min-width: 900px) {
+  .world { display: grid; grid-template-columns: minmax(0, 1fr) 420px; align-items: start; }
+  .stage { grid-column: 1; grid-row: 1; position: sticky; top: 49px; height: calc(100vh - 49px); border-bottom: 0; border-right: 1px solid var(--border); }
+  .steps { grid-column: 2; grid-row: 1; padding: 0 20px 30vh; }
+  .step { min-height: 90vh; }
+  #info { left: auto; right: 12px; bottom: 12px; width: 340px; }
+  #legend { left: 12px; bottom: 12px; }
+  #toolbar { left: 12px; top: 12px; }
+  #clim { right: 12px; top: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #cam, .cell .top-face, .rain i { transition: none; animation: none; }
+  html { scroll-behavior: auto; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="mvp-rotacion.html#/inicio" target="_top" style="color:inherit;text-decoration:none" title="Abrir el asistente">← Field Shift</a>
+  <span class="src"><b>Clima:</b> NASA POWER · <b>Rendimientos y precios:</b> MAGyP · <b>Suelo:</b> ilustrativo</span>
+</header>
+
+<main class="world">
+  <section class="stage" id="stage" aria-label="Mapa del campo de 60 hectáreas">
+    <svg id="map" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Campo de 60 hectáreas en perspectiva. Cada cuadro es una hectárea.">
+      <g id="cam"></g>
+    </svg>
+    <div class="rain" id="rain" aria-hidden="true"></div>
+    <div class="hud" id="toolbar"></div>
+    <div class="hud" id="clim" aria-label="Lluvia de cada campaña real, julio a junio"></div>
+    <div class="hud off" id="legend"></div>
+    <aside class="hud" id="info" hidden></aside>
+    <div class="dots" id="dots" aria-hidden="true"></div>
+  </section>
+
+  <div class="steps" id="steps">
+    <article class="step" data-mode="campo">
+      <div class="card">
+        <span class="kick">Paso 1 · El campo</span>
+        <h2>Un campo, 60 hectáreas, 60 decisiones</h2>
+        <p>Este es un campo de la Pampa húmeda, cerca de Pergamino. Bajá despacio: vamos a ver qué tiene cada hectárea y qué conviene hacer en ella.</p>
+        <p class="muted">El campo lo armamos para mostrar el método. <span class="tag ilus">suelo ilustrativo</span> <span class="tag real">clima, rendimientos y precios reales</span></p>
+      </div>
+    </article>
+
+    <article class="step" data-mode="terreno">
+      <div class="card">
+        <span class="kick">Paso 2 · El suelo</span>
+        <h2>Ninguna hectárea es igual a la de al lado</h2>
+        <p>La loma es de suelo franco y bien drenado. Hacia abajo se pone más arcilloso, y en una esquina hay un manchón arenoso. Cada textura retiene agua y nutrientes de otra manera.</p>
+        <p class="dyn" id="dyn-terreno"></p>
+      </div>
+    </article>
+
+    <article class="step" data-mode="agua">
+      <div class="card">
+        <span class="kick">Paso 3 · El agua</span>
+        <h2>El relieve decide dónde se queda el agua</h2>
+        <p>En el bajo el agua se estanca y en el médano se va enseguida. Un mismo cultivo se comporta distinto en cada punto, aunque llueva igual sobre todo el campo.</p>
+        <p class="dyn" id="dyn-agua"></p>
+      </div>
+    </article>
+
+    <article class="step" data-mode="clima">
+      <div class="card">
+        <span class="kick">Paso 4 · El clima <span class="tag real">NASA POWER</span></span>
+        <h2>Cada campaña real, no un promedio</h2>
+        <p>Usamos la serie real de NASA POWER para este punto. Cada barra es la lluvia de una campaña, de julio a junio. Las rojas son las más secas.</p>
+        <p class="dyn" id="dyn-clima"></p>
+      </div>
+    </article>
+
+    <article class="step" data-mode="siembra">
+      <div class="card">
+        <span class="kick">Paso 5 · Qué sembrar <span class="tag real">MAGyP</span></span>
+        <h2>Lo que conviene en cada hectárea, hoy</h2>
+        <p>Para cada hectárea el motor filtra los cultivos que entran, los puntúa con tus prioridades y se queda con el primero. Cambiá la fecha o las prioridades arriba del mapa y mirá cómo se reparte el campo.</p>
+        <p class="dyn" id="dyn-siembra"></p>
+      </div>
+    </article>
+
+    <article class="step" data-mode="malo">
+      <div class="card">
+        <span class="kick">Paso 6 · El año malo</span>
+        <h2>¿Y si el año sale mal?</h2>
+        <p>Probamos el cultivo elegido, sembrado igual, contra el clima de cada campaña real. Acá el color es el margen bruto en un año malo, 1 de cada 10. El rojo es perder plata.</p>
+        <p class="dyn" id="dyn-malo"></p>
+      </div>
+    </article>
+
+    <article class="step" data-mode="rotacion">
+      <div class="card">
+        <span class="kick">Paso 7 · La rotación</span>
+        <h2>No es solo qué sembrar: es qué viene después</h2>
+        <p>Para cada hectárea comparamos tu rotación actual con dos alternativas a tres años: doble cultivo con trigo y una con cultivos de cobertura. El color dice qué haría el motor.</p>
+        <p class="dyn" id="dyn-rotacion"></p>
+      </div>
+    </article>
+
+    <article class="step" data-mode="explora">
+      <div class="card">
+        <span class="kick">Paso 8 · Explorá</span>
+        <h2>Tocá una hectárea</h2>
+        <p>Elegí una y mirá el detalle: suelo, mejor cultivo, margen en un año normal y en uno malo, y la rotación sugerida. Cambiá la capa del mapa con los botones.</p>
+        <p class="dyn" id="dyn-explora"></p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="cta" href="mvp-rotacion.html#/inicio" target="_top" style="text-decoration:none">Abrir el asistente para mi lote</a><button class="cta" type="button" id="reset" style="background:transparent;color:var(--text);border-color:var(--border)">Volver al principio</button></div>
+      </div>
+    </article>
+  </div>
+</main>
+
+<section class="foot">
+  <h3>Qué es real y qué no</h3>
+  <ul>
+    <li><b>Real:</b> el clima de cada campaña (NASA POWER, un punto de referencia cerca de Pergamino), los rendimientos por zona, los precios a cosecha y los costos (MAGyP, informe de septiembre 2026).</li>
+    <li><b>Ilustrativo:</b> el suelo, el relieve y el pH de cada hectárea. No tenemos suelo real de este campo; lo armamos para mostrar cómo cambia la decisión.</li>
+    <li>El margen es <b>bruto, sin arrendamiento</b>. La soja de segunda usa el rendimiento y el precio de la soja en general.</li>
+    <li>El «año malo» sale de un modelo que acierta qué años son malos pero <b>subestima cuánto caen</b>. El año malo real puede ser peor.</li>
+    <li>Las rotaciones alternativas son las de ejemplo del equipo, no una optimización: son ideas para hablar con un agrónomo. Esto apoya la decisión del productor, no la reemplaza.</li>
+  </ul>
+</section>
+
+<script>if (/[?&]embebido\b/.test(location.search)) document.documentElement.classList.add('embebido');</script>
+<script>/*ENGINE*/</script>
+<script>
+(function () {
+  'use strict';
+  const M = window.Motor;
+  const $ = id => document.getElementById(id);
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  const NX = 10, NY = 6, TW = 104, TH = 52, EH = 46, OX = 396, OY = 118;
+  const ZONA = 'pampa_humeda';
+
+  /* ---------- paleta ---------- */
+  const CULT = {
+    soja: ['Soja', '#84cc16'], maiz_temprano: ['Maíz temprano', '#fde047'], maiz_tardio: ['Maíz tardío', '#ca8a04'],
+    girasol: ['Girasol', '#fb923c'], sorgo: ['Sorgo', '#c2410c'], trigo: ['Trigo', '#d9b86c'], cebada: ['Cebada', '#b99b6b'],
+    centeno: ['Centeno', '#94a3b8'], avena: ['Avena', '#cbd5e1'], vicia: ['Vicia', '#a78bfa'], mijo: ['Mijo', '#2dd4bf'], crotalaria: ['Crotalaria', '#5eead4'],
+  };
+  const TEX = { arenoso: ['Arenoso', '#ecd39c'], franco_arenoso: ['Franco arenoso', '#d8b074'], franco: ['Franco', '#b4803f'], franco_limoso: ['Franco limoso', '#8b6030'], franco_arcilloso: ['Franco arcilloso', '#6a4527'], arcilloso: ['Arcilloso', '#432c1b'] };
+  const DREN = { excesivo: ['Excesivo', '#fcd34d'], bueno: ['Bueno', '#86efac'], moderado: ['Moderado', '#38bdf8'], pobre: ['Pobre', '#2563eb'] };
+  const ROT = { mantener: ['Mantener la actual', '#94a3b8'], cobertura: ['Cambiar, con cobertura', '#2dd4bf'], cambiar: ['Cambiar de rotación', '#f59e0b'] };
+  const PRESETS = {
+    equilibrado: ['Equilibrado', { ingreso: .25, rapidez: .15, salud_suelo: .20, ahorro_insumos: .15, resiliencia: .15, cumplimiento: .10 }],
+    rendimiento: ['Mayor rendimiento', { ingreso: .55, rapidez: .10, salud_suelo: .10, ahorro_insumos: .10, resiliencia: .08, cumplimiento: .07 }],
+    suelo: ['Mejor salud de suelo', { ingreso: .10, rapidez: .10, salud_suelo: .50, ahorro_insumos: .12, resiliencia: .10, cumplimiento: .08 }],
+  };
+  const FECHAS = [['14 nov', '2026-11-14'], ['10 ene', '2027-01-10'], ['10 may', '2027-05-10'], ['20 jun', '2027-06-20']];
+  const MODE_LAYER = { campo: 'campo', terreno: 'suelo', agua: 'agua', clima: 'clima', siembra: 'cultivo', malo: 'malo', rotacion: 'rotacion', explora: null };
+  const MODES = Object.keys(MODE_LAYER);
+  const CAM = { campo: [1, 0], terreno: [1.12, 0], agua: [1.12, 0], clima: [.9, 0], siembra: [1.1, 0], malo: [1.1, 0], rotacion: [1.1, 0], explora: [1, 0] };
+
+  /* ---------- el campo (ilustrativo): relieve, suelo y riesgos por hectárea ---------- */
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  function relieve(i, j) {
+    const u = i / (NX - 1), v = j / (NY - 1);
+    return clamp(.97 - .78 * (.62 * u + .38 * v) - .28 * Math.exp(-(Math.pow(u - .72, 2) + Math.pow(v - .62, 2)) / .035) + .09 * Math.sin(5 * u + 1) * Math.cos(4 * v + .5) + .04 * Math.sin(11 * u + 3 * v), .04, 1);
+  }
+  const TEXORD = ['arenoso', 'franco_arenoso', 'franco', 'franco_limoso', 'franco_arcilloso', 'arcilloso'];
+  const cells = [];
+  for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) {
+    const e = relieve(i, j), s = .5 + .5 * Math.sin(i * 1.7 + j * 2.3) * Math.cos(j * 1.1 - i * .6);
+    const dx = relieve(Math.min(i + 1, NX - 1), j) - relieve(Math.max(i - 1, 0), j), dy = relieve(i, Math.min(j + 1, NY - 1)) - relieve(i, Math.max(j - 1, 0));
+    let tex;
+    if (e > .70 && s > .52 && i <= 3) tex = 'franco_arenoso';
+    else if (e > .80 && s > .62) tex = 'arenoso';
+    else if (e < .26) tex = 'arcilloso';
+    else if (e < .40) tex = 'franco_arcilloso';
+    else tex = s > .5 ? 'franco_limoso' : 'franco';
+    const dren = e > .78 && (tex === 'arenoso' || tex === 'franco_arenoso') ? 'excesivo' : e > .42 ? 'bueno' : e > .27 ? 'moderado' : 'pobre';
+    const arc = TEXORD.indexOf(tex) / 5;
+    const ph = Math.round((5.9 + .85 * arc + .25 * Math.sin(i * 2.1 + j * 1.3)) * 10) / 10;
+    const pend = Math.round(clamp(Math.hypot(dx, dy) * 7, .2, 4) * 10) / 10;
+    const lote = { zona: ZONA, textura: tex, ph: clamp(ph, 5.6, 7.1), drenaje: dren, pendiente: pend, riego: false,
+      riesgos: { sequia: Math.round(clamp(.22 + .55 * (1 - arc) * (e > .5 ? 1 : .5) + .1 * e, .05, .9) * 100) / 100, anegamiento: Math.round(clamp(.08 + .7 * (1 - e) * (.5 + arc), .05, .9) * 100) / 100 },
+      rotacion_habitual: ['maiz_temprano', 'soja', 'trigo'], historial: ['maiz_temprano', 'soja'] };
+    cells.push({ n: cells.length + 1, i, j, e, lote, res: null });
+  }
+
+  /* ---------- cálculo con el motor real ---------- */
+  const state = { mode: 'campo', layer: 'cultivo', fecha: FECHAS[0][1], preset: 'equilibrado', sel: null };
+  const ESC = M.ESCENARIOS[ZONA], CAMP = Object.keys(ESC).filter(k => /^c\d{4}$/.test(k));
+  // Rotaciones: la actual del lote y las dos alternativas de ejemplo del equipo para la Pampa húmeda.
+  const ROTS = l => [{ id: 'actual', nombre: 'Tu rotación actual', seq: l.rotacion_habitual },
+    { id: 'a', nombre: 'Doble cultivo con trigo', seq: ['maiz_tardio', 'trigo', 'soja'] },
+    { id: 'b', nombre: 'Con cultivos de cobertura', seq: ['maiz_temprano', 'avena', 'soja', 'vicia'] }];
+  const q10 = a => { const b = a.slice().sort((x, y) => x - y), i = .1 * (b.length - 1), lo = Math.floor(i);
+    return lo + 1 < b.length ? b[lo] + (b[lo + 1] - b[lo]) * (i - lo) : b[lo]; };
+  function calcular() {
+    const pesos = PRESETS[state.preset][1], f = M.parseFecha(state.fecha);
+    for (const c of cells) {
+      const r = M.recomendar(c.lote, f, null, pesos, 5), top = r.top[0] || null;
+      const x = { top: r.top, mejor: top, cult: top ? top.cultivo : null, margen: top ? top.margen_usd_ha : null, medio: null, malo: null, rot: null };
+      if (top) {   // el mismo cultivo, sembrado igual, con el clima de cada campaña real de NASA POWER
+        const ms = CAMP.map(k => {
+          const rr = M.recomendar(Object.assign({}, c.lote, { escenario: k, pisoClima: M.PISO_CLIMA }), f, null, pesos, 30);
+          const e = rr.ranking.find(z => z.cultivo === top.cultivo);
+          return e ? e.margen_usd_ha : Math.round(M.margenUsd(top.cultivo, ZONA, 0));
+        });
+        x.medio = ms.length ? Math.round(ms.reduce((s, v) => s + v, 0) / ms.length) : top.margen_usd_ha;
+        x.malo = ms.length ? Math.round(q10(ms)) : top.margen_usd_ha;
+      }
+      const cr = M.compararRotaciones(c.lote, ROTS(c.lote), f, pesos), act = cr.rotaciones[0], best = cr.mejor;
+      if (act && act.pasos && best) x.rot = { actual: act, best,
+        tipo: best.id === 'actual' ? 'mantener' : best.indicadores.coberturas > 0 ? 'cobertura' : 'cambiar',
+        dMedio: best.indicadores.margen_anual - act.indicadores.margen_anual };
+      c.res = x;
+    }
+  }
+
+  /* ---------- dibujo isométrico ---------- */
+  const P = (i, j, h) => [OX + (i - j) * TW / 2, OY + (i + j) * TH / 2 - (h || 0)];
+  const pts = a => a.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+  function el(name, attrs, parent) {
+    const n = document.createElementNS(SVGNS, name);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  }
+  const cam = $('cam');
+  const BASE = 8;
+  const order = cells.slice().sort((a, b) => (a.i + a.j) - (b.i + b.j));
+  function layout(c) {   // reposiciona todas las caras de la hectárea según su altura actual c.h
+    const h = c.h, A = P(c.i, c.j, h), B = P(c.i + 1, c.j, h), C = P(c.i + 1, c.j + 1, h), D = P(c.i, c.j + 1, h);
+    const Bb = P(c.i + 1, c.j, -BASE), Cb = P(c.i + 1, c.j + 1, -BASE), Db = P(c.i, c.j + 1, -BASE);
+    c.pl.setAttribute('points', pts([D, C, Cb, Db]));
+    c.pr.setAttribute('points', pts([B, C, Cb, Bb]));
+    c.top.setAttribute('points', pts([A, B, C, D]));
+    c.water.setAttribute('points', pts([A, B, C, D]));
+    for (let k = 1; k <= 3; k++) {
+      const a = P(c.i + k / 4, c.j, h), b = P(c.i + k / 4, c.j + 1, h), f = c.furrows[k - 1];
+      f.setAttribute('x1', a[0]); f.setAttribute('y1', a[1]); f.setAttribute('x2', b[0]); f.setAttribute('y2', b[1]);
+    }
+    const m = P(c.i + .5, c.j + .5, h);
+    c.label.setAttribute('x', m[0]); c.label.setAttribute('y', m[1] + 3);
+  }
+  for (const c of order) {
+    c.h = c.e * EH;
+    const g = el('g', { class: 'cell', tabindex: 0, role: 'button', 'aria-label': 'Hectárea ' + c.n, 'data-n': c.n }, cam);
+    c.pl = el('polygon', { fill: '#4d3b2c' }, g);
+    c.pr = el('polygon', { fill: '#3b2d21' }, g);
+    c.top = el('polygon', { class: 'top-face', fill: '#5b7a3a' }, g);
+    c.water = el('polygon', { class: 'water', opacity: 0, 'pointer-events': 'none' }, g);
+    c.furrows = [];
+    for (let k = 1; k <= 3; k++) c.furrows.push(el('line', { class: 'furrow', opacity: 0, 'pointer-events': 'none' }, g));
+    c.label = el('text', { class: 'num', opacity: 0 }, g);
+    c.label.textContent = c.n;
+    c.g = g;
+    layout(c);
+    g.addEventListener('click', () => seleccionar(c));
+    g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); seleccionar(c); } });
+  }
+  let anim = null;
+  function alturas(objetivo) {   // anima la altura de cada hectárea hacia su objetivo
+    if (anim) cancelAnimationFrame(anim);
+    const desde = cells.map(c => c.h), hasta = cells.map(c => objetivo(c)), t0 = performance.now(), D = matchMedia('(prefers-reduced-motion: reduce)').matches ? 1 : 800;
+    (function paso(t) {
+      const k = Math.min(1, (t - t0) / D), q = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      cells.forEach((c, n) => { c.h = desde[n] + (hasta[n] - desde[n]) * q; layout(c); });
+      if (k < 1) anim = requestAnimationFrame(paso);
+    })(t0);
+  }
+  const altMargen = v => 6 + clamp((v || 0) / 700, 0, 1.2) * EH * 1.25;
+  function altura(c, capa) {
+    if (!c.res) return c.e * EH;
+    if (capa === 'cultivo') return altMargen(c.res.margen);
+    if (capa === 'malo') return altMargen(c.res.malo);
+    if (capa === 'rotacion') return 6 + clamp((c.res.rot ? Math.max(c.res.rot.dMedio, 0) : 0) / 140, 0, 1.2) * EH * 1.25;
+    return c.e * EH;
+  }
+
+  /* ---------- colores por capa ---------- */
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function hex(c) { return [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)); }
+  function mix(c1, c2, t) { const a = hex(c1), b = hex(c2); return '#' + a.map((v, k) => Math.round(lerp(v, b[k], t)).toString(16).padStart(2, '0')).join(''); }
+  const RAMPA = [[-60, '#dc2626'], [0, '#f97316'], [150, '#eab308'], [350, '#84cc16'], [700, '#16a34a']];
+  function rampa(v) {
+    if (v <= RAMPA[0][0]) return RAMPA[0][1];
+    for (let k = 1; k < RAMPA.length; k++) if (v <= RAMPA[k][0]) return mix(RAMPA[k - 1][1], RAMPA[k][1], (v - RAMPA[k - 1][0]) / (RAMPA[k][0] - RAMPA[k - 1][0]));
+    return RAMPA[RAMPA.length - 1][1];
+  }
+  function colorDe(c, capa) {
+    switch (capa) {
+      case 'campo': return mix('#4f7a31', '#8a8f45', .5 * (1 - c.e) + .25 * Math.sin(c.i * 2 + c.j));
+      case 'suelo': return TEX[c.lote.textura][1];
+      case 'agua': return DREN[c.lote.drenaje][1];
+      case 'clima': return mix('#5d7f5a', '#7a8a6a', .4 * (1 - c.e));
+      case 'cultivo': return c.res && c.res.cult ? CULT[c.res.cult][1] : '#777';
+      case 'malo': return c.res && c.res.malo !== null ? rampa(c.res.malo) : '#777';
+      case 'rotacion': return c.res && c.res.rot ? ROT[c.res.rot.tipo][1] : '#777';
+    }
+    return '#777';
+  }
+  const fmt = n => Math.round(n).toLocaleString('es-AR');
+  const usd = n => (n < 0 ? '−' : '') + 'USD ' + fmt(Math.abs(n));
+
+  function legendHTML(capa) {
+    const it = (map, keys) => keys.map(k => '<span><i style="background:' + map[k][1] + '"></i>' + map[k][0] + '</span>').join('');
+    switch (capa) {
+      case 'suelo': return it(TEX, TEXORD.filter(t => cells.some(c => c.lote.textura === t)));
+      case 'agua': return it(DREN, ['excesivo', 'bueno', 'moderado', 'pobre']);
+      case 'cultivo': { const u = [...new Set(cells.map(c => c.res && c.res.cult).filter(Boolean))]; return it(CULT, u) + '<span class="muted">Altura = margen bruto</span>'; }
+      case 'malo': return '<span>Color y altura = margen en año malo</span><span><span class="mono">−60</span><i class="grad" style="background:linear-gradient(90deg,#dc2626,#f97316,#eab308,#84cc16,#16a34a);border:0"></i><span class="mono">700 USD/ha</span></span>';
+      case 'rotacion': return it(ROT, ['mantener', 'cobertura', 'cambiar']) + '<span class="muted">Altura = margen extra por año al cambiar</span>';
+    }
+    return '';
+  }
+
+  /* ---------- clima: lluvia de cada campaña real (julio a junio) ---------- */
+  const campanas = CAMP.map(k => ({ y: parseInt(String(ESC[k].campania).slice(0, 4), 10), mm: ESC[k].total })).sort((a, b) => a.y - b.y);
+  const medMm = campanas.reduce((s, c) => s + c.mm, 0) / (campanas.length || 1);
+  const secas = campanas.slice().sort((a, b) => a.mm - b.mm).slice(0, 2).map(c => c.y);
+  function climaHTML() {
+    if (!campanas.length) return '';
+    const W = 320, H = 96, mx = Math.max(...campanas.map(c => c.mm)), bw = W / campanas.length;
+    const bars = campanas.map((c, k) => '<rect x="' + (k * bw + .5).toFixed(1) + '" y="' + (H - c.mm / mx * (H - 6)).toFixed(1) + '" width="' + (bw - 1).toFixed(1) + '" height="' + (c.mm / mx * (H - 6)).toFixed(1) + '" rx="1" fill="' + (secas.includes(c.y) ? '#dc2626' : '#3b82f6') + '"><title>' + c.y + '/' + String(c.y + 1).slice(2) + ': ' + fmt(c.mm) + ' mm</title></rect>').join('');
+    const ym = (H - medMm / mx * (H - 6)).toFixed(1);
+    const nom = y => y + '/' + String(y + 1).slice(2);
+    const s = secas.slice().sort();
+    return '<div class="t">Lluvia de cada campaña (julio a junio) · NASA POWER · ' + campanas[0].y + '/' + String(campanas[0].y + 1).slice(2) + ' a ' + campanas[campanas.length - 1].y + '/' + String(campanas[campanas.length - 1].y + 1).slice(2) + '</div>' +
+      '<svg viewBox="0 0 ' + W + ' ' + (H + 2) + '" role="img" aria-label="Barras de lluvia por campaña">' + bars + '<line x1="0" x2="' + W + '" y1="' + ym + '" y2="' + ym + '" stroke="currentColor" stroke-dasharray="3 3" opacity=".6"/></svg>' +
+      '<div class="k">Promedio <b>' + fmt(medMm) + ' mm</b> · más secas: <b>' + nom(s[0]) + '</b> (' + fmt(campanas.find(c => c.y === s[0]).mm) + ' mm) y <b>' + nom(s[1]) + '</b> (' + fmt(campanas.find(c => c.y === s[1]).mm) + ' mm)</div>';
+  }
+  $('clim').innerHTML = climaHTML();
+  (function lluvia() {
+    const r = $('rain'); let h = '';
+    for (let k = 0; k < 46; k++) h += '<i style="left:' + (k * 2.2 + (k % 3)).toFixed(1) + '%;animation-duration:' + (.7 + (k % 5) * .18).toFixed(2) + 's;animation-delay:-' + ((k * 37) % 17 / 10).toFixed(1) + 's;opacity:' + (.35 + (k % 4) * .15).toFixed(2) + '"></i>';
+    r.innerHTML = h;
+  })();
+
+  /* ---------- textos dinámicos ---------- */
+  function conteo(fn) { const m = {}; for (const c of cells) { const k = fn(c); if (k != null) m[k] = (m[k] || 0) + 1; } return m; }
+  function dinamicos() {
+    const tex = conteo(c => c.lote.textura), dr = conteo(c => c.lote.drenaje);
+    $('dyn-terreno').innerHTML = TEXORD.filter(t => tex[t]).map(t => '<b>' + tex[t] + ' ha</b> ' + TEX[t][0].toLowerCase()).join(' · ');
+    $('dyn-agua').innerHTML = ['excesivo', 'bueno', 'moderado', 'pobre'].filter(d => dr[d]).map(d => '<b>' + dr[d] + ' ha</b> drenaje ' + DREN[d][0].toLowerCase()).join(' · ');
+    const lu = campanas.length ? 'La campaña más seca dejó <b>' + fmt(Math.min(...campanas.map(c => c.mm))) + ' mm</b> y el promedio es <b>' + fmt(medMm) + ' mm</b>: <b>' + Math.round(100 * (1 - Math.min(...campanas.map(c => c.mm)) / medMm)) + ' % menos</b>. Con años así se prueba cada decisión.' : '';
+    $('dyn-clima').innerHTML = lu;
+    const cu = conteo(c => c.res.cult), tot = cells.filter(c => c.res.margen !== null);
+    const medio = tot.reduce((s, c) => s + c.res.margen, 0) / (tot.length || 1);
+    const lista = Object.keys(cu).sort((a, b) => cu[b] - cu[a]).map(k => '<b>' + cu[k] + ' ha</b> ' + CULT[k][0].toLowerCase()).join(' · ');
+    $('dyn-siembra').innerHTML = (lista || 'Ningún cultivo entra en esta fecha.') + (tot.length ? '<br>Margen bruto medio del campo: <b>' + usd(medio) + '/ha</b>.' : '') +
+      (Object.keys(cu).length <= 2 && tot.length ? '<br><span class="muted">En esta fecha casi todo el campo cae en el mismo cultivo: lo que cambia entre hectáreas es cuánto margen deja, y eso es la altura de cada columna.</span>' : '<br><span class="muted">La altura de cada columna es el margen bruto de la hectárea.</span>');
+    const co = cells.filter(c => c.res.malo !== null), mediaOk = co.reduce((s, c) => s + c.res.medio, 0) / (co.length || 1), mediaMalo = co.reduce((s, c) => s + c.res.malo, 0) / (co.length || 1);
+    const neg = co.filter(c => c.res.malo < 0).length;
+    $('dyn-malo').innerHTML = co.length ? 'Año normal: <b>' + usd(mediaOk) + '/ha</b>. Año malo: <b>' + usd(mediaMalo) + '/ha</b>. Perdés <b>' + usd(mediaOk - mediaMalo) + '/ha</b>, unos <b>' + usd((mediaOk - mediaMalo) * cells.length) + '</b> en todo el campo.' +
+      (neg ? '<br><b>' + neg + ' ha</b> pierden plata en un año malo.' : '<br>Ninguna hectárea pierde plata en un año malo con esta elección.') +
+      '<br><span class="muted">Para maíz y soja la caída de cada año sale de un modelo validado que ubica bien los años malos pero subestima cuánto caen: lo real puede ser peor.</span>' : '';
+    const ro = cells.filter(c => c.res.rot), cam = ro.filter(c => c.res.rot.tipo !== 'mantener');
+    const gM = cam.reduce((s, c) => s + c.res.rot.dMedio, 0), porNombre = conteo(c => c.res.rot && c.res.rot.tipo !== 'mantener' ? c.res.rot.best.nombre : null);
+    $('dyn-rotacion').innerHTML = ro.length ? (cam.length ? 'En <b>' + cam.length + ' de ' + ro.length + ' ha</b> el motor cambiaría la rotación (' + Object.keys(porNombre).map(k => k.toLowerCase() + ': ' + porNombre[k] + ' ha').join(', ') + '). El margen bruto del campo cambiaría en <b>' + usd(gM) + '</b> por año.' : 'Con estas prioridades el motor mantiene tu rotación en todo el campo.') +
+      '<br><span class="muted">Las alternativas son las de ejemplo del equipo y se eligen por puntaje, no solo por plata: una puede ganar por suelo aunque deje menos margen.</span>' : '';
+    $('dyn-explora').innerHTML = state.sel ? '' : 'Tocá cualquier hectárea del mapa.';
+  }
+
+  /* ---------- barra de controles y capas ---------- */
+  function toolbar() {
+    const mk = (titulo, items, cur, key) => '<div class="chips"><span>' + titulo + '</span>' + items.map(([k, t]) => '<button type="button" class="chip" aria-pressed="' + (cur === k) + '" data-k="' + key + '" data-v="' + k + '">' + t + '</button>').join('') + '</div>';
+    let h = '';
+    if (['siembra', 'malo', 'rotacion', 'explora'].includes(state.mode)) {
+      h += mk('Siembra', FECHAS.map(f => [f[1], f[0]]), state.fecha, 'fecha') + mk('Prioridad', Object.keys(PRESETS).map(k => [k, PRESETS[k][0]]), state.preset, 'preset');
+    }
+    if (state.mode === 'explora') h += mk('Capa', [['cultivo', 'Cultivo'], ['malo', 'Año malo'], ['rotacion', 'Rotación'], ['suelo', 'Suelo'], ['agua', 'Agua']], state.layer, 'layer');
+    const st = $('stage'), vertical = st.clientHeight > st.clientWidth * 1.05;
+    if (state.mode === 'explora' && state.sel && vertical) h = '';   // en pantallas angostas el detalle ocupa el lugar de los controles
+    $('toolbar').innerHTML = h; $('toolbar').classList.toggle('on', !!h);
+    $('toolbar').querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => {
+      const k = b.dataset.k, v = b.dataset.v;
+      if (k === 'layer') { state.layer = v; render(); return; }
+      state[k] = v; calcular(); dinamicos(); state.recalc = true; render();
+    }));
+  }
+
+  /* ---------- detalle de una hectárea ---------- */
+  function seleccionar(c) { state.sel = c; render(); }
+  function info() {
+    const box = $('info'), c = state.sel;
+    if (!c || !c.res) { box.hidden = true; return; }
+    const r = c.res, l = c.lote, m = r.mejor;
+    const alt = r.top.slice(1, 3).map(e => CULT[e.cultivo][0] + ' ' + Math.round(e.score)).join(' · ');
+    let h = '<h3><span>Hectárea ' + c.n + '</span><button class="x" type="button" aria-label="Cerrar">×</button></h3>' +
+      '<p class="sub">' + TEX[l.textura][0] + ' · pH ' + l.ph + ' · drenaje ' + DREN[l.drenaje][0].toLowerCase() + ' · pendiente ' + l.pendiente + ' % · <span class="tag ilus" style="font-size:10px">ilustrativo</span></p>';
+    if (m) {
+      h += '<div class="best"><span class="sw" style="background:' + CULT[m.cultivo][1] + '"></span><span><b>' + CULT[m.cultivo][0] + '</b> · score ' + Math.round(m.score) + '</span></div>' +
+        '<div class="row"><span>Margen bruto, año normal</span><b class="mono">' + usd(r.medio) + '/ha</b></div><div class="row"><span>Margen bruto, año malo</span><b class="mono">' + usd(r.malo) + '/ha</b></div>' +
+        (alt ? '<div class="alt">Siguientes: ' + alt + '</div>' : '');
+      for (const a of m.alertas.slice(0, 2)) h += '<div class="al">' + a.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</div>';
+    } else h += '<p>Ningún cultivo del catálogo entra en esta hectárea en esta fecha.</p>';
+    if (r.rot) {
+      const sq = x => x.secuencia.map(cid => CULT[cid] ? CULT[cid][0] : cid).join(' → ');
+      h += '<div class="rot"><b>Rotación a 3 años</b><div class="row"><span>Actual: ' + sq(r.rot.actual) + '</span><b class="mono">' + usd(r.rot.actual.indicadores.margen_anual) + '/año</b></div>' +
+        (r.rot.tipo === 'mantener' ? '<div class="alt">El motor mantiene la actual.</div>' : '<div class="row"><span>' + r.rot.best.nombre + ': ' + sq(r.rot.best) + '</span><b class="mono">' + usd(r.rot.best.indicadores.margen_anual) + '/año</b></div>') + '</div>';
+    }
+    box.innerHTML = h; box.hidden = false;
+    box.querySelector('.x').addEventListener('click', () => { state.sel = null; render(); });
+  }
+
+  /* ---------- cámara ---------- */
+  function camara() {
+    const st = $('stage'), vertical = st.clientHeight > st.clientWidth * 1.05;
+    let [s] = CAM[state.mode], cx = OX + (NX - NY) * TW / 4, cy = OY + (NX + NY) * TH / 4 - 14;
+    let objY = 300;
+    if (state.mode === 'explora' && state.sel) { const p = P(state.sel.i + .5, state.sel.j + .5, state.sel.h); s = vertical ? 1.55 : 1.9; cx = p[0]; cy = p[1]; if (vertical) objY = 140; }
+    if (vertical && !(state.mode === 'explora' && state.sel)) s *= 1.28;
+    const tx = 500 - s * cx, ty = objY - s * cy;
+    cam.style.transform = 'translate(' + tx.toFixed(1) + 'px,' + ty.toFixed(1) + 'px) scale(' + s + ')';
+  }
+
+  /* ---------- render ---------- */
+  function render() {
+    const capa = MODE_LAYER[state.mode] || state.layer;
+    const cultivoLike = ['cultivo', 'malo', 'rotacion'].includes(capa);
+    if (capa !== state.capaPrev || state.recalc) { alturas(c => altura(c, capa)); state.capaPrev = capa; state.recalc = false; }
+    for (const c of cells) {
+      c.top.setAttribute('fill', colorDe(c, capa));
+      c.furrows.forEach(f => f.setAttribute('opacity', capa === 'cultivo' || capa === 'campo' ? .9 : 0));
+      c.water.setAttribute('opacity', capa === 'agua' && c.lote.drenaje === 'pobre' ? .45 : capa === 'agua' && c.lote.drenaje === 'moderado' ? .15 : 0);
+      c.label.setAttribute('opacity', state.mode === 'explora' || (state.sel && c === state.sel) ? 1 : 0);
+      c.g.classList.toggle('sel', state.sel === c);
+      c.g.classList.toggle('dim', capa === 'clima');
+    }
+    $('legend').innerHTML = legendHTML(capa);
+    $('legend').classList.toggle('off', !legendHTML(capa) || (state.sel && state.mode === 'explora'));
+    $('rain').classList.toggle('on', state.mode === 'clima');
+    $('clim').classList.toggle('on', state.mode === 'clima');
+    $('dots').innerHTML = MODES.map(m => '<i class="' + (m === state.mode ? 'on' : '') + '"></i>').join('');
+    toolbar(); info(); camara();
+    $('dyn-explora').innerHTML = state.sel ? 'Hectárea <b>' + state.sel.n + '</b> seleccionada.' : 'Tocá cualquier hectárea del mapa.';
+  }
+
+  /* ---------- scroll: el paso que cruza una línea dentro de la zona visible manda el modo ---------- */
+  const pasos = [...document.querySelectorAll('.step')];
+  let io = null;
+  function armarObserver() {
+    if (io) io.disconnect();
+    const vh = window.innerHeight, ancho = matchMedia('(min-width: 900px)').matches;
+    const base = ancho ? 0 : $('stage').getBoundingClientRect().bottom;          // en móvil el mapa tapa la parte de arriba
+    const y = Math.round(base + .5 * (vh - base));
+    io = new IntersectionObserver(es => {
+      for (const e of es) if (e.isIntersecting) { const m = e.target.dataset.mode; if (m !== state.mode) { state.mode = m; if (m !== 'explora') state.sel = null; render(); } }
+    }, { rootMargin: '-' + y + 'px 0px -' + Math.max(0, vh - y - 3) + 'px 0px', threshold: 0 });
+    pasos.forEach(p => io.observe(p));
+  }
+  armarObserver();
+  window.addEventListener('resize', () => { armarObserver(); camara(); });
+  $('reset').addEventListener('click', () => { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+
+  calcular(); dinamicos(); render();
+  window.__mundo = { cells, state, calcular, dinamicos, render, campanas, secas };
+})();
+</script>
+</body>
+</html>
