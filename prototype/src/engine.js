@@ -365,7 +365,139 @@
     return Object.assign(out, { viable: true, score: ev.score, idoneidad: idon, posicion: pos, nota });
   }
 
+  /* ---------- rotaciones de varias campañas ----------
+     Encadena el mismo evaluador campaña por campaña durante un horizonte fijo.
+     Referencias fijas (no relativas a otros cultivos) para que el puntaje de una
+     rotación no dependa de qué otras rotaciones se comparan. Valores ILUSTRATIVOS. */
+  const HORIZONTE_ANIOS = 3;
+  const REF_MARGEN_ANUAL = 900; // USD/ha/año que equivale a ingreso = 100
+  const REF_N_ANUAL = 250;      // kg N/ha/año a reponer que equivale a ahorro = 0
+  const PAUSA_DIAS = 7;         // entre cosecha y siembra siguiente
+  const COB_MIN_DIAS = 45;      // una cobertura más corta que esto no se siembra
+
+  function proximaSiembra(cid, cursor) {
+    const c = CULTIVOS[cid], w = c.siembra_opt;
+    const fuera = diasFueraVentana(cursor, w);
+    if (fuera === 0) return cursor;
+    const atrasado = distCirc(doy(cursor), doyMD(w[2], w[3])) === fuera;
+    if (atrasado && fuera <= c.margen_siembra_dias * 0.4) return cursor; // tarde pero todavía razonable
+    return diasHastaVentana(cursor, w)[1];
+  }
+
+  // Arranca la secuencia por el cultivo que se puede sembrar antes, sin cambiar el orden.
+  // Evita arrancar repitiendo el último cultivo del lote.
+  function offsetInicio(seq, inicio, ant) {
+    let mejor = 0, min = Infinity;
+    seq.forEach((cid, i) => {
+      const w = diffDias(proximaSiembra(cid, inicio), inicio) + (cid === ant && seq.length > 1 ? 120 : 0);
+      if (w < min) { min = w; mejor = i; }
+    });
+    return mejor;
+  }
+
+  function evaluarRotacion(lote, secuencia, inicio, pesos) {
+    const seq = secuencia.filter(c => CULTIVOS[c]);
+    const pn = normalizarPesos(pesos);
+    const fin = addDias(inicio, Math.round(HORIZONTE_ANIOS * 365.25));
+    const H = diffDias(fin, inicio), anios = H / 365.25;
+    const pasos = [], omitidos = [];
+    if (!seq.length) return null;
+    let hist = lote.historial.slice(), cursor = inicio, i = offsetInicio(seq, inicio, antecesor(lote));
+    for (let guard = 0; guard < 60; guard++) {
+      const cid = seq[i % seq.length], c = CULTIVOS[cid];
+      i++;
+      const siembra = proximaSiembra(cid, cursor);
+      if (siembra >= fin) break;
+      let finCiclo = addDias(siembra, c.ciclo_dias), cortada = false;
+      if (c.tipo === 'cobertura' && seq.length > 1) {
+        const sigue = proximaSiembra(seq[i % seq.length], addDias(siembra, COB_MIN_DIAS));
+        const tope = addDias(sigue, -10);
+        if (tope < finCiclo) { finCiclo = tope; cortada = true; }
+        if (diffDias(finCiclo, siembra) < COB_MIN_DIAS) {
+          omitidos.push({ cultivo: cid, nombre: c.nombre, fecha: fmtISO(siembra) });
+          cursor = addDias(siembra, 1);
+          continue;
+        }
+      }
+      const ev = evaluarCultivo(cid, Object.assign({}, lote, { historial: hist }), siembra, null);
+      const dur = diffDias(finCiclo, siembra);
+      const dias = Math.max(0, diffDias(finCiclo > fin ? fin : finCiclo, siembra));
+      const frac = dur > 0 ? dias / dur : 0;
+      const p = { cultivo: cid, nombre: c.nombre, tipo: c.tipo, siembra: fmtISO(siembra), fin: fmtISO(finCiclo),
+        desde: diffDias(siembra, inicio), dias, cortada, viable: !ev.descartado,
+        aptitud: ev.descartado ? 0 : ev.apt.indice, epoca: ev.apt.factores.epoca, razones: ev.apt.razones };
+      if (p.viable) Object.assign(p, { margen: ev.margen_usd_ha * frac, n_rep: ev.balance.n_a_reponer * frac,
+        salud: ev.comp.salud_suelo, rapidez: ev.comp.rapidez, resil: ev.comp.resiliencia, cumpl: ev.comp.cumplimiento, motivos: ev.motivos });
+      pasos.push(p);
+      if (p.viable) hist = hist.concat([cid]);
+      cursor = addDias(finCiclo, c.tipo === 'cobertura' ? 1 : PAUSA_DIAS);
+    }
+    const ok = pasos.filter(p => p.viable);
+    const cubiertos = ok.reduce((s, p) => s + p.dias, 0);
+    const cobertura = clamp(cubiertos / H);
+    const wmean = k => cubiertos > 0 ? ok.reduce((s, p) => s + p[k] * p.dias, 0) / cubiertos : 0;
+    const margenAnual = ok.reduce((s, p) => s + p.margen, 0) / anios;
+    const nAnual = ok.reduce((s, p) => s + p.n_rep, 0) / anios;
+    const comp = {
+      ingreso: clamp(margenAnual / REF_MARGEN_ANUAL),
+      rapidez: ok.length ? ok.reduce((s, p) => s + p.rapidez, 0) / ok.length : 0,
+      salud_suelo: clamp(.5 * wmean('salud') + .5 * cobertura),
+      ahorro_insumos: 1 - clamp(nAnual / REF_N_ANUAL),
+      resiliencia: wmean('resil'),
+      cumplimiento: ok.length ? Math.min(...ok.map(p => p.cumpl)) : 0,
+    };
+    const aptMedia = pasos.length ? pasos.reduce((s, p) => s + p.aptitud, 0) / pasos.length : 0;
+    const mezcla = Object.keys(pn).reduce((s, k) => s + pn[k] * comp[k], 0);
+    const componentes = {}, aporte = {};
+    for (const k of Object.keys(comp)) { componentes[k] = Math.round(1000 * comp[k]) / 10; aporte[k] = 100 * aptMedia * pn[k] * comp[k]; }
+    const alertas = [];
+    pasos.filter(p => !p.viable).forEach(p => alertas.push(p.nombre + ' (' + p.siembra.slice(0, 7) + '): no viable. ' + (p.razones[0] || '')));
+    pasos.filter(p => p.viable && p.epoca < .7).forEach(p => alertas.push(p.nombre + ' se siembra fuera de la ventana óptima (' + p.siembra + ').'));
+    omitidos.forEach(o => alertas.push(o.nombre + ' no entra entre cultivos (' + o.fecha.slice(0, 7) + '): queda barbecho.'));
+    const motivos = [...new Set(ok.flatMap(p => p.motivos))];
+    return {
+      secuencia: seq, pasos, inicio: fmtISO(inicio), fin: fmtISO(fin), horizonte_dias: H,
+      comp, componentes, aporte, aptitud_media: aptMedia, score: Math.round(1000 * aptMedia * mezcla) / 10,
+      indicadores: {
+        cobertura_pct: Math.round(100 * cobertura), barbecho_dias: H - cubiertos,
+        margen_anual: Math.round(margenAnual), n_anual: Math.round(nAnual),
+        familias: new Set(ok.map(p => CULTIVOS[p.cultivo].familia)).size,
+        cultivos_anio: Math.round(10 * ok.length / anios) / 10,
+        coberturas: ok.filter(p => p.tipo === 'cobertura').length,
+      },
+      alertas: alertas.concat(motivos),
+    };
+  }
+
+  // Diferencias legibles de una rotación frente a la actual: [signo, texto].
+  function diferencias(r, base) {
+    const I = r.indicadores, B = base.indicadores, out = [];
+    const add = (d, u, pos, neg) => { if (d >= u) out.push(['+', pos]); else if (d <= -u) out.push(['-', neg]); };
+    add(I.cobertura_pct - B.cobertura_pct, 5, 'Suelo cubierto el ' + I.cobertura_pct + ' % del tiempo (actual: ' + B.cobertura_pct + ' %).',
+      'Suelo cubierto solo el ' + I.cobertura_pct + ' % del tiempo (actual: ' + B.cobertura_pct + ' %).');
+    add(I.familias - B.familias, 1, 'Más diversidad: ' + I.familias + ' familias botánicas (actual: ' + B.familias + ').',
+      'Menos diversidad: ' + I.familias + ' familias botánicas (actual: ' + B.familias + ').');
+    add(B.n_anual - I.n_anual, 15, 'Menos nitrógeno a reponer: ~' + I.n_anual + ' kg/ha/año (actual: ' + B.n_anual + ').',
+      'Más nitrógeno a reponer: ~' + I.n_anual + ' kg/ha/año (actual: ' + B.n_anual + ').');
+    add(I.margen_anual - B.margen_anual, 50, 'Mayor margen ilustrativo: USD ' + I.margen_anual + '/ha/año (actual: ' + B.margen_anual + ').',
+      'Menor margen ilustrativo: USD ' + I.margen_anual + '/ha/año (actual: ' + B.margen_anual + ').');
+    add(100 * (r.comp.resiliencia - base.comp.resiliencia), 5, 'Cultivos más tolerantes a la sequía y al anegamiento de este lote.',
+      'Cultivos menos tolerantes a la sequía y al anegamiento de este lote.');
+    add(100 * (r.comp.cumplimiento - base.comp.cumplimiento), 5, 'Evita repetir el mismo cultivo.', 'Repite el mismo cultivo.');
+    if (I.cultivos_anio - B.cultivos_anio >= .4) out.push(['-', 'Más campañas por año: más trabajo y más complejidad de manejo.']);
+    return out;
+  }
+
+  function compararRotaciones(lote, rotaciones, inicio, pesos) {
+    const evs = rotaciones.map(r => Object.assign({ id: r.id, nombre: r.nombre }, evaluarRotacion(lote, r.seq, inicio, pesos)));
+    const base = evs[0];
+    evs.forEach((e, i) => { e.diferencias = i === 0 || !e.pasos ? [] : diferencias(e, base); });
+    const orden = evs.filter(e => e.pasos).slice().sort((a, b) => b.score - a.score);
+    orden.forEach((e, i) => { e.posicion = i + 1; });
+    return { rotaciones: evs, mejor: orden[0] || null, pesos: normalizarPesos(pesos), horizonte_anios: HORIZONTE_ANIOS };
+  }
+
   const API = { CULTIVOS, ZONAS, FUENTE_CLIMA, TEXTURAS, DRENAJES, PESOS_DEFECTO, PESO_MAX, COMPONENTES_NOMBRE, COMPONENTES_DESC, FACTORES_NOMBRE,
-    recomendar, normalizarPesos, parseFecha, fmtISO, addDias };
+    HORIZONTE_ANIOS, REF_MARGEN_ANUAL, recomendar, evaluarRotacion, compararRotaciones, normalizarPesos, parseFecha, fmtISO, addDias };
   if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.Motor = API;
 })(typeof window !== 'undefined' ? window : globalThis);
