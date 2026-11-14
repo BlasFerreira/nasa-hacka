@@ -2,7 +2,16 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b3d91">
+<meta name="description" content="Compará rotaciones de cultivos y mirá qué sembrar hoy en tu campo, con clima de NASA POWER.">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Rotación">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Asistente de rotación de cultivos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -281,8 +290,22 @@ details.disc li b { color: var(--text); font-weight: 500; }
 /* Mapa */
 .mapcard { overflow: hidden; position: relative; isolation: isolate; z-index: 0; }
 .map-wrap { position: relative; }
-#map { height: 320px; background: var(--surface-2); }
-@media (max-width: 560px) { #map { height: 260px; } }
+/* Mapa grande: alto relativo a la pantalla (antes 320 px fijos). */
+#map { height: clamp(440px, 66vh, 760px); background: var(--surface-2); }
+@media (max-width: 560px) { #map { height: clamp(380px, 62vh, 560px); } }
+/* Pantalla completa: el mapa ocupa todo y el panel de resultados queda abajo, con scroll propio. */
+body.map-fs { overflow: hidden; }
+.mapcard.fs-on { position: fixed; inset: 0; z-index: 2000; border-radius: 0; margin: 0; display: flex; flex-direction: column; background: var(--bg); }
+.mapcard.fs-on .map-wrap { flex: 1 1 auto; min-height: 0; display: flex; }
+.mapcard.fs-on #map { flex: 1 1 auto; height: auto !important; min-height: 0; }
+.mapcard.fs-on .map-foot { flex: 0 0 auto; max-height: 38vh; overflow: auto; }
+.map-fullbtn { display: grid; place-items: center; width: 34px; height: 34px; background: #fff; color: #0b3d91; border: 0; cursor: pointer; padding: 0; }
+.map-fullbtn svg { width: 18px; height: 18px; stroke: currentColor; }
+/* Manijas del rectángulo editable. */
+.area-h { background: #fff; border: 2.5px solid #38bdf8; box-shadow: 0 1px 6px rgb(0 0 0 / .55); border-radius: 5px; cursor: grab; }
+.area-h:active { cursor: grabbing; }
+.area-h.mover { background: #38bdf8; border-color: #fff; border-radius: 50%; display: grid; place-items: center; color: #082f49; }
+.area-h.mover svg { width: 16px; height: 16px; stroke: currentColor; }
 .map-off { display: grid; place-items: center; height: 100%; color: var(--muted); padding: 16px; text-align: center; }
 .map-draw { position: absolute; left: 10px; right: 10px; bottom: 10px; z-index: 1000; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 8px 10px; border-radius: 10px; background: rgb(6 16 41 / 0.85); color: #fafafa; font-size: 13px; backdrop-filter: blur(6px); }
 .map-draw span { flex: 1 1 200px; }
@@ -306,8 +329,8 @@ details.disc li b { color: var(--text); font-weight: 500; }
 .map-ctl button[aria-pressed="true"] { background: #ffffff; color: #0b3d91; }
 #btn-area[aria-pressed="true"] { background: #fc3d21; color: #ffffff; }
 #btn-ha[aria-pressed="true"] { background: #22c55e; color: #052e16; }
-.mapcard.ha-on #map { height: 480px; }
-@media (max-width: 560px) { .mapcard.ha-on #map { height: 400px; } }
+.mapcard.ha-on #map { height: clamp(520px, 78vh, 840px); }
+@media (max-width: 560px) { .mapcard.ha-on #map { height: clamp(440px, 72vh, 640px); } }
 .ha-panel { display: grid; gap: 8px; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--surface-2); }
 .ha-panel[hidden] { display: none; }
 .ha-capas { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
@@ -336,6 +359,30 @@ details.disc li b { color: var(--text); font-weight: 500; }
 .crop-map-label { background: #0b3d91; color: #fff; border: 2px solid #fff; border-radius: 7px; box-shadow: 0 2px 8px rgb(0 0 0 / .35); padding: 4px 7px; font: 600 11px/1.25 var(--font); white-space: nowrap; }
 .leaflet-container { font-family: var(--font); }
 .map-ctl .sep { width: 1px; background: rgb(255 255 255 / 0.25); margin: 4px 2px; }
+.install { display: grid; gap: 8px; padding: 8px 4px 0; }
+.install[hidden], .install [hidden] { display: none; }
+
+/* Celular y app instalada (PWA): zonas seguras del notch, blancos táctiles de 44 px y barra del mapa que se acomoda. */
+.topbar { padding-top: calc(12px + env(safe-area-inset-top)); padding-left: calc(20px + env(safe-area-inset-left)); padding-right: calc(20px + env(safe-area-inset-right)); }
+.side { padding-top: calc(16px + env(safe-area-inset-top)); padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+body { padding-bottom: env(safe-area-inset-bottom); }
+.map-ctl { flex-wrap: wrap; max-width: calc(100% - 66px); justify-content: flex-end; }
+@media (pointer: coarse) {
+  .btn, .map-ctl button, .nav-item, .lote-btn, .vtabs a { min-height: 44px; }
+  .icon-btn { min-width: 44px; min-height: 44px; }
+  .leaflet-touch .leaflet-bar a { width: 40px; height: 40px; line-height: 40px; }
+  .map-fullbtn { width: 40px; height: 40px; }
+  input, select, textarea { font-size: 16px; }   /* evita el zoom automático de iOS al enfocar un campo */
+}
+@media (max-width: 520px) {
+  .topbar > div:last-child { display: none !important; }   /* los avisos de fuentes de datos ya figuran en cada página; en el celular no caben */
+  /* La barra del mapa pasa debajo del mapa (no lo tapa) y se desliza si no entra. */
+  .map-ctl { position: static; display: flex; max-width: none; margin: 8px 10px 0; justify-content: flex-start; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .map-ctl button { white-space: nowrap; flex: none; }
+  /* En pantalla completa vuelve a flotar sobre el mapa, a la derecha de los botones de zoom. */
+  .mapcard.fs-on .map-ctl { position: absolute; top: calc(10px + env(safe-area-inset-top)); left: 56px; right: 10px; margin: 0; }
+  .mapcard.fs-on .map-wrap .leaflet-top.leaflet-left { top: env(safe-area-inset-top); }
+}
 #map.dibujando, #map.dibujando .leaflet-interactive { cursor: crosshair; }
 .area-res { display: grid; gap: 10px; border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: var(--surface-2); }
 .area-res[hidden] { display: none; }
@@ -374,7 +421,7 @@ details.disc li b { color: var(--text); font-weight: 500; }
 .vtabs a:hover { color: var(--text); }
 .vtabs a[aria-selected="true"] { background: var(--surface); color: var(--acc); box-shadow: 0 1px 3px rgb(0 0 0 / .12); }
 #view-lote[data-vista="rotaciones"] .solo-cultivo, #view-lote[data-vista="cultivo"] .solo-rot { display: none; }
-#view-lote[data-vista="rotaciones"] #map { height: 220px; }
+#view-lote[data-vista="rotaciones"] #map { height: clamp(360px, 54vh, 560px); }
 #view-lote .cols { grid-template-columns: minmax(0, 1fr) minmax(0, 340px); }
 #view-lote .cols > .stack:first-child { order: 2; }
 #view-lote .cols > .stack:last-child { order: 1; }
@@ -491,6 +538,10 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
   </div>
   <nav class="nav" id="nav" aria-label="Navegación principal"></nav>
   <p class="hint" style="padding:8px 8px 0">Campos y lotes de ejemplo. Todo el cálculo corre en esta página.</p>
+  <div class="install" id="install" hidden>
+    <button class="btn" type="button" id="btn-install" hidden>Instalar la app en este dispositivo</button>
+    <p class="hint" id="ios-hint" hidden>En iPhone o iPad: tocá Compartir y después «Añadir a pantalla de inicio» para instalarla.</p>
+  </div>
 </aside>
 <div class="tip" id="tip" hidden></div>
 
@@ -1372,6 +1423,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     document.querySelectorAll('.map-ctl button[data-modo]').forEach(b => b.addEventListener('click', () => { mapa.modo = b.dataset.modo; encuadrar(true); }));
     initArea(m);
     initHa();
+    initFull(m);
   }
   // Recuadro de la celda de NASA POWER y su punto de consulta.
   const zonasDibujadas = new Set();
@@ -1493,12 +1545,14 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     b.setAttribute('aria-pressed', String(on)); b.textContent = on ? 'Cancelar' : 'Seleccionar área';
     $('map').classList.toggle('dibujando', on);
     if (on) {
+      quitarManijas();
       mapa.m.dragging.disable();
       $('area-res').hidden = false;
-      $('area-res').innerHTML = '<p class="sub">Arrastrá sobre el mapa para marcar el área. En pantallas táctiles, tocá dos esquinas opuestas.</p>';
+      $('area-res').innerHTML = '<p class="sub">Arrastrá sobre el mapa para marcar el área. En pantallas táctiles, tocá dos esquinas opuestas. Después podés ajustarla.</p>';
     } else {
       mapa.m.dragging.enable();
-      if (!area.b) $('area-res').hidden = true;
+      if (area.b && area.rect) { area.rect.setBounds(area.b); crearManijas(); analizarArea(); }   // cancelar: vuelve el área anterior
+      else if (!area.b) $('area-res').hidden = true;
     }
   }
   function dibujarRect(b) {
@@ -1506,14 +1560,84 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     else area.rect = L.rectangle(b, { color: '#38bdf8', weight: 2.5, fillColor: '#38bdf8', fillOpacity: .18, interactive: false }).addTo(mapa.m);
   }
   function borrarArea() {
+    quitarManijas();
     if (area.rect) { area.rect.remove(); area.rect = null; }
     area.b = null; $('area-res').hidden = true; $('area-res').innerHTML = '';
   }
   function terminarArea(b) {
     area.fin = Date.now();
+    area.b = null;                    // para que setDibujo(false) no restaure el área anterior
     setDibujo(false);
     area.b = b; dibujarRect(b);
+    crearManijas();
     analizarArea();
+  }
+
+  /* ---------- rectángulo editable: 4 esquinas para cambiar el tamaño y un punto central para mover ---------- */
+  const ICONO_MOVER = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg>';
+  function quitarManijas() { (area.hand || []).forEach(h => h.remove()); area.hand = []; }
+  const puntosArea = b => ({ nw: b.getNorthWest(), ne: b.getNorthEast(), se: b.getSouthEast(), sw: b.getSouthWest(), c: b.getCenter() });
+  function posManijas(salvo) { if (!area.b) return; const p = puntosArea(area.b); (area.hand || []).forEach(h => { if (h !== salvo) h.setLatLng(p[h.rol]); }); }
+  let rafArea = 0;
+  function pedirAnalisis() { if (rafArea) return; rafArea = requestAnimationFrame(() => { rafArea = 0; analizarArea(); }); }
+  function moverManija(h) {
+    const p = h.getLatLng(), b0 = h._b0;
+    let nb;
+    if (h.rol === 'c') {
+      const dLat = p.lat - b0.getCenter().lat, dLng = p.lng - b0.getCenter().lng;
+      nb = L.latLngBounds([b0.getSouth() + dLat, b0.getWest() + dLng], [b0.getNorth() + dLat, b0.getEast() + dLng]);
+    } else {
+      const opuesta = { nw: b0.getSouthEast(), ne: b0.getSouthWest(), se: b0.getNorthWest(), sw: b0.getNorthEast() }[h.rol];
+      nb = L.latLngBounds(opuesta, p);
+    }
+    area.b = nb; area.rect.setBounds(nb); posManijas(h); pedirAnalisis();
+  }
+  function crearManijas() {
+    quitarManijas();
+    for (const rol of ['nw', 'ne', 'se', 'sw', 'c']) {
+      const mover = rol === 'c', tactil = window.matchMedia('(pointer: coarse)').matches;   // en el celular, manijas más grandes
+      const tam = mover ? (tactil ? 42 : 28) : (tactil ? 34 : 22);
+      const h = L.marker(area.b.getCenter(), {
+        draggable: true, keyboard: false, zIndexOffset: 1000, riseOnHover: true,
+        title: mover ? 'Arrastrá para mover el área' : 'Arrastrá para cambiar el tamaño',
+        icon: L.divIcon({ className: 'area-h' + (mover ? ' mover' : ''), html: mover ? ICONO_MOVER : '', iconSize: [tam, tam], iconAnchor: [tam / 2, tam / 2] }),
+      }).addTo(mapa.m);
+      h.rol = rol;
+      h.on('dragstart', () => { h._b0 = L.latLngBounds(area.b.getSouthWest(), area.b.getNorthEast()); });
+      h.on('drag', () => moverManija(h));
+      h.on('dragend', () => { moverManija(h); posManijas(); analizarArea(); });
+      area.hand.push(h);
+    }
+    posManijas();
+  }
+
+  /* ---------- pantalla completa del mapa ---------- */
+  const enFull = () => $('mapcard').classList.contains('fs-on');
+  function setFull(on) {
+    const c = $('mapcard');
+    c.classList.toggle('fs-on', on); document.body.classList.toggle('map-fs', on);
+    if (on && c.requestFullscreen && !document.fullscreenElement) c.requestFullscreen().catch(() => { /* queda el modo a pantalla completa de la página */ });
+    if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    const b = document.querySelector('.map-fullbtn');
+    if (b) { b.setAttribute('aria-pressed', String(on)); b.title = b.ariaLabel = on ? 'Salir de pantalla completa' : 'Pantalla completa'; }
+    [60, 350].forEach(ms => setTimeout(() => mapa.m && mapa.m.invalidateSize(), ms));
+  }
+  function initFull(m) {
+    const Ctl = L.Control.extend({
+      options: { position: 'topleft' },
+      onAdd() {
+        const box = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+        const b = L.DomUtil.create('button', 'map-fullbtn', box);
+        b.type = 'button'; b.title = b.ariaLabel = 'Pantalla completa'; b.setAttribute('aria-pressed', 'false');
+        b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+        L.DomEvent.disableClickPropagation(box);
+        L.DomEvent.on(b, 'click', () => setFull(!enFull()));
+        return box;
+      },
+    });
+    new Ctl().addTo(m);
+    document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && enFull()) setFull(false); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && enFull() && !document.fullscreenElement) setFull(false); });
   }
   function analizarArea() {
     const b = area.b; if (!b) return;
@@ -1543,6 +1667,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       ', drenaje ' + NOMBRE_DREN[s.drenaje].toLowerCase() + ', pendiente ' + s.pendiente + ' %. Clima: NASA POWER ' + esc(M.FUENTE_CLIMA.periodo) +
       ' del punto ' + esc(z.referencia) + ', a ' + Math.round(km) + ' km.' +
       (km > 100 ? ' Está lejos del área: el clima puede no representarla.' : '') + ' Usa tus prioridades actuales.</p>' +
+      '<p class="sub">Para ajustarla: arrastrá las esquinas para cambiar el tamaño y el punto del centro para moverla. El resultado se actualiza solo.</p>' +
       '<div><button class="btn" type="button" id="area-x">Borrar área</button></div>';
     $('area-x').addEventListener('click', borrarArea);
   }
@@ -2101,6 +2226,25 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
 
   $('f-siembra').value = state.siembra;
   renderPresets(); renderWeightPresets(); renderWeights(); bindControls(); initMapa(); loadLote(); aplicarRuta(false);
+
+  /* ---------- PWA: service worker e instalación ---------- */
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => { /* sin soporte: la app funciona igual */ }));
+  }
+  const yaInstalada = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  let promptInstalar = null;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault(); promptInstalar = e;
+    $('install').hidden = false; $('btn-install').hidden = false;
+  });
+  $('btn-install').addEventListener('click', async () => {
+    if (!promptInstalar) return;
+    promptInstalar.prompt();
+    try { await promptInstalar.userChoice; } catch (e) { /* cancelado */ }
+    promptInstalar = null; $('btn-install').hidden = true; $('install').hidden = true;
+  });
+  window.addEventListener('appinstalled', () => { $('install').hidden = true; });
+  if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !yaInstalada()) { $('install').hidden = false; $('ios-hint').hidden = false; }
 })();
 </script>
 </body>
