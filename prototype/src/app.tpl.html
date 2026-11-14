@@ -514,8 +514,9 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
               <div class="field"><label for="p-pend">Pendiente % <span class="tag" id="o-pendiente"></span></label><input type="number" id="p-pend" min="0" max="30" step="0.5"></div>
             </div>
             <label class="chk"><input type="checkbox" id="p-riego"> Riego disponible <span class="tag" id="o-riego"></span></label>
-            <div class="field"><label for="p-seq">Riesgo de sequía de la zona <span class="mono" id="v-seq"></span></label><input type="range" id="p-seq" min="0" max="1" step="0.05"></div>
-            <div class="field"><label for="p-ane">Riesgo de anegamiento de la zona <span class="mono" id="v-ane"></span></label><input type="range" id="p-ane" min="0" max="1" step="0.05"></div>
+            <!-- Antes había dos sliders de "riesgo de sequía/anegamiento de la zona" cargados a mano.
+                 Ahora la resiliencia sale de las campañas reales de NASA POWER; acá solo se muestra de dónde. -->
+            <div class="field"><span class="lbl">Clima de la zona <span class="tag">NASA POWER</span></span><p class="hint" id="p-clima-zona"></p></div>
             <hr>
             <div class="field">
               <label for="p-notas">Conocimiento del productor</label>
@@ -772,8 +773,11 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     fillSelect($('p-textura'), M.TEXTURAS, NOMBRE_TEX, lote.textura);
     fillSelect($('p-drenaje'), M.DRENAJES, NOMBRE_DREN, lote.drenaje);
     $('p-ph').value = lote.ph; $('p-pend').value = lote.pendiente; $('p-riego').checked = lote.riego;
-    $('p-seq').value = lote.riesgos.sequia; $('p-ane').value = lote.riesgos.anegamiento;
-    $('v-seq').textContent = pct(lote.riesgos.sequia) + ' %'; $('v-ane').textContent = pct(lote.riesgos.anegamiento) + ' %';
+    const rz = M.riesgoZona(actual().campo.zona);
+    $('p-clima-zona').textContent = rz
+      ? rz.n + ' campañas reales (' + rz.periodo + '): ' + rz.secas + ' secas y ' + rz.humedas + ' húmedas (±20 % de lluvia frente al promedio). La peor: ' +
+        rz.peor.campania + ' (' + rz.peor.anomalia_pct + ' %). La resiliencia de cada cultivo sale de cómo le fue en los peores años de esta serie.'
+      : 'Sin serie anual para esta zona: la resiliencia usa un supuesto.';
     $('p-notas').value = lote.notas;
     $('p-nombre').value = lote.nombre;
     $('p-sup').value = lote.superficie; $('p-sup').disabled = !!lote.geo;
@@ -843,8 +847,6 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     $('p-ph').addEventListener('input', e => { const v = parseFloat(e.target.value); if (isFinite(v)) edit('ph', v); });
     $('p-pend').addEventListener('input', e => { const v = parseFloat(e.target.value); if (isFinite(v)) edit('pendiente', Math.max(0, v)); });
     $('p-riego').addEventListener('change', e => edit('riego', e.target.checked));
-    $('p-seq').addEventListener('input', e => { const { lote } = actual(); lote.riesgos.sequia = Number(e.target.value); $('v-seq').textContent = pct(lote.riesgos.sequia) + ' %'; refresh(); });
-    $('p-ane').addEventListener('input', e => { const { lote } = actual(); lote.riesgos.anegamiento = Number(e.target.value); $('v-ane').textContent = pct(lote.riesgos.anegamiento) + ' %'; refresh(); });
     $('p-notas').addEventListener('input', e => { actual().lote.notas = e.target.value; guardar(); });
     $('p-nombre').addEventListener('change', e => { const v = e.target.value.trim(); actual().lote.nombre = v || 'Lote sin nombre'; e.target.value = actual().lote.nombre; refresh(); });
     $('p-sup').addEventListener('change', e => { const v = Math.round(parseFloat(e.target.value)); if (isFinite(v) && v > 0) { actual().lote.superficie = v; refresh(); } });
@@ -890,6 +892,9 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     const b = e.balance;
     const evid = [
       ['Clima del ciclo', 'NASA POWER', e.apt.tMedia.toFixed(1) + ' °C medios y ' + Math.round(e.apt.precip) + ' mm en el ciclo. Climatología mensual ' + M.FUENTE_CLIMA.periodo + ' (T2M y PRECTOTCORR) en un punto de referencia de la zona.'],
+      ['Resiliencia climática', 'derivado', e.resil && e.resil.n
+        ? 'Aptitud promedio en los ' + e.resil.peores + ' peores de ' + e.resil.n + ' años reales de NASA POWER: ' + Math.round(100 * e.resil.valor) + ' %. Clima observado; los rangos de temperatura y agua del cultivo son del catálogo (supuesto).'
+        : 'Sin serie anual para esta zona: supuesto del catálogo.'],
       ['Requisitos del cultivo', 'supuesto', 'Catálogo ilustrativo, a validar con EcoCrop (FAO) e INTA.'],
       ['Parámetros del lote', 'productor / dataset', 'El origen de cada uno está en el panel de parámetros.'],
     ].map(([d, o, t]) => '<div><span class="tag">' + o + '</span><b>' + d + '</b><span class="sub">' + esc(t) + '</span></div>').join('');
@@ -1015,9 +1020,9 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       difs + (alertas ? '<div class="alerts">' + alertas + '</div>' : '') + '</article>';
   }
 
-  // En el comparador, "resiliencia" mide la tolerancia de los cultivos a los riesgos cargados del lote;
-  // la respuesta al clima real está en la Prueba de clima. Nombres que no se pisen entre sí.
-  const EJE_NOMBRE = { resiliencia: 'Tolerancia a sequía y anegamiento del lote', cumplimiento: 'Evita monocultivo y erosión', rapidez: 'Siembra a tiempo' };
+  // En el comparador, "resiliencia" es cómo se sostiene cada cultivo en los peores años de la serie anual de NASA POWER;
+  // la Prueba de clima simula la rotación entera en cada campaña. Nombres que no se pisen entre sí.
+  const EJE_NOMBRE = { resiliencia: 'Resiliencia en los peores años (NASA POWER)', cumplimiento: 'Evita monocultivo y erosión', rapidez: 'Siembra a tiempo' };
   function ejesHTML(r) {
     const rows = Object.keys(COL).map(k => {
       const max = Math.max(...r.rotaciones.map(e => e.componentes[k]));
@@ -1031,6 +1036,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
   function evidenciaHTML() {
     const filas = [
       ['Clima de cada campaña', 'NASA POWER', 'Temperatura y lluvia mensual ' + M.FUENTE_CLIMA.periodo + ' en un punto de referencia de la zona: el promedio o una campaña real (seca o húmeda). No es un pronóstico. GPM IMERG y SMAP están planificados.'],
+      ['Resiliencia climática', 'derivado', 'De cada cultivo, en su fecha de siembra: aptitud promedio en el ' + Math.round(100 * M.PEOR_FRAC) + ' % de años más malos de la serie anual de NASA POWER ' + M.FUENTE_CLIMA.periodo + '. Clima observado; rangos de cada cultivo del catálogo (supuesto).'],
       ['Requisitos y ventanas de siembra', 'supuesto', 'Catálogo ilustrativo, a validar con EcoCrop (FAO) e INTA.'],
       ['Márgenes', 'supuesto', 'Precios y costos de ejemplo. Referencia fija: USD ' + M.REF_MARGEN_ANUAL + '/ha/año equivale a 100.'],
       ['Parámetros del lote', 'dataset / productor', 'El origen de cada uno está en el panel de parámetros.'],
