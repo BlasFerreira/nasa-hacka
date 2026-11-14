@@ -306,6 +306,9 @@ body.map-fs { overflow: hidden; }
 .area-h:active { cursor: grabbing; }
 .area-h.mover { background: #38bdf8; border-color: #fff; border-radius: 50%; display: grid; place-items: center; color: #082f49; }
 .area-h.mover svg { width: 16px; height: 16px; stroke: currentColor; }
+/* Marcador del punto seleccionado con un clic. */
+.punto-h { background: #fc3d21; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 1px 8px rgb(0 0 0 / .6); cursor: grab; display: grid; place-items: center; }
+.punto-h i { width: 8px; height: 8px; border-radius: 50%; background: #fff; display: block; }
 .map-off { display: grid; place-items: center; height: 100%; color: var(--muted); padding: 16px; text-align: center; }
 .map-draw { position: absolute; left: 10px; right: 10px; bottom: 10px; z-index: 1000; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 8px 10px; border-radius: 10px; background: rgb(6 16 41 / 0.85); color: #fafafa; font-size: 13px; backdrop-filter: blur(6px); }
 .map-draw span { flex: 1 1 200px; }
@@ -570,6 +573,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       </div>
       <div class="map-foot">
         <p class="map-info" id="map-info"></p>
+        <p class="hint" id="map-tip">Tocá cualquier punto del mapa para ver qué conviene sembrar ahí, o usá «Seleccionar área» para marcar un rectángulo.</p>
         <div class="area-res" id="area-res" aria-live="polite" hidden></div>
         <div class="ha-panel" id="ha-panel" aria-live="polite" hidden>
           <div class="ha-capas" id="ha-capas" role="group" aria-label="Qué mostrar en cada hectárea"></div>
@@ -1418,7 +1422,15 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     mapa.m = m;
     Object.keys(M.ZONAS).forEach(dibujarZona);
     syncCapas();
-    m.on('click', e => { if (dib.modo) dibujoPunto(e.latlng); });
+    m.on('click', e => {
+      if (dib.modo) { dibujoPunto(e.latlng); return; }
+      // Clic en un lugar vacío del mapa: punto con su recomendación. No si se está dibujando un área, en la vista por hectárea,
+      // ni si el clic cayó sobre un lote u otra capa interactiva (esos tienen su propia acción).
+      if (area.activo || hect.on || Date.now() - (area.fin || 0) < 400) return;
+      const t = e.originalEvent && e.originalEvent.target;
+      if (t && t.closest && t.closest('.leaflet-interactive, .leaflet-marker-icon, .leaflet-control, .leaflet-popup')) return;
+      ponerPunto(e.latlng);
+    });
     m.attributionControl.addAttribution('Lotes trazados con datos © OpenStreetMap');
     document.querySelectorAll('.map-ctl button[data-modo]').forEach(b => b.addEventListener('click', () => { mapa.modo = b.dataset.modo; encuadrar(true); }));
     initArea(m);
@@ -1514,7 +1526,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
      Arrastrar sobre el mapa marca un rectángulo (o tocar dos esquinas, en pantallas táctiles).
      El suelo del área se inventa de forma determinística a partir de sus coordenadas
      (misma área → mismos valores); el clima es el de NASA POWER del punto de referencia más cercano. */
-  const area = { activo: false, ini: null, presionado: false, arrastro: false, ultMouse: 0, rect: null, b: null };
+  const area = { activo: false, ini: null, presionado: false, arrastro: false, ultMouse: 0, rect: null, b: null, punto: null, pin: null };
   function hashNum(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967296; }
   function sueloSimulado(lat, lon) {
     const k = lat.toFixed(3) + ',' + lon.toFixed(3), r = i => hashNum(k + '#' + i);
@@ -1545,7 +1557,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     b.setAttribute('aria-pressed', String(on)); b.textContent = on ? 'Cancelar' : 'Seleccionar área';
     $('map').classList.toggle('dibujando', on);
     if (on) {
-      quitarManijas();
+      quitarManijas(); quitarPunto();
       mapa.m.dragging.disable();
       $('area-res').hidden = false;
       $('area-res').innerHTML = '<p class="sub">Arrastrá sobre el mapa para marcar el área. En pantallas táctiles, tocá dos esquinas opuestas. Después podés ajustarla.</p>';
@@ -1560,9 +1572,27 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     else area.rect = L.rectangle(b, { color: '#38bdf8', weight: 2.5, fillColor: '#38bdf8', fillOpacity: .18, interactive: false }).addTo(mapa.m);
   }
   function borrarArea() {
-    quitarManijas();
+    quitarManijas(); quitarPunto();
     if (area.rect) { area.rect.remove(); area.rect = null; }
     area.b = null; $('area-res').hidden = true; $('area-res').innerHTML = '';
+  }
+
+  /* ---------- clic en el mapa: un punto con su recomendación (alternativa al rectángulo) ---------- */
+  function quitarPunto() { if (area.pin) { area.pin.remove(); area.pin = null; } area.punto = null; }
+  function ponerPunto(ll) {
+    if (area.rect) { quitarManijas(); area.rect.remove(); area.rect = null; area.b = null; }   // un solo resultado a la vez
+    area.punto = ll;
+    if (area.pin) area.pin.setLatLng(ll);
+    else {
+      const t = window.matchMedia('(pointer: coarse)').matches ? 40 : 30;
+      area.pin = L.marker(ll, {
+        draggable: true, keyboard: false, zIndexOffset: 900, title: 'Arrastrá para mover el punto',
+        icon: L.divIcon({ className: 'punto-h', html: '<i></i>', iconSize: [t, t], iconAnchor: [t / 2, t / 2] }),
+      }).addTo(mapa.m);
+      area.pin.on('drag', () => { area.punto = area.pin.getLatLng(); pedirAnalisis(); });
+      area.pin.on('dragend', () => { area.punto = area.pin.getLatLng(); analizarArea(); });
+    }
+    analizarArea();
   }
   function terminarArea(b) {
     area.fin = Date.now();
@@ -1640,16 +1670,23 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && enFull() && !document.fullscreenElement) setFull(false); });
   }
   function analizarArea() {
-    const b = area.b; if (!b) return;
-    const c = b.getCenter(), sw = b.getSouthWest(), ne = b.getNorthEast();
-    const ha = Math.abs(ne.lat - sw.lat) * 110.574 * Math.abs(ne.lng - sw.lng) * 111.320 * Math.cos(c.lat * Math.PI / 180) * 100;
+    const b = area.b, pt = area.punto; if (!b && !pt) return;
+    let c, ha = null;
+    if (b) {
+      c = b.getCenter(); const sw = b.getSouthWest(), ne = b.getNorthEast();
+      ha = Math.abs(ne.lat - sw.lat) * 110.574 * Math.abs(ne.lng - sw.lng) * 111.320 * Math.cos(c.lat * Math.PI / 180) * 100;
+    } else c = pt;
+    const lugar = b ? 'esta área' : 'este punto';
     const [zid, km] = zonaCercana(c.lat, c.lng), z = M.ZONAS[zid], s = sueloSimulado(c.lat, c.lng), hoy = hoyISO();
     let r;
     try {
       r = M.recomendar({ zona: zid, textura: s.textura, ph: s.ph, drenaje: s.drenaje, pendiente: s.pendiente, riego: false,
         riesgos: s.riesgos, rotacion_habitual: [], historial: [] }, M.parseFecha(hoy), null, state.pesos, 3);
     } catch (e) { $('area-res').innerHTML = '<div class="alert">Revisá las prioridades: ' + esc(e.message) + '</div>'; return; }
-    const best = r.top[0], fmtHa = ha >= 100 ? Math.round(ha).toLocaleString('es-AR') : ha.toLocaleString('es-AR', { maximumFractionDigits: 1 });
+    const best = r.top[0], fmtHa = ha === null ? '' : ha >= 100 ? Math.round(ha).toLocaleString('es-AR') : ha.toLocaleString('es-AR', { maximumFractionDigits: 1 });
+    const titulo = b ? 'Área seleccionada · ' + fmtHa + ' ha' : 'Punto seleccionado · ' + c.lat.toFixed(4) + ', ' + c.lng.toFixed(4);
+    const ajuste = b ? 'Para ajustarla: arrastrá las esquinas para cambiar el tamaño y el punto del centro para moverla. El resultado se actualiza solo.'
+                     : 'Para cambiarlo: tocá otro lugar del mapa o arrastrá el marcador. Para marcar una superficie usá «Seleccionar área».';
     const cuerpo = best
       ? '<div class="area-best"><span class="sub">Mejor para sembrar hoy (' + fmtF(hoy) + '):</span>' +
         '<span class="nm">' + esc(best.nombre) + '</span>' +
@@ -1659,16 +1696,16 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
         (best.alertas.length ? '<div class="alert">' + esc(best.alertas[0]) + '</div>' : '') +
         (r.top.length > 1 ? '<div class="area-alt"><span class="sub">Otras opciones:</span>' +
           r.top.slice(1).map(e => '<span class="chip">' + esc(e.nombre) + ' · ' + Math.round(e.score) + '</span>').join('') + '</div>' : '')
-      : '<div class="alert">Ningún cultivo del catálogo es viable para sembrar hoy en esta área.</div>';
+      : '<div class="alert">Ningún cultivo del catálogo es viable para sembrar hoy en ' + lugar + '.</div>';
     $('area-res').hidden = false;
     $('area-res').innerHTML =
-      '<div class="area-head"><b>Área seleccionada · ' + fmtHa + ' ha</b><span class="pill sim">Suelo simulado</span></div>' + cuerpo +
-      '<p class="sub">Suelo inventado para esta área (no es un dato real): ' + NOMBRE_TEX[s.textura].toLowerCase() + ', pH ' + s.ph +
+      '<div class="area-head"><b>' + titulo + '</b><span class="pill sim">Suelo simulado</span></div>' + cuerpo +
+      '<p class="sub">Suelo inventado para ' + lugar + ' (no es un dato real): ' + NOMBRE_TEX[s.textura].toLowerCase() + ', pH ' + s.ph +
       ', drenaje ' + NOMBRE_DREN[s.drenaje].toLowerCase() + ', pendiente ' + s.pendiente + ' %. Clima: NASA POWER ' + esc(M.FUENTE_CLIMA.periodo) +
       ' del punto ' + esc(z.referencia) + ', a ' + Math.round(km) + ' km.' +
-      (km > 100 ? ' Está lejos del área: el clima puede no representarla.' : '') + ' Usa tus prioridades actuales.</p>' +
-      '<p class="sub">Para ajustarla: arrastrá las esquinas para cambiar el tamaño y el punto del centro para moverla. El resultado se actualiza solo.</p>' +
-      '<div><button class="btn" type="button" id="area-x">Borrar área</button></div>';
+      (km > 100 ? ' Está lejos de ' + lugar + ': el clima puede no representarlo.' : '') + ' Usa tus prioridades actuales.</p>' +
+      '<p class="sub">' + ajuste + '</p>' +
+      '<div><button class="btn" type="button" id="area-x">Borrar selección</button></div>';
     $('area-x').addEventListener('click', borrarArea);
   }
   function initArea(m) {
