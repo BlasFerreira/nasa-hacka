@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
 /* Dirección: interfaz neutra y silenciosa al estilo v0 (grises zinc, bordes finos, un solo botón primario).
    Layout: menú hamburguesa con campos y lotes + panel de planificación + ranking expandible. */
@@ -185,6 +187,25 @@ details.disc li b { color: var(--text); font-weight: 500; }
 .foot ul { margin: 6px 0 0; padding-left: 18px; }
 .empty { padding: 24px 16px; color: var(--muted); }
 
+/* Mapa */
+.mapcard { overflow: hidden; position: relative; isolation: isolate; z-index: 0; }
+.map-wrap { position: relative; }
+#map { height: 320px; background: var(--surface-2); }
+@media (max-width: 560px) { #map { height: 260px; } }
+.map-off { display: grid; place-items: center; height: 100%; color: var(--muted); padding: 16px; text-align: center; }
+.map-ctl { position: absolute; top: 10px; right: 10px; z-index: 1000; display: inline-flex; gap: 2px; padding: 3px; border-radius: 10px; background: rgb(15 15 17 / 0.72); backdrop-filter: blur(6px); }
+.map-ctl button { border: 0; background: transparent; color: #e4e4e7; border-radius: 7px; padding: 5px 10px; font-size: 12px; font-weight: 500; cursor: pointer; min-height: 28px; }
+.map-ctl button[aria-pressed="true"] { background: #fafafa; color: #09090b; }
+.map-foot { display: grid; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); }
+.map-info { font-size: 14px; }
+.mej-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); align-items: center; }
+.mej-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.mej-legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.mej-legend i.celda { border: 1.5px dashed #f59e0b; background: transparent; }
+.leaflet-tooltip.lote-lbl { background: rgb(9 9 11 / 0.72); color: #fafafa; border: 0; box-shadow: none; border-radius: 6px; padding: 2px 7px; font: 500 12px/1.3 var(--font); white-space: nowrap; }
+.leaflet-tooltip.lote-lbl::before { display: none; }
+.leaflet-container { font-family: var(--font); }
+
 /* Pestañas */
 .tabs { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); align-self: flex-start; max-width: 100%; }
 .tabs button { border: 0; background: transparent; border-radius: 7px; padding: 6px 14px; font-weight: 500; color: var(--muted); cursor: pointer; min-height: 32px; }
@@ -280,6 +301,23 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       </div>
       <div id="h-chips" class="hist"></div>
     </div>
+
+    <section class="card mapcard" aria-label="Mapa de lotes">
+      <div class="map-wrap">
+        <div id="map"></div>
+        <div class="map-ctl" role="group" aria-label="Encuadre del mapa">
+          <button type="button" data-modo="campo" aria-pressed="true">Campo</button>
+          <button type="button" data-modo="zona" aria-pressed="false">Celda NASA POWER</button>
+        </div>
+      </div>
+      <div class="map-foot">
+        <p class="map-info" id="map-info"></p>
+        <div class="mej-legend"><span>Mejora posible frente a la rotación actual:</span>
+          <span><i style="background:#22c55e"></i>hasta 5 pts</span><span><i style="background:#f59e0b"></i>5 a 15 pts</span><span><i style="background:#ef4444"></i>más de 15 pts</span>
+          <span><i class="celda"></i>celda NASA POWER</span></div>
+        <p class="hint">Ubicaciones y límites de ejemplo. El clima sale de la celda de NASA POWER (0,5° × 0,625°, unos 55 × 60 km): es el mismo para todos los lotes dentro de ella.</p>
+      </div>
+    </section>
 
     <div class="cols">
       <div class="stack">
@@ -888,16 +926,16 @@ window.POWER_CLIMATOLOGY = {"fuente":"NASA POWER (Prediction Of Worldwide Energy
   const D = 'dataset';
   const org = () => ({ textura: D, drenaje: D, ph: D, pendiente: D, riego: D });
   const CAMPOS = [
-    { id: 'c1', nombre: 'Campo Don Mateo', provincia: 'Entre Ríos', zona: 'entre_rios', lotes: [
-      { id: 'l1', nombre: 'Lote Loma', superficie: 120, textura: 'franco_limoso', ph: 6.4, drenaje: 'bueno', pendiente: 1, riego: false,
+    { id: 'c1', nombre: 'Campo Don Mateo', provincia: 'Entre Ríos', zona: 'entre_rios', centro: [-31.64, -60.40], lotes: [
+      { id: 'l1', geo: { x: -0.6, y: 0.5, w: 1.2, h: 1.0 }, nombre: 'Lote Loma', superficie: 120, textura: 'franco_limoso', ph: 6.4, drenaje: 'bueno', pendiente: 1, riego: false,
         riesgos: { sequia: .5, anegamiento: .5 }, rotacion_habitual: ['soja', 'maiz_tardio'], historial: ['maiz_tardio', 'soja'], origen: org(), notas: '' },
-      { id: 'l2', nombre: 'Lote Bajo', superficie: 80, textura: 'arcilloso', ph: 6.9, drenaje: 'pobre', pendiente: .5, riego: false,
+      { id: 'l2', geo: { x: -0.6, y: -0.55, w: 1.0, h: 0.8 }, nombre: 'Lote Bajo', superficie: 80, textura: 'arcilloso', ph: 6.9, drenaje: 'pobre', pendiente: .5, riego: false,
         riesgos: { sequia: .3, anegamiento: .7 }, rotacion_habitual: ['soja'], historial: ['soja', 'soja', 'soja'], origen: org(), notas: 'Tres años seguidos de soja. Se anega con lluvias fuertes.' },
-      { id: 'l3', nombre: 'Lote Arenoso', superficie: 60, textura: 'franco_arenoso', ph: 5.8, drenaje: 'excesivo', pendiente: 3, riego: false,
+      { id: 'l3', geo: { x: 0.45, y: -0.55, w: 0.75, h: 0.8 }, nombre: 'Lote Arenoso', superficie: 60, textura: 'franco_arenoso', ph: 5.8, drenaje: 'excesivo', pendiente: 3, riego: false,
         riesgos: { sequia: .7, anegamiento: .1 }, rotacion_habitual: ['girasol', 'sorgo', 'trigo'], historial: ['trigo', 'girasol'], origen: org(), notas: '' },
     ] },
-    { id: 'c2', nombre: 'Estancia La Paz', provincia: 'Buenos Aires', zona: 'pampa_humeda', lotes: [
-      { id: 'l4', nombre: 'Lote Norte', superficie: 200, textura: 'franco', ph: 6.5, drenaje: 'bueno', pendiente: .8, riego: false,
+    { id: 'c2', nombre: 'Estancia La Paz', provincia: 'Buenos Aires', zona: 'pampa_humeda', centro: [-33.98, -60.45], lotes: [
+      { id: 'l4', geo: { x: -0.8, y: 0.6, w: 1.6, h: 1.25 }, nombre: 'Lote Norte', superficie: 200, textura: 'franco', ph: 6.5, drenaje: 'bueno', pendiente: .8, riego: false,
         riesgos: { sequia: .4, anegamiento: .3 }, rotacion_habitual: ['maiz_temprano', 'soja', 'trigo'], historial: ['maiz_temprano', 'soja'], origen: org(), notas: '' },
     ] },
   ];
@@ -1223,14 +1261,87 @@ window.POWER_CLIMATOLOGY = {"fuente":"NASA POWER (Prediction Of Worldwide Energy
     }));
   }
 
+  /* ---------- mapa ---------- */
+  const KM_LAT = 1 / 110.574;
+  const kmLon = lat => 1 / (111.320 * Math.cos(lat * Math.PI / 180));
+  // geo: esquina superior izquierda en km desde el centro del campo, ancho y alto en km.
+  function poligono(campo, g) {
+    const [la, lo] = campo.centro, dl = kmLon(la);
+    const y0 = la + g.y * KM_LAT, x0 = lo + g.x * dl, y1 = y0 - g.h * KM_LAT, x1 = x0 + g.w * dl;
+    return [[y0, x0], [y0, x1], [y1, x1], [y1, x0]];
+  }
+  // Celda de la grilla de NASA POWER (meteorología MERRA-2: 0,5° lat × 0,625° lon) que contiene el punto.
+  function celdaPower(z) {
+    const la = Math.round(z.lat / .5) * .5, lo = Math.round(z.lon / .625) * .625;
+    return [[la - .25, lo - .3125], [la + .25, lo + .3125]];
+  }
+  const MEJ_COL = ['#22c55e', '#f59e0b', '#ef4444'];
+  const nivelMejora = d => d <= 5 ? 0 : d <= 15 ? 1 : 2;
+  function mejoraLote(campo, lote) {
+    try {
+      const r = M.compararRotaciones(input(campo, lote), rotacionesDe(lote), M.parseFecha(state.siembra), state.pesos);
+      return r.mejor ? { delta: r.mejor.score - r.rotaciones[0].score, mejor: r.mejor, actual: r.rotaciones[0] } : null;
+    } catch (e) { return null; }
+  }
+  const mapa = { m: null, capas: {}, modo: 'campo', campo: null };
+  function initMapa() {
+    if (!window.L) { $('map').innerHTML = '<div class="map-off">El mapa necesita conexión a internet.</div>'; document.querySelector('.map-ctl').hidden = true; return; }
+    const m = L.map('map', { scrollWheelZoom: false }).setView(actual().campo.centro, 13);
+    const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      { maxZoom: 18, attribution: 'Imágenes © Esri, Maxar, Earthstar Geographics' }).addTo(m);
+    const nombres = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+      { maxZoom: 18 }).addTo(m);
+    const calles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' });
+    L.control.layers({ 'Satélite': sat, 'Mapa': calles }, { 'Nombres': nombres }, { position: 'bottomright' }).addTo(m);
+    Object.keys(M.ZONAS).forEach(zid => {
+      const z = M.ZONAS[zid];
+      L.rectangle(celdaPower(z), { color: '#f59e0b', weight: 2, dashArray: '6 6', fill: false, interactive: false }).addTo(m);
+      L.circleMarker([z.lat, z.lon], { radius: 6, color: '#fff', weight: 2, fillColor: '#f59e0b', fillOpacity: 1 })
+        .bindTooltip('<b>Punto NASA POWER</b> · ' + esc(z.referencia) + '<br>Clima ' + esc(M.FUENTE_CLIMA.periodo) + ' de toda la celda, no de cada lote').addTo(m);
+    });
+    lotesPlano.forEach(({ campo, lote }) => {
+      const p = L.polygon(poligono(campo, lote.geo), { color: '#fff', weight: 1.5, fillOpacity: .4 }).addTo(m);
+      p.bindTooltip('', { permanent: true, direction: 'center', className: 'lote-lbl' });
+      p.on('click', () => { if (state.sel !== lote.id) { state.sel = lote.id; state.abierto = null; loadLote(); } });
+      mapa.capas[lote.id] = p;
+    });
+    mapa.m = m;
+    document.querySelectorAll('.map-ctl button').forEach(b => b.addEventListener('click', () => { mapa.modo = b.dataset.modo; encuadrar(true); }));
+  }
+  function encuadrar(animar) {
+    if (!mapa.m) return;
+    const { campo } = actual();
+    mapa.campo = campo.id;
+    document.querySelectorAll('.map-ctl button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.modo === mapa.modo)));
+    const pts = mapa.modo === 'zona' ? celdaPower(M.ZONAS[campo.zona]) : campo.lotes.flatMap(l => poligono(campo, l.geo));
+    mapa.m.fitBounds(L.latLngBounds(pts), { padding: [28, 28], animate: animar });
+  }
+  function updateMapa() {
+    const { campo, lote } = actual(), rs = mejoraLote(campo, lote);
+    $('map-info').innerHTML = rs
+      ? '<b>' + esc(lote.nombre) + '</b>: ' + (rs.delta > .5
+        ? 'la mejor rotación según tus prioridades es <b>' + esc(rs.mejor.nombre) + '</b> (' + Math.round(rs.mejor.score) + ' pts), ' + Math.round(rs.delta) + ' más que la actual.'
+        : 'tu rotación actual es la mejor según tus prioridades (' + Math.round(rs.actual.score) + ' pts).')
+      : '';
+    if (!mapa.m) return;
+    if (mapa.campo !== campo.id) encuadrar(mapa.campo !== null);
+    lotesPlano.forEach(({ campo: c, lote: l }) => {
+      const p = mapa.capas[l.id], r = l.id === lote.id ? rs : mejoraLote(c, l), sel = l.id === lote.id;
+      p.setStyle({ fillColor: MEJ_COL[r ? nivelMejora(r.delta) : 0], color: sel ? '#fff' : 'rgba(255,255,255,.7)', weight: sel ? 3.5 : 1.5, fillOpacity: sel ? .5 : .32 });
+      p.setTooltipContent(esc(l.nombre.replace(/^Lote /, '')) + (r && r.delta > .5 ? ' · +' + Math.round(r.delta) : ''));
+      if (sel) p.bringToFront();
+    });
+  }
+
   function renderResults() {
+    updateMapa();
     for (const t of ['tab-rot', 'tab-cul']) $(t).setAttribute('aria-selected', String($(t).dataset.v === state.vista));
     if (state.vista === 'rotaciones') renderRotaciones(); else renderCultivo();
   }
   ['tab-rot', 'tab-cul'].forEach(t => $(t).addEventListener('click', () => { state.vista = $(t).dataset.v; renderResults(); }));
 
   $('f-siembra').value = state.siembra;
-  renderPresets(); renderWeightPresets(); renderWeights(); bindControls(); loadLote();
+  renderPresets(); renderWeightPresets(); renderWeights(); bindControls(); initMapa(); loadLote();
 })();
 </script>
 </body>
