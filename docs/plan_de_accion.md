@@ -53,8 +53,8 @@ Eso es **resiliencia medida con datos de NASA**, y responde bien al "what-if" qu
 
 - [ ] Estructura del repo (`data/`, `notebooks/`, `src/`, …) y `pyproject.toml`. El repo git ya existe.
 - [ ] **Inventario de datos** (`docs/data_inventory.md` o `notebooks/01_data_inventory.ipynb`): para cada dataset, resolución espacial y temporal, período cubierto, método de acceso, latencia y faltantes. Es el primer entregable del EDA y evita bajar datasets grandes a ciegas.
-- [ ] **Crear ya las cuentas de Earthdata Login** (https://urs.earthdata.nasa.gov/).
-- [ ] **Pedir ya los recortes en AppEEARS** (MODIS NDVI, SMAP L4) para los polígonos de los departamentos. Las solicitudes quedan en cola entre minutos y horas, así que conviene lanzarlas en la hora 1 para no bloquearse después.
+- [ ] **Crear ya las cuentas de Earthdata Login** (https://urs.earthdata.nasa.gov/), **los 6**.
+- [ ] **Pedir ya los recortes en AppEEARS** (MODIS NDVI, SMAP L4) para el bounding box de la región; no hace falta esperar los polígonos exactos. Las solicitudes quedan en cola entre minutos y horas, así que conviene lanzarlas en la hora 1 para no bloquearse después. Lo hacen los Tracks D y E.
 - [ ] Fijar `case_study.yaml`:
   - **Región:** Zona Núcleo, unos 15–25 departamentos (Pergamino, Rojas, General López, Marcos Juárez, Caseros, etc.).
   - **Cultivos:** soja (1ra y 2da), maíz, trigo y cultivo de cobertura.
@@ -64,11 +64,44 @@ Eso es **resiliencia medida con datos de NASA**, y responde bien al "what-if" qu
 
 ---
 
-## Fase 1 — EDA en 4 tracks paralelos (h2–h10)
+## Fase 1 — EDA en 6 tracks paralelos (h2–h10)
 
-> Si somos menos de 4, fusionar los tracks C y D.
+Hay un track por persona. Cada track además **completa su fila en el inventario de datos** y tiene asignado un rol para después del EDA, así nadie queda sin tarea cuando se pasa a desarrollo.
 
-### Track A — Labels (el más crítico, porque decide si hay ML)
+| Track | Tema | Criticidad | Después del EDA pasa a… |
+|---|---|---|---|
+| **A** | Labels de rendimiento (MAGyP) | 🔴 Decide si hay ML | Modelado (Fase 3) |
+| **B** | Clima NASA POWER + ventanas fenológicas | 🔴 Features principales | Modelado (Fase 3) |
+| **C** | Precipitación GPM + ENSO | 🟡 | Motor de escenarios what-if |
+| **D** | Agua: SMAP + evapotranspiración | 🟡 | Componente `water` del scorer |
+| **E** | Vegetación + mapa de cultivos INTA | 🟡 | Efecto antecesor + mapa de la UI |
+| **F** | Geometría, suelo y parámetros agronómicos | 🔴 Bloquea a todos en h2 | Componente `soil_health` + API |
+
+### Contrato común (se fija en h2, antes de que cada uno arranque)
+
+Todos los tracks producen tablas con la **misma clave**:
+
+```text
+depto_id   código INDEC del departamento (string, 5 dígitos)
+campana    "2020/21"  — campaña agrícola, no año calendario
+cultivo    soja_1ra | soja_2da | maiz | trigo
+```
+
+- **Gotcha:** los nombres de los departamentos difieren entre fuentes ("General López" vs "Gral. López", tildes, mayúsculas). **Nunca joinear por nombre**, siempre por código INDEC. El Track F publica la tabla de equivalencias.
+- Formato de salida: `parquet` en `data/processed/`. Los datos crudos van a `data/raw/<fuente>/` y no se modifican.
+
+### Puntos de sincronización
+
+| Hora | Qué |
+|---|---|
+| **h2** | El Track F publica los polígonos y centroides de los departamentos. Se fija el contrato. |
+| **h6** | Stand-up de 15 min. Cada track muestra 1 gráfico y dice qué funciona y qué está bloqueado. Se decide qué datasets se descartan (gate de "dataset doloroso"). |
+| **h9** | Join de todas las tablas (A + B como mínimo). Se corren los análisis transversales. |
+| **h10** | Gate de ML (Fase 2). |
+
+---
+
+### Track A — Labels de rendimiento (el más crítico, porque decide si hay ML)
 
 Fuente: **Estimaciones Agrícolas** (datos.magyp.gob.ar).
 
@@ -84,9 +117,11 @@ Preguntas a responder:
 **Entregables:**
 - `notebooks/00_labels_exploration.ipynb`
 - `data/processed/yields_detrended.parquet`
+- Lista de los peores años por cultivo (insumo de los sanity checks).
 
-### Track B — Clima (NASA POWER y GPM)
+### Track B — Clima NASA POWER y ventanas fenológicas
 
+- Implementar el cliente de POWER (Tarea 3 del `CLAUDE.md`): coordenadas, rango de fechas y variables configurables, reintentos, caché y JSON crudo en `data/raw/power/`.
 - POWER diario desde 1981 en el centroide de cada departamento. **Filtrar los `-999`** (valor faltante de POWER; si no se filtran, contaminan medias y anomalías sin dar error).
 - **Variable clave:** POWER incluye humedad de suelo (`GWETTOP`, `GWETROOT`, de MERRA-2) desde 1981. Es una serie larga de humedad que SMAP (desde 2015) no da.
 - Agregar por **ventana fenológica**, no por año calendario:
@@ -96,29 +131,73 @@ Preguntas a responder:
 
   Esto vale más que cualquier truco de modelado.
 - **Gotcha agronómico — maíz temprano vs tardío:** en la Zona Núcleo, el maíz tardío (siembra en diciembre) pasó de ser marginal a ocupar una parte grande del área en la última década. Su período crítico se corre a febrero. Una ventana fija de dic–ene mezcla dos cultivos distintos y genera un **cambio estructural en la serie**. Opciones: ventanas más anchas, features para las dos ventanas, o restringir el período de entrenamiento y documentarlo.
-- Comparar la precipitación de **GPM IMERG** con la de POWER y quedarse con GPM solo si cambia algo, por ejemplo en eventos extremos.
+- Features por ventana: lluvia acumulada, `T2M_MAX` media, días con Tmax > 32–35 °C (golpe de calor en floración), heladas (Tmin < 0 °C, importante para trigo), días secos consecutivos y `GWETROOT` medio.
+- Si C o D necesitan clima diario, B se los pasa: **un solo cliente de POWER para todo el equipo**.
 
 **Entregables:**
+- `src/data/power.py` (cliente)
 - `notebooks/02_power_exploration.ipynb`
-- `data/processed/climate_features.parquet`, con la clave `(departamento, campaña, cultivo)`
+- `data/processed/climate_features.parquet`, con la clave del contrato
 
-### Track C — SMAP y validación cruzada
+### Track C — Precipitación GPM IMERG + ENSO
 
-- SMAP L4 (9 km): ¿la anomalía de humedad aporta información más allá de la precipitación acumulada? Medir la correlación parcial.
-- **Uso realista:** validar que `GWETROOT` de POWER sigue a SMAP en 2015–2025. Si lo sigue, se usa POWER para entrenar (serie larga) y SMAP como **evidencia observada** en la UI.
+- **GPM IMERG** (0,1°, desde 2000): ¿coincide con la lluvia de POWER? Comparar por departamento, en totales mensuales y en eventos extremos (p95 diario, días con más de 50 mm). Si la correlación mensual es muy alta y los extremos no cambian, **GPM no se usa para entrenar** y queda como evidencia en la UI. *No mantener GPM solo porque es de NASA.*
+- **Extremos:** con GPM, contar lluvias intensas (riesgo de erosión) y la duración de las rachas secas. Son insumos para el scorer.
+- **ENSO:** bajar el índice ONI de NOAA y clasificar cada campaña como Niña / neutro / Niño. Verificar que las campañas Niña estén sobrerrepresentadas entre las peores (cruzar con el Track A).
+- Prototipar el **remuestreo de años por fase ENSO**, que después es la base del motor de escenarios.
 
-**Entregable:** `notebooks/04_smap_exploration.ipynb`
+**Entregables:**
+- `notebooks/03_gpm_exploration.ipynb`
+- `data/processed/enso_by_campaign.parquet`
+- `data/processed/precip_extremes.parquet`
+- Decisión "GPM sí/no para entrenar", escrita en `docs/decisions.md`.
 
-### Track D — Vegetación y suelo
+### Track D — Agua: SMAP + evapotranspiración
 
-- **MODIS MOD13Q1** (NDVI 250 m, 16 días, desde 2000): integral y pico estacional por departamento, enmascarando por cultivo si hay mapa disponible.
+- **SMAP L4** (9 km, desde 2015): ¿la anomalía de humedad aporta información más allá de la lluvia acumulada? Medir la correlación parcial.
+- **Uso realista:** validar que `GWETROOT` de POWER sigue a SMAP en 2015–2025. Si lo sigue, se usa POWER para entrenar (serie larga) y SMAP como **evidencia observada** en la UI. *Este resultado habilita o no la mitad de los features del Track B, así que hay que comunicarlo en h6.*
+- **Demanda hídrica:** calcular la ET de referencia (ET0) con las variables de POWER, que ya trae radiación, temperatura, humedad y viento. Combinarla con coeficientes de cultivo `Kc` de FAO-56 para estimar la demanda de cada cultivo. Con eso sale un **balance hídrico simple** (oferta − demanda por ventana), que es la base del componente `water` del scorer.
+- Opcional, solo si sobra tiempo: ECOSTRESS ET. No tiene serie larga; puede servir como visual.
+
+**Entregables:**
+- `notebooks/04_smap_exploration.ipynb`
+- `data/processed/water_balance.parquet`
+
+### Track E — Vegetación + mapa de cultivos INTA
+
+- **MODIS MOD13Q1** (NDVI 250 m, 16 días, desde 2000): integral y pico estacional por departamento, enmascarando por cultivo si hay mapa disponible. **Pedir los recortes en AppEEARS en h0–h1** (lo hace este track).
+- Sanity check: el NDVI tiene que mostrar la estacionalidad (picos en verano para soja/maíz, en primavera para trigo), y la integral estacional debería correlacionar con el rendimiento del Track A.
 - **Mapa Nacional de Cultivos (INTA):** *verificado:* hay mapas de campañas consecutivas **desde 2018/19 hasta 2024/25**, unas 7 campañas. Se distribuyen por INTA.GEO, el repositorio institucional del INTA y Zenodo, y están hechos con Landsat 8/9 + Sentinel-2. Con 7 campañas se observan unas **6 transiciones antecesor → cultivo por píxel**: alcanza para describir las rotaciones reales de la zona (qué secuencias son frecuentes) y para un análisis exploratorio del efecto antecesor. **No alcanza para entrenar un modelo de efecto rotación.** Falta confirmar el formato de descarga (raster vs vector) y la resolución.
-- **Suelo:** SoilGrids (250 m) o la cartografía de suelos de INTA, para textura, carbono orgánico y capacidad de retención. Va como feature estática y como contexto en la UI.
+- Producto concreto: una **tabla de frecuencias de secuencias** (por ejemplo, "soja → soja → maíz aparece en un X % de los píxeles"). Define cuál es la rotación "actual" típica del caso de estudio con datos, no de memoria.
 - **Visual de la demo:** Sentinel-2 o HLS sobre el lote. No hace falta para el modelo.
 
-**Entregable:** `notebooks/05_remote_sensing_exploration.ipynb`
+**Entregables:**
+- `notebooks/05_remote_sensing_exploration.ipynb`
+- `data/processed/ndvi_seasonal.parquet`
+- `data/processed/rotation_sequences.parquet`
 
-### Análisis transversales del EDA
+### Track F — Geometría, suelo y parámetros agronómicos
+
+**Bloquea a todos, así que su primera entrega es para h2:**
+
+- **Polígonos de los departamentos** (IGN) con código INDEC, centroides y la **tabla de equivalencias de nombres** entre MAGyP e IGN → `data/processed/departamentos.geojson`.
+- Completar `case_study.yaml` (lote demo, cultivos, rotaciones candidatas) junto con el Track E.
+
+**Después de h2:**
+
+- **Suelo:** SoilGrids (250 m) o la cartografía de suelos de INTA, para textura, carbono orgánico, pH y capacidad de retención de agua. Se agrega por departamento y sale el valor puntual del lote. Va como feature estática y como contexto en la UI.
+- **Terreno:** SRTM, pendiente media por departamento. En la Zona Núcleo es bastante plana, así que es probable que **no aporte**. Verificarlo en 30 minutos y descartarlo si es el caso.
+- **Tabla de parámetros agronómicos con fuente:** por cultivo, `Kc`, longitud del ciclo, aporte de rastrojo, relación C:N, fijación de N, días de cobertura del suelo y beneficio como antecesor. **Cada valor con su cita** (FAO-56, INTA, AAPRESID, papers). Es lo que respalda el componente `soil_health` y los valores `assumed`.
+- **Dueño del inventario de datos:** consolida las filas que manda cada track.
+
+**Entregables:**
+- `data/processed/departamentos.geojson`
+- `data/processed/soil_static.parquet`
+- `data/reference/crop_parameters.yaml` (con las fuentes)
+- `docs/data_inventory.md`
+- `docs/assumptions.md`
+
+### Análisis transversales del EDA (h9–h10, dueños: A + B)
 
 1. **Tamaño muestral efectivo.** Unos 20 departamentos × 25 años × 3 cultivos ≈ 1.500 filas. Pero el clima está muy correlacionado espacialmente dentro de un mismo año, así que **la unidad efectiva es el año: ~25 realizaciones independientes**. Esto define la validación y descarta modelos con muchos parámetros.
 2. **Trade-off ventana de entrenamiento vs features.** Cada fuente agregada como feature recorta la serie al año en que empieza:
