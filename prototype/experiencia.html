@@ -25,6 +25,13 @@ h1,h2,h3,p{margin:0}
 
 /* HUD */
 .hud{position:absolute;z-index:20;pointer-events:none}
+.app-cta{display:inline-flex;align-items:center;gap:8px;background:#0b3d91;color:#fff;text-decoration:none;font-weight:600;font-size:14px;letter-spacing:-.005em;border:1px solid rgba(255,255,255,.55);border-radius:999px;padding:9px 18px;box-shadow:0 2px 14px rgba(0,0,0,.35);pointer-events:auto;transition:background .15s,transform .15s}
+.app-cta:hover{background:#1450b8;transform:translateY(-1px)}
+.app-cta:focus-visible{outline:2px solid #fff;outline-offset:3px}
+.app-cta svg{width:15px;height:15px}
+.app-cta.top{position:absolute;z-index:30;right:calc(clamp(18px,3vw,40px) + 92px);top:clamp(10px,2vh,24px)}
+.app-cta.big{font-size:16px;padding:13px 26px;margin-top:22px}
+@media (max-width:560px){.app-cta.top{right:clamp(12px,3vw,18px);top:clamp(44px,7vh,60px);padding:7px 14px;font-size:13px}}
 .brand{left:clamp(18px,3vw,40px);top:clamp(16px,2.6vh,30px);display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:-.01em;font-size:15px}
 .brand .logo{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#f2c46d,#4fb36f);display:grid;place-items:center}
 .brand .logo svg{width:15px;height:15px;stroke:#06080c}
@@ -221,6 +228,7 @@ table tr{opacity:0;transform:translateY(8px);transition:.5s cubic-bezier(.2,.8,.
   <div class="hud progress" id="progress"></div>
   <div class="hud brand"><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V8"/><path d="M12 13c-4 0-6-2-6-6 4 0 6 2 6 6Z"/><path d="M12 10c0-3 2-5 6-5 0 4-2 5-6 5Z"/></svg></span>Field Shift<small id="teamline"></small></div>
   <div class="hud count" id="count"><b>01</b> / 07</div>
+  <a class="app-cta top" href="/app">Open the app <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
   <nav class="hud rail" id="rail" aria-label="Chapters"></nav>
   <div class="hud tl" id="tl"><span id="tl-d">Nov 2026</span><div class="tbar"><i id="tl-f"></i></div><span class="tls">3-year replay · NASA POWER climate</span></div>
   <div class="hud hint" id="hint"><div class="mouse"></div>Scroll to dive</div>
@@ -301,6 +309,7 @@ table tr{opacity:0;transform:translateY(8px);transition:.5s cubic-bezier(.2,.8,.
       <div class="glass"><h3>Honest limits</h3><p>Illustrative crop catalog, regional climate, relative yields. Needs local validation.</p></div>
     </div>
     <p class="big-quote">Field Shift doesn’t tell farmers what to do. It lets them test what could happen first.</p>
+    <a class="app-cta big" href="/app">Try it on your field — open the app <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
   </section>
 </div>
 

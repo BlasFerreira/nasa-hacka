@@ -71,6 +71,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
   overflow-y: auto; overscroll-behavior: contain; padding: 16px 12px 24px; background: var(--bg); border-right: 1px solid var(--border);
   box-shadow: 0 10px 40px rgb(0 0 0 / 0.18); transform: translateX(-100%); visibility: hidden; }
 .side.open { transform: none; visibility: visible; }
+/* Menú lateral en azul NASA: se redefinen los tokens de color solo dentro del menú para que todo lo de adentro (texto, hover, ítem activo, tarjetas de campo) se lea sobre el azul. */
+.side { background: #0b3d91; border-right-color: #082f70; color: #fff;
+  --text: #ffffff; --muted: #c9d8f6; --surface: rgb(255 255 255 / .10); --surface-2: rgb(255 255 255 / .16); --border: rgb(255 255 255 / .28); --ring: #ffffff; }
+.side .icon-btn { color: #fff; border-color: rgb(255 255 255 / .45); }
+.side a { color: inherit; }
 #side { display: grid; gap: 10px; }
 .side-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 4px; }
 .scrim { position: fixed; inset: 0; z-index: 15; background: rgb(0 0 0 / 0.4); }
