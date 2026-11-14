@@ -1,0 +1,10 @@
+const fs = require('fs');
+const path = require('path');
+const dir = __dirname;
+const tpl = fs.readFileSync(path.join(dir, 'app.tpl.html'), 'utf8');
+const engine = fs.readFileSync(path.join(dir, 'engine.js'), 'utf8');
+if (engine.includes('</script>')) throw new Error('engine.js contiene </script>');
+const out = tpl.replace('/*ENGINE*/', () => engine);
+const dest = process.argv[2] || path.join(dir, '..', 'mvp-rotacion.html');
+fs.writeFileSync(dest, out, 'utf8');
+console.log('OK', dest, out.length, 'bytes');
