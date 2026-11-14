@@ -190,7 +190,7 @@
     rapidez: 'Siembra inmediata en ventana óptima y ciclo más corto',
     salud_suelo: 'Rastrojo, rotación de familias y menor erosión',
     ahorro_insumos: 'Aprovecha fijación de N y crédito del antecesor',
-    resiliencia: 'Tolerancia a sequía o anegamiento del lote',
+    resiliencia: 'Cómo se sostiene en los peores años reales (NASA POWER)',
     cumplimiento: 'Evita monocultivo y erosión en pendiente',
   };
 
@@ -322,10 +322,80 @@
     const eros = 1 - pw * (1 - c.erosion);
     return [clamp(.30 * c.rastrojo + .25 * eros + .15 * c.raiz + .30 * div), nota];
   }
-  function resiliencia(cid, lote) {
-    const c = CULTIVOS[cid], rs = lote.riesgos.sequia ?? .5, ra = lote.riesgos.anegamiento ?? .5, tot = rs + ra;
-    if (tot <= 0) return .5;
-    return clamp(1 - (rs * (1 - c.tol_sequia) + ra * (1 - c.tol_anegamiento)) / tot);
+  /* ---------- resiliencia climática (desde datos de NASA POWER) ----------
+     Para un cultivo sembrado en un día y mes dados, se recorre la serie anual real de NASA POWER: cada año,
+     el ciclo completo con la temperatura y la lluvia mensual de ESE año (y del siguiente si el ciclo cruza
+     diciembre). Se calcula la aptitud climática de cada año (media geométrica de los factores temperatura y
+     agua, igual que en aptitud()).
+     resiliencia = aptitud climática promedio en el 20 % de años más malos (los ~5 peores de 24).
+     Se usa la cola y no el P10: con 24 años el P10 depende de 2 o 3 años y salta mucho.
+     Es una propiedad del cultivo, la fecha y la zona: no depende del escenario que se esté simulando.
+     Los años con exceso de lluvia también cuentan (límite superior de agua del cultivo). El anegamiento propio
+     del lote (bajos, mal drenaje) sigue entrando por el factor drenaje de la aptitud. */
+  const PEOR_FRAC = 0.2;
+  const cacheResil = new Map();
+  function climaAnio(z, y, m0, d0, dias) {
+    let t = 0, p = 0;
+    for (let i = 0; i < dias; i++) {
+      const d = new Date(Date.UTC(y, m0, d0 + i)), yy = d.getUTCFullYear(), m = d.getUTCMonth(), s = z.serie[yy];
+      if (!s || s.temp[m] == null || s.precip[m] == null) return null; // ciclo incompleto en la serie
+      t += s.temp[m]; p += s.precip[m] / new Date(Date.UTC(yy, m + 1, 0)).getUTCDate();
+    }
+    return [t / dias, p];
+  }
+  function resilienciaClima(cid, lote, siembra) {
+    const zid = ZONAS[lote.zona] ? lote.zona : 'pampa_humeda', z = ZONAS[zid], c = CULTIVOS[cid];
+    const m0 = siembra.getUTCMonth(), d0 = siembra.getUTCDate();
+    const key = cid + '|' + zid + '|' + m0 + '|' + d0 + '|' + (lote.riego ? 1 : 0);
+    if (cacheResil.has(key)) return cacheResil.get(key);
+    const anios = [];
+    for (const y of Object.keys(z.serie || {}).map(Number).sort((a, b) => a - b)) {
+      const cl = climaAnio(z, y, m0, d0, c.ciclo_dias);
+      if (!cl) continue;
+      const p = lote.riego ? Math.max(cl[1], c.agua_opt[0]) : cl[1];
+      const ft = trapecio(cl[0], c.temp_lim[0], c.temp_opt[0], c.temp_opt[1], c.temp_lim[1]);
+      const fa = trapecio(p, c.agua_lim[0], c.agua_opt[0], c.agua_opt[1], c.agua_lim[1]);
+      anios.push({ y, apt: Math.sqrt(ft * fa), falta: p < c.agua_opt[0], exceso: p > c.agua_opt[1], fuera: ft * fa === 0 });
+    }
+    let res;
+    if (!anios.length) {
+      // Sin serie para la zona: se vuelve al supuesto anterior (tolerancias del catálogo y riesgos cargados).
+      const rs = lote.riesgos?.sequia ?? .5, ra = lote.riesgos?.anegamiento ?? .5, tot = rs + ra;
+      res = { valor: tot > 0 ? clamp(1 - (rs * (1 - c.tol_sequia) + ra * (1 - c.tol_anegamiento)) / tot) : .5, fuente: 'supuesto', n: 0 };
+    } else {
+      const ord = anios.slice().sort((a, b) => a.apt - b.apt), k = Math.max(1, Math.round(PEOR_FRAC * ord.length));
+      const fmtCamp = y => y + '/' + String(y + 1).slice(2);
+      res = {
+        valor: ord.slice(0, k).reduce((s, a) => s + a.apt, 0) / k, fuente: 'NASA POWER', n: anios.length, peores: k,
+        media: anios.reduce((s, a) => s + a.apt, 0) / anios.length,
+        falta_agua: anios.filter(a => a.falta).length, exceso_agua: anios.filter(a => a.exceso).length,
+        fuera_limites: anios.filter(a => a.fuera).length,
+        peor: ord[0] ? fmtCamp(ord[0].y) : null,
+      };
+    }
+    cacheResil.set(key, res);
+    return res;
+  }
+  function textoResiliencia(r) {
+    if (r.fuente !== 'NASA POWER') return 'Resiliencia: sin serie anual para esta zona, se usa un supuesto (tolerancias del catálogo).';
+    const partes = ['Resiliencia: en los ' + r.peores + ' peores de ' + r.n + ' años reales de NASA POWER mantiene ' + Math.round(100 * r.valor) +
+      ' % de aptitud climática (promedio de todos los años: ' + Math.round(100 * r.media) + ' %).'];
+    const q = [];
+    if (r.falta_agua) q.push(r.falta_agua + ' con menos agua que la óptima');
+    if (r.exceso_agua) q.push(r.exceso_agua + ' con exceso de lluvia');
+    if (q.length) partes.push('Años de ' + r.n + ': ' + q.join(', ') + '.');
+    if (r.fuera_limites) partes.push(r.fuera_limites + ' fuera de los límites tolerados (peor: ' + r.peor + ').');
+    return partes.join(' ');
+  }
+  // Resumen del clima de la zona por campaña (julio a junio), para mostrar de dónde sale la resiliencia.
+  function riesgoZona(zona) {
+    const zid = ZONAS[zona] ? zona : 'pampa_humeda', ids = CAMPANIAS[zid] || [], E = ESCENARIOS[zid];
+    const camp = ids.map(id => E[id]);
+    if (!camp.length) return null;
+    const peor = camp.reduce((a, c) => c.total < a.total ? c : a);
+    return { n: camp.length, periodo: POWER.periodo,
+      secas: camp.filter(c => c.anomalia_pct <= -20).length, humedas: camp.filter(c => c.anomalia_pct >= 20).length,
+      peor: { campania: peor.campania, anomalia_pct: peor.anomalia_pct } };
   }
   function cumplimiento(c, cid, hist, pend) {
     let f = 1; const m = [];
@@ -357,6 +427,7 @@
     const bal = balanceNutrientes(cid, lote);
     const [salud, notaDiv] = saludSuelo(cid, lote);
     const [cumpl, motivos] = cumplimiento(c, cid, lote.historial, lote.pendiente);
+    const resil = resilienciaClima(cid, lote, siembra);
 
     // Rapidez: siembra inmediata en ventana óptima (65%) + ciclo corto para liberar el lote antes (35%)
     const factorCicloCorto = clamp(1 - (c.ciclo_dias - 90) / 100);
@@ -371,10 +442,10 @@
         rapidez: rapidezScore,
         salud_suelo: salud,
         ahorro_insumos: 1 - clamp(bal.n_a_reponer / 150),
-        resiliencia: resiliencia(cid, lote),
+        resiliencia: resil.valor,
         cumplimiento: cumpl
       },
-      notaDiv, motivos, siembra: fmtISO(siembra), cosecha_estimada: fmtISO(addDias(siembra, c.ciclo_dias)),
+      resil, notaDiv, motivos, siembra: fmtISO(siembra), cosecha_estimada: fmtISO(addDias(siembra, c.ciclo_dias)),
     });
     return base;
   }
@@ -407,6 +478,7 @@
       'Punto más débil: ' + COMPONENTES_NOMBRE[ord[ord.length - 1][0]].toLowerCase() + ' (' + Math.round(ord[ord.length - 1][1]) + ').',
       'Factor de aptitud más limitante: ' + FACTORES_NOMBRE[peor] + ' (' + Math.round(f[peor] * 100) + ' %).',
       'Rotación: ' + e.notaDiv + '.',
+      textoResiliencia(e.resil),
     ];
     if (e.balance.credito_antecesor_n) partes.push('El antecesor deja ~' + e.balance.credito_antecesor_n + ' kg N/ha disponibles para este ciclo.');
     if (e.tipo === 'cobertura') partes.push('Es un cultivo de cobertura: su valor está en el suelo y en el ahorro de insumos del ciclo siguiente, no en el ingreso directo.');
@@ -577,8 +649,8 @@
       'Más nitrógeno a reponer: ~' + I.n_anual + ' kg/ha/año (actual: ' + B.n_anual + ').');
     add(I.margen_anual - B.margen_anual, 50, 'Mayor margen bruto: USD ' + I.margen_anual + '/ha/año (actual: ' + B.margen_anual + ').',
       'Menor margen bruto: USD ' + I.margen_anual + '/ha/año (actual: ' + B.margen_anual + ').');
-    add(100 * (r.comp.resiliencia - base.comp.resiliencia), 5, 'Cultivos más tolerantes a la sequía y al anegamiento de este lote.',
-      'Cultivos menos tolerantes a la sequía y al anegamiento de este lote.');
+    add(100 * (r.comp.resiliencia - base.comp.resiliencia), 5, 'Se sostiene mejor en los peores años climáticos reales (NASA POWER).',
+      'Sufre más en los peores años climáticos reales (NASA POWER).');
     add(100 * (r.comp.cumplimiento - base.comp.cumplimiento), 5, 'Evita repetir el mismo cultivo.', 'Repite el mismo cultivo.');
     if (I.cultivos_anio - B.cultivos_anio >= .4) out.push(['-', 'Más campañas por año: más trabajo y más complejidad de manejo.']);
     return out;
@@ -623,7 +695,7 @@
       filas, n_campanias: camps.length, estable: estable ? estable.id : null, periodo: POWER.periodo };
   }
 
-  const API = { ESCENARIOS, ESCENARIOS_ORDEN, PISO_CLIMA, compararEscenarios, CULTIVOS, ZONAS, FUENTE_CLIMA, TEXTURAS, DRENAJES, PESOS_DEFECTO, PESO_MAX, COMPONENTES_NOMBRE, COMPONENTES_DESC, FACTORES_NOMBRE,
+  const API = { ESCENARIOS, ESCENARIOS_ORDEN, PISO_CLIMA, PEOR_FRAC, compararEscenarios, riesgoZona, resilienciaClima, CULTIVOS, ZONAS, FUENTE_CLIMA, TEXTURAS, DRENAJES, PESOS_DEFECTO, PESO_MAX, COMPONENTES_NOMBRE, COMPONENTES_DESC, FACTORES_NOMBRE,
     HORIZONTE_ANIOS, REF_MARGEN_ANUAL, recomendar, evaluarRotacion, compararRotaciones, normalizarPesos, parseFecha, fmtISO, addDias, margenUsd, rendBase, econDe };
   if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.Motor = API;
 })(typeof window !== 'undefined' ? window : globalThis);
