@@ -644,8 +644,72 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       localStorage.setItem(CLAVE, JSON.stringify({ campos: CAMPOS.map(c => ({ id: c.id, lotes: c.lotes.map(l => Object.assign({}, l, { _rotOrig: undefined })) })), alts: state.alts }));
     } catch (e) { /* sin almacenamiento: los cambios duran mientras la página esté abierta */ }
   }
+  /* ---------- clima de cada lote: celda de NASA POWER ----------
+     POWER da un valor por celda de 0,5° × 0,625° (unos 55 × 60 km). Los puntos que trae la página cubren las celdas
+     de los campos de ejemplo; si un lote cae en otra celda, se consulta la API de NASA POWER en vivo desde el
+     navegador y la respuesta se guarda en este navegador para no repetirla. Sin conexión se usa la zona del campo. */
+  const POWER_API = 'https://power.larc.nasa.gov/api/temporal/monthly/point';
+  const [P_INI, P_FIN] = M.POWER_PERIODO.split('–').map(Number);
+  const celdaCentro = (lat, lon) => [Math.round(lat / .5) * .5, Math.round(lon / .625) * .625];
+  const celdaKey = (lat, lon) => { const [a, b] = celdaCentro(lat, lon); return 'p' + a.toFixed(2) + '_' + b.toFixed(3); };
+  const CELDA_ZONA = {};               // celda -> id de zona en el motor
+  const ZONA_INCLUIDA = new Set(Object.keys(M.ZONAS));
+  for (const zid of Object.keys(M.ZONAS)) CELDA_ZONA[celdaKey(M.ZONAS[zid].lat, M.ZONAS[zid].lon)] = zid;
+  const powerEstado = {};              // celda -> 'cargando' | 'error'
+  const centroide = g => [g.reduce((s, p) => s + p[0], 0) / g.length, g.reduce((s, p) => s + p[1], 0) / g.length];
+  const fmtCoord = (la, lo) => Math.abs(la).toFixed(2) + '° ' + (la < 0 ? 'S' : 'N') + ', ' + Math.abs(lo).toFixed(2) + '° ' + (lo < 0 ? 'O' : 'E');
+  function registrarCelda(key, lat, lon, clima) {
+    M.registrarZona(key, Object.assign({ nombre: 'Celda NASA POWER', referencia: fmtCoord(lat, lon), lat, lon, vivo: true }, clima));
+    CELDA_ZONA[key] = key;
+    if (mapa.m) dibujarZona(key);
+  }
+  function pedirPower(key, lat, lon) {
+    if (powerEstado[key]) return;
+    powerEstado[key] = 'cargando';
+    const url = POWER_API + '?parameters=T2M,PRECTOTCORR&community=AG&longitude=' + lon.toFixed(4) + '&latitude=' + lat.toFixed(4) +
+      '&start=' + P_INI + '&end=' + P_FIN + '&format=JSON';
+    const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const t = setTimeout(() => ctl && ctl.abort(), 25000);
+    fetch(url, ctl ? { signal: ctl.signal } : {})
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(j => {
+        const clima = M.climaDesdePower(j, P_INI, P_FIN);
+        try { localStorage.setItem('fieldshift.power.' + key, JSON.stringify({ lat, lon, clima, fecha: new Date().toISOString().slice(0, 10) })); } catch (e) { /* sin caché */ }
+        registrarCelda(key, lat, lon, clima);
+        delete powerEstado[key];
+      })
+      .catch(() => { powerEstado[key] = 'error'; })
+      .finally(() => { clearTimeout(t); render(); });
+  }
+  // Zona climática que usa un lote y de dónde sale: 'incluido' (dato bajado con la página), 'vivo' (API en vivo),
+  // 'cargando', 'error' o 'zona' (lote sin contorno: clima de la zona del campo).
+  function climaLote(campo, lote) {
+    if (!lote.geo || !lote.geo.length) return { zid: campo.zona, estado: 'zona' };
+    const [lat, lon] = centroide(lote.geo), key = celdaKey(lat, lon);
+    if (!CELDA_ZONA[key]) {
+      try {
+        const c = JSON.parse(localStorage.getItem('fieldshift.power.' + key) || 'null');
+        if (c && c.clima) registrarCelda(key, c.lat, c.lon, c.clima);
+      } catch (e) { /* sin caché */ }
+    }
+    const zid = CELDA_ZONA[key];
+    if (zid) return { zid, estado: ZONA_INCLUIDA.has(zid) ? 'incluido' : 'vivo' };
+    if (!powerEstado[key]) pedirPower(key, lat, lon);
+    return { zid: campo.zona, estado: powerEstado[key] || 'cargando' };
+  }
+  function climaTexto(campo, lote) {
+    const c = climaLote(campo, lote), z = M.ZONAS[c.zid];
+    return {
+      incluido: 'clima NASA POWER ' + M.FUENTE_CLIMA.periodo + ' de la celda del lote (' + z.referencia + ')',
+      vivo: 'clima NASA POWER ' + M.FUENTE_CLIMA.periodo + ' de la celda del lote, consultado en vivo (' + z.referencia + ')',
+      cargando: 'consultando NASA POWER para la celda del lote… mientras tanto, clima de ' + z.referencia,
+      error: 'no se pudo consultar NASA POWER: se usa el clima de ' + z.referencia,
+      zona: 'clima NASA POWER ' + M.FUENTE_CLIMA.periodo + ' de la zona del campo (' + z.referencia + '), el lote no tiene contorno',
+    }[c.estado];
+  }
+
   const input = (campo, lote) => ({
-    zona: campo.zona, textura: lote.textura, ph: lote.ph, drenaje: lote.drenaje, pendiente: lote.pendiente, riego: lote.riego,
+    zona: climaLote(campo, lote).zid, textura: lote.textura, ph: lote.ph, drenaje: lote.drenaje, pendiente: lote.pendiente, riego: lote.riego,
     riesgos: lote.riesgos, rotacion_habitual: lote.rotacion_habitual, historial: lote.historial,
   });
   function calcular(campo, lote) {
@@ -777,7 +841,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       const { campo, lote } = actual(), otra = state.vista === 'rotaciones' ? 'cultivo' : 'rotaciones';
       k = migas([['Resumen general', '#/inicio'], [campo.nombre, '#/campo/' + campo.id], [VISTAS_LOTE[state.vista]]]);
       h1 = lote.nombre;
-      sub = campo.nombre + ' · ' + lote.superficie + ' ha · ' + campo.provincia + ' · clima NASA POWER ' + M.FUENTE_CLIMA.periodo + ', ' + M.ZONAS[campo.zona].referencia;
+      sub = campo.nombre + ' · ' + lote.superficie + ' ha · ' + campo.provincia + ' · ' + climaTexto(campo, lote);
       const opts = CAMPOS.map(c => '<optgroup label="' + esc(c.nombre) + '">' +
         c.lotes.map(l => '<option value="' + l.id + '"' + (l.id === lote.id ? ' selected' : '') + '>' + esc(l.nombre) + '</option>').join('') + '</optgroup>').join('');
       der = '<label>Lote <select id="ctx-lote">' + opts + '</select></label><a class="btn" href="' + hrefLote(lote.id, otra) + '">' + VISTAS_LOTE[otra] + '</a>';
@@ -818,7 +882,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     fillSelect($('p-textura'), M.TEXTURAS, NOMBRE_TEX, lote.textura);
     fillSelect($('p-drenaje'), M.DRENAJES, NOMBRE_DREN, lote.drenaje);
     $('p-ph').value = lote.ph; $('p-pend').value = lote.pendiente; $('p-riego').checked = lote.riego;
-    const rz = M.riesgoZona(actual().campo.zona);
+    const rz = M.riesgoZona(climaLote(actual().campo, lote).zid);
     $('p-clima-zona').textContent = rz
       ? rz.n + ' campañas reales (' + rz.periodo + '): ' + rz.secas + ' secas y ' + rz.humedas + ' húmedas (±20 % de lluvia frente al promedio). La peor: ' +
         rz.peor.campania + ' (' + rz.peor.anomalia_pct + ' %). La resiliencia de cada cultivo sale de cómo le fue en los peores años de esta serie.'
@@ -936,7 +1000,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       '<div class="fbar"><span>' + M.FACTORES_NOMBRE[k] + '</span><span class="track"><i style="width:' + pct(e.apt.factores[k]) + '%"></i></span><span class="v">' + pct(e.apt.factores[k]) + '</span></div>').join('');
     const b = e.balance;
     const evid = [
-      ['Clima del ciclo', 'NASA POWER', e.apt.tMedia.toFixed(1) + ' °C medios y ' + Math.round(e.apt.precip) + ' mm en el ciclo. Climatología mensual ' + M.FUENTE_CLIMA.periodo + ' (T2M y PRECTOTCORR) en un punto de referencia de la zona.'],
+      ['Clima del ciclo', 'NASA POWER', e.apt.tMedia.toFixed(1) + ' °C medios y ' + Math.round(e.apt.precip) + ' mm en el ciclo. Climatología mensual ' + M.FUENTE_CLIMA.periodo + ' (T2M y PRECTOTCORR) en la celda de NASA POWER del lote (unos 55 × 60 km).'],
       ['Rendimiento base', e.rend_fuente && e.rend_fuente.indexOf('MAGyP') >= 0 ? 'observado · MAGyP' : 'supuesto',
         e.rend_fuente && e.rend_fuente.indexOf('MAGyP') >= 0 ? 'Media de las últimas 10 campañas (superficie cosechada) de los departamentos de la zona, MAGyP Estimaciones Agrícolas.' + (e.rend_fuente.indexOf('tardío') >= 0 ? ' MAGyP no separa maíz temprano de tardío: el ajuste para tardío es un supuesto.' : '') : 'Valor del catálogo ilustrativo; no hay serie oficial para este cultivo.'],
       ['Precio y costo', e.econ_fuente === 'observado · MAGyP' ? 'observado · MAGyP' : 'supuesto', e.econ_fuente === 'observado · MAGyP' ? 'Precio a cosecha (futuros de la Bolsa de Cereales de Buenos Aires, fin de septiembre 2026) y gastos directos de la región, informe de Resultados Agrícolas de MAGyP, campaña 2026/27. Margen bruto de campo propio: no incluye arrendamiento ni estructura.' : 'Valores del catálogo ilustrativo; no hay informe oficial para este cultivo.'],
@@ -979,7 +1043,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       '<div class="rank-head"><h2>Top ' + r.top.length + ' para sembrar el ' + fmtF(r.fecha_siembra) + '</h2></div><div class="legend">' + leyenda + '</div>' +
       lista + desc +
       '<section class="card foot"><b>Qué hay detrás de estos números</b><ul>' +
-      '<li>Clima: promedio mensual ' + M.FUENTE_CLIMA.periodo + ' de NASA POWER (temperatura a 2 m y precipitación) en un punto de referencia por zona. Es climatología, no el pronóstico de esta campaña. SMAP y MODIS/Landsat están planificados.</li>' +
+      '<li>Clima: promedio mensual ' + M.FUENTE_CLIMA.periodo + ' de NASA POWER (temperatura a 2 m y precipitación) en la celda de NASA POWER de cada lote (unos 55 × 60 km). Es climatología, no el pronóstico de esta campaña. SMAP y MODIS/Landsat están planificados.</li>' +
       '<li>Rendimientos: media de las últimas 10 campañas de los departamentos de la zona (MAGyP Estimaciones Agrícolas). Donde no hay serie oficial (centeno, avena, vicia, mijo, crotalaria) el valor es ilustrativo.</li>' +
       '<li>Precios y costos: informe de Resultados Agrícolas de MAGyP, campaña 2026/27 (septiembre 2026). Margen bruto de campo propio, sin arrendamiento. Son precios de un momento: cambian.</li>' +
       '<li>Requisitos de cultivo y suelo del lote siguen siendo ilustrativos, a validar con EcoCrop (FAO) e INTA.</li>' +
@@ -1084,7 +1148,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
 
   function evidenciaHTML() {
     const filas = [
-      ['Clima de cada campaña', 'NASA POWER', 'Temperatura y lluvia mensual ' + M.FUENTE_CLIMA.periodo + ' en un punto de referencia de la zona: el promedio o una campaña real (seca o húmeda). No es un pronóstico. GPM IMERG y SMAP están planificados.'],
+      ['Clima de cada campaña', 'NASA POWER', 'Temperatura y lluvia mensual ' + M.FUENTE_CLIMA.periodo + ' en la celda de NASA POWER del lote (unos 55 × 60 km): el promedio o una campaña real (seca o húmeda). No es un pronóstico. GPM IMERG y SMAP están planificados.'],
       ['Resiliencia climática', 'derivado', 'De cada cultivo, en su fecha de siembra: aptitud promedio en el ' + Math.round(100 * M.PEOR_FRAC) + ' % de años más malos de la serie anual de NASA POWER ' + M.FUENTE_CLIMA.periodo + '. Clima observado; rangos de cada cultivo del catálogo (supuesto).'],
       ['Requisitos y ventanas de siembra', 'supuesto', 'Catálogo ilustrativo, a validar con EcoCrop (FAO) e INTA.'],
       ['Rendimientos', 'observado · MAGyP', 'Media de las últimas 10 campañas por zona (MAGyP Estimaciones Agrícolas). En campañas reales, maíz (ambas zonas) y soja (Pampa) usan un modelo clima-rendimiento validado dejando un año afuera (R² 0,30 a 0,61); el resto, el índice de aptitud. El modelo acierta qué años son malos pero subestima cuánto caen.'],
@@ -1203,19 +1267,29 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     const calles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' });
     mapa.cultivo = L.layerGroup().addTo(m);
     L.control.layers({ 'Satélite': sat, 'Mapa': calles }, { 'Nombres': nombres, 'Cultivo recomendado': mapa.cultivo }, { position: 'bottomright' }).addTo(m);
-    Object.keys(M.ZONAS).forEach(zid => {
-      const z = M.ZONAS[zid];
-      L.rectangle(celdaPower(z), { color: '#f59e0b', weight: 2, dashArray: '6 6', fill: false, interactive: false }).addTo(m);
-      L.circleMarker([z.lat, z.lon], { radius: 6, color: '#fff', weight: 2, fillColor: '#f59e0b', fillOpacity: 1 })
-        .bindTooltip('<b>Punto NASA POWER</b> · ' + esc(z.referencia) + '<br>Clima ' + esc(M.FUENTE_CLIMA.periodo) + ' de toda la celda, no de cada lote').addTo(m);
-    });
     mapa.m = m;
+    Object.keys(M.ZONAS).forEach(dibujarZona);
     syncCapas();
     m.on('click', e => { if (dib.modo) dibujoPunto(e.latlng); });
     m.attributionControl.addAttribution('Lotes trazados con datos © OpenStreetMap');
     document.querySelectorAll('.map-ctl button[data-modo]').forEach(b => b.addEventListener('click', () => { mapa.modo = b.dataset.modo; encuadrar(true); }));
     initArea(m);
     initHa();
+  }
+  // Recuadro de la celda de NASA POWER y su punto de consulta.
+  const zonasDibujadas = new Set();
+  function dibujarZona(zid) {
+    if (!mapa.m || zonasDibujadas.has(zid)) return;
+    const z = M.ZONAS[zid]; zonasDibujadas.add(zid);
+    L.rectangle(celdaPower(z), { color: '#f59e0b', weight: 2, dashArray: '6 6', fill: false, interactive: false }).addTo(mapa.m);
+    L.circleMarker([z.lat, z.lon], { radius: 6, color: '#fff', weight: 2, fillColor: '#f59e0b', fillOpacity: 1 })
+      .bindTooltip('<b>Punto NASA POWER</b> · ' + esc(z.referencia) + (z.vivo ? ' · consultado en vivo' : '') + '<br>Clima ' + esc(M.FUENTE_CLIMA.periodo) + ' de toda la celda, no de cada lote').addTo(mapa.m);
+  }
+  // Zona climática a mostrar en el mapa: la del lote abierto, o la del primer lote del campo.
+  function zonaMapa(campo) {
+    if (esLote(state.vista)) { const { campo: c, lote } = actual(); return climaLote(c, lote).zid; }
+    const l = campo.lotes[0];
+    return l ? climaLote(campo, l).zid : campo.zona;
   }
   // Crea, actualiza o quita los polígonos según la lista de lotes.
   function syncCapas() {
@@ -1240,7 +1314,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     const campo = campoMapa();
     mapa.campo = campo.id;
     document.querySelectorAll('.map-ctl button[data-modo]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.modo === mapa.modo)));
-    const pts = mapa.modo === 'zona' ? celdaPower(M.ZONAS[campo.zona]) : campo.lotes.flatMap(l => poligono(campo, l.geo) || []);
+    const pts = mapa.modo === 'zona' ? celdaPower(M.ZONAS[zonaMapa(campo)]) : campo.lotes.flatMap(l => poligono(campo, l.geo) || []);
     if (!pts.length) { mapa.m.setView(campo.centro, 14, { animate: animar }); return; }
     mapa.m.fitBounds(L.latLngBounds(pts), { padding: [28, 28], animate: animar });
   }
@@ -1252,7 +1326,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
         ? '<b>' + esc(lote.nombre) + '</b>: ' + (rs.delta > .5
           ? 'la mejor rotación según tus prioridades es <b>' + esc(rs.mejor.nombre) + '</b> (' + Math.round(rs.mejor.score) + ' pts), ' + Math.round(rs.delta) + ' más que la actual.'
           : 'tu rotación actual es la mejor según tus prioridades (' + Math.round(rs.actual.score) + ' pts).') +
-          (state.escenario === 'promedio' ? '' : ' <span class="hint">Mostrando el ' + esc(M.ESCENARIOS[campo.zona][state.escenario].nombre.toLowerCase()) + ' ' + esc(M.ESCENARIOS[campo.zona][state.escenario].campania) + '.</span>')
+          (state.escenario === 'promedio' || !M.ESCENARIOS[zonaMapa(campo)][state.escenario] ? '' : ' <span class="hint">Mostrando el ' + esc(M.ESCENARIOS[zonaMapa(campo)][state.escenario].nombre.toLowerCase()) + ' ' + esc(M.ESCENARIOS[zonaMapa(campo)][state.escenario].campania) + '.</span>')
         : '';
     if (!mapa.m) return;
     // Reencuadrar solo si cambió el campo o el lugar de la página donde está el mapa (no pisa el zoom del usuario).
@@ -1271,7 +1345,9 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       let rec;
       try { rec = M.recomendar(inputEsc(c, l), M.parseFecha(state.siembra), state.cosecha ? M.parseFecha(state.cosecha) : null, state.pesos, 1).top[0]; }
       catch (e) { rec = null; }
-      const pts = poligono(c, l.geo), centro = [pts.reduce((s, p) => s + p[0], 0) / pts.length, pts.reduce((s, p) => s + p[1], 0) / pts.length];
+      const pts = poligono(c, l.geo);
+      if (!pts) return; // lote sin contorno: no hay dónde poner la etiqueta
+      const centro = [pts.reduce((s, p) => s + p[0], 0) / pts.length, pts.reduce((s, p) => s + p[1], 0) / pts.length];
       const texto = rec ? esc(rec.nombre) : 'Sin cultivo viable';
       const etiqueta = L.marker(centro, { interactive: true, keyboard: false, icon: L.divIcon({ className: '', html: '<span class="crop-map-label">' + texto + '</span>', iconSize: null, iconAnchor: [0, 0] }) });
       etiqueta.bindTooltip('<b>' + esc(l.nombre) + '</b><br>Recomendado para sembrar el ' + fmtF(state.siembra) + ': <b>' + texto + '</b>' + (rec ? '<br>Aptitud ' + Math.round(rec.aptitud_pct) + ' % · ' + Math.round(rec.score) + '/100' : '') + '<br><span class="hint">Estimación del prototipo; verificar datos de suelo en campo.</span>');
@@ -1448,9 +1524,9 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       '<div class="tbl-wrap"><table class="dash-tbl"><thead><tr><th class="izq">Lote</th><th>ha</th><th class="izq">Rotación actual</th><th>Pts</th>' +
       '<th class="izq">Mejor alternativa</th><th>Pts</th><th>Mejora</th><th>Suelo cubierto</th></tr></thead><tbody>' + filasT + '</tbody></table></div></section>';
 
-    const zonas = [...new Set(filas.map(x => x.campo.zona))];
+    const zonas = [...new Set(filas.map(x => climaLote(x.campo, x.lote).zid))];
     const clima = '<section class="card card-pad"><div class="rank-head"><h2>Clima de referencia · NASA POWER</h2>' +
-      '<span class="hint">Promedio mensual ' + esc(M.FUENTE_CLIMA.periodo) + ' en un punto por zona · no es el pronóstico de esta campaña</span></div>' +
+      '<span class="hint">Promedio mensual ' + esc(M.FUENTE_CLIMA.periodo) + ' por celda de NASA POWER · no es el pronóstico de esta campaña</span></div>' +
       '<div class="clima-grid' + (zonas.length === 1 ? ' uno' : '') + '">' + zonas.map(climaZonaHTML).join('') + '</div></section>';
 
     const pr = state.wPreset ? WEIGHT_PRESETS[state.wPreset].t : 'personalizadas';
@@ -1591,7 +1667,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
   }
   function calcularHa(campo, lote) {
     const base = inputEsc(campo, lote), f = M.parseFecha(state.siembra), cos = state.cosecha ? M.parseFecha(state.cosecha) : null;
-    const rots = rotacionesDe(lote), camps = Object.keys(M.ESCENARIOS[campo.zona] || {}).filter(k => /^c\d{4}$/.test(k));
+    const rots = rotacionesDe(lote), camps = Object.keys(M.ESCENARIOS[base.zona] || {}).filter(k => /^c\d{4}$/.test(k));
     for (const cel of hect.celdas) {
       const l = sueloCelda(base, cel, lote.id), r = M.recomendar(l, f, cos, state.pesos, 3), top = r.top[0] || null;
       const x = { suelo: l, top: r.top, cult: top ? top.cultivo : null, margen: top ? top.margen_usd_ha : null, medio: null, malo: null, rot: null };

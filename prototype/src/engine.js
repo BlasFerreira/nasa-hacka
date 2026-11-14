@@ -106,7 +106,8 @@
   const ESCENARIOS_ORDEN = ['promedio', 'seco', 'humedo'];
   const ESCENARIOS = {}, CAMPANIAS = {};
   const PISO_CLIMA = 0.15; // aptitud climática mínima de un cultivo ya sembrado (cosecha fallida)
-  for (const [zid, z] of Object.entries(ZONAS)) {
+  function prepararZona(zid) {
+    const z = ZONAS[zid];
     const totalProm = z.precip.reduce((a, b) => a + b, 0);
     const camp = [], s = z.serie || {};
     for (const y of Object.keys(s).map(Number).sort((a, b) => a - b)) {
@@ -128,6 +129,31 @@
     for (const e of Object.values(esc)) e.anomalia_pct = Math.round(100 * (e.total - totalProm) / totalProm);
     ESCENARIOS[zid] = esc;
   }
+  for (const zid of Object.keys(ZONAS)) prepararZona(zid);
+
+  // Convierte la respuesta JSON de la API mensual de NASA POWER (T2M, PRECTOTCORR) en una zona climática:
+  // promedio mensual del período + serie año por año. Misma cuenta que fetch_power.js.
+  function climaDesdePower(j, ini, fin) {
+    const T = j.properties.parameter.T2M, P = j.properties.parameter.PRECTOTCORR;
+    const dim = (y, m) => new Date(Date.UTC(y, m, 0)).getUTCDate();
+    const ok = v => v !== undefined && v !== null && v > -900;
+    const serie = {}, st = Array(12).fill(0), sp = Array(12).fill(0), n = Array(12).fill(0);
+    for (let y = ini; y <= fin; y++) {
+      const t = [], pr = [];
+      for (let m = 1; m <= 12; m++) {
+        const k = String(y) + String(m).padStart(2, '0'), tv = T[k], pv = P[k];
+        if (ok(tv) && ok(pv)) {
+          t.push(Math.round(tv * 10) / 10); pr.push(Math.round(pv * dim(y, m)));
+          st[m - 1] += tv; sp[m - 1] += pv * dim(y, m); n[m - 1]++;
+        } else { t.push(null); pr.push(null); }
+      }
+      serie[y] = { temp: t, precip: pr };
+    }
+    if (n.some(x => !x)) throw new Error('NASA POWER no devolvió datos para todos los meses');
+    return { temp: st.map((v, i) => Math.round(v / n[i] * 10) / 10), precip: sp.map((v, i) => Math.round(v / n[i])), serie };
+  }
+  // Agrega una zona climática en tiempo de ejecución (p. ej. la celda de NASA POWER de un lote nuevo).
+  function registrarZona(id, datos) { ZONAS[id] = datos; prepararZona(id); return ZONAS[id]; }
 
   /* Rendimientos oficiales de MAGyP (Estimaciones Agrícolas) agregados por zona, y resultado del gate de ML:
      rendimiento medio de las últimas 10 campañas sobre superficie cosechada (t/ha) y, si el clima de la ventana
@@ -695,7 +721,7 @@
       filas, n_campanias: camps.length, estable: estable ? estable.id : null, periodo: POWER.periodo };
   }
 
-  const API = { ESCENARIOS, ESCENARIOS_ORDEN, PISO_CLIMA, PEOR_FRAC, compararEscenarios, riesgoZona, resilienciaClima, CULTIVOS, ZONAS, FUENTE_CLIMA, TEXTURAS, DRENAJES, PESOS_DEFECTO, PESO_MAX, COMPONENTES_NOMBRE, COMPONENTES_DESC, FACTORES_NOMBRE,
+  const API = { ESCENARIOS, ESCENARIOS_ORDEN, PISO_CLIMA, PEOR_FRAC, climaDesdePower, registrarZona, POWER_PERIODO: POWER.periodo, compararEscenarios, riesgoZona, resilienciaClima, CULTIVOS, ZONAS, FUENTE_CLIMA, TEXTURAS, DRENAJES, PESOS_DEFECTO, PESO_MAX, COMPONENTES_NOMBRE, COMPONENTES_DESC, FACTORES_NOMBRE,
     HORIZONTE_ANIOS, REF_MARGEN_ANUAL, recomendar, evaluarRotacion, compararRotaciones, normalizarPesos, parseFecha, fmtISO, addDias, margenUsd, rendBase, econDe };
   if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.Motor = API;
 })(typeof window !== 'undefined' ? window : globalThis);
