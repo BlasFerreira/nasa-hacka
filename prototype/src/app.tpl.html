@@ -356,6 +356,51 @@ details.disc li b { color: var(--text); font-weight: 500; }
 .esc-tab td { color: var(--muted); }
 .esc-tab td:first-child { color: var(--text); }
 
+/* Identidad de cada análisis del lote */
+.ctx[data-vista="rotaciones"] { --acc: var(--primary); border-top: 4px solid var(--acc); }
+.ctx[data-vista="cultivo"] { --acc: var(--good); border-top: 4px solid var(--acc); }
+.ctx-ey { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--acc); }
+.ctx-ey svg { width: 16px; height: 16px; stroke: currentColor; }
+.ctx-lote { font-size: 14px; color: var(--text); }
+.ctx-lote b { font-weight: 600; }
+.vtabs { display: inline-flex; gap: 4px; padding: 4px; margin-top: 8px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); max-width: 100%; flex-wrap: wrap; }
+.vtabs a { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 9px; font-weight: 600; font-size: 14px; color: var(--muted); text-decoration: none; min-height: 40px; }
+.vtabs a svg { width: 18px; height: 18px; stroke: currentColor; }
+.vtabs a:hover { color: var(--text); }
+.vtabs a[aria-selected="true"] { background: var(--surface); color: var(--acc); box-shadow: 0 1px 3px rgb(0 0 0 / .12); }
+#view-lote[data-vista="rotaciones"] .solo-cultivo, #view-lote[data-vista="cultivo"] .solo-rot { display: none; }
+#view-lote[data-vista="rotaciones"] #map { height: 220px; }
+#view-lote .cols { grid-template-columns: minmax(0, 1fr) minmax(0, 340px); }
+#view-lote .cols > .stack:first-child { order: 2; }
+#view-lote .cols > .stack:last-child { order: 1; }
+@media (max-width: 1060px) { #view-lote .cols { grid-template-columns: 1fr; } }
+details.lote-det > summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 14px 16px; }
+details.lote-det > summary::-webkit-details-marker { display: none; }
+details.lote-det > summary::after { content: '▾'; color: var(--muted); }
+details.lote-det[open] > summary::after { content: '▴'; }
+details.lote-det > .form { padding-top: 0; }
+/* Tarjeta de veredicto: la respuesta de cada página, arriba de todo */
+.verdict { padding: 18px 20px; display: grid; gap: 10px; border-left: 5px solid var(--acc, var(--primary)); }
+.verdict.rot { --acc: var(--primary); }
+.verdict.cul { --acc: var(--good); }
+.v-ey { font-size: 13px; font-weight: 600; color: var(--acc); }
+.verdict h2 { font-size: 26px; line-height: 1.2; letter-spacing: -0.02em; font-weight: 600; }
+.verdict h2 b { color: var(--acc); font-weight: 700; }
+.v-score { font-size: 15px; color: var(--muted); }
+.v-score b { color: var(--text); }
+.v-why { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 15px; }
+.v-why li { display: grid; grid-template-columns: 18px 1fr; gap: 6px; }
+.v-why li b { font-weight: 700; }
+.v-why li.pos b { color: var(--good); }
+.v-why li.neg b { color: var(--bad); }
+.v-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.tl-cmp { padding: 16px; display: grid; gap: 12px; }
+.tl-row { display: grid; grid-template-columns: minmax(0, 170px) minmax(0, 1fr) 44px; gap: 12px; align-items: center; }
+.tl-row .rn { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; min-width: 0; }
+.tl-row .rn span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tl-row .sc { font-size: 18px; font-weight: 600; text-align: right; }
+@media (max-width: 640px) { .tl-row { grid-template-columns: 1fr 44px; } .tl-row .tlw { grid-column: 1 / -1; } }
+
 /* Pestañas */
 .tabs { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); align-self: flex-start; max-width: 100%; }
 .tabs button { border: 0; background: transparent; border-radius: 7px; padding: 6px 14px; font-weight: 500; color: var(--muted); cursor: pointer; min-height: 32px; }
@@ -492,13 +537,13 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       <div class="stack">
         <section class="card" aria-labelledby="t-plan">
           <div class="form">
-            <h2 id="t-plan" class="section-label">Planificación</h2>
+            <h2 id="t-plan" class="section-label">Ajustes</h2>
             <div class="field">
-              <label for="f-siembra">Fecha de siembra</label>
+              <label for="f-siembra"><span class="solo-rot">Empezar el plan el</span><span class="solo-cultivo">¿Cuándo querés sembrar?</span></label>
               <input type="date" id="f-siembra">
               <div class="presets" id="presets"></div>
             </div>
-            <div class="field">
+            <div class="field solo-cultivo">
               <label for="f-cosecha">Cosechar antes de <span class="hint">opcional</span></label>
               <div style="display:flex;gap:6px">
                 <input type="date" id="f-cosecha">
@@ -521,9 +566,10 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
           </div>
         </section>
 
-        <section class="card" aria-labelledby="t-lote">
+        <section class="card">
+          <details class="lote-det">
+          <summary><span><span class="section-label" id="t-lote">Datos del lote</span> <span class="hint">nombre, contorno, suelo</span></span></summary>
           <div class="form">
-            <h2 id="t-lote" class="section-label">Parámetros del lote</h2>
             <div class="row2">
               <div class="field"><label for="p-nombre">Nombre</label><input type="text" id="p-nombre" maxlength="40"></div>
               <div class="field"><label for="p-sup">Superficie (ha) <span class="hint" id="p-sup-h"></span></label><input type="number" id="p-sup" min="1" max="20000" step="1"></div>
@@ -557,6 +603,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
             </div>
             <p class="hint">Lo que cargás vos pasa a origen «productor» y tiene prioridad sobre el dato de dataset.</p>
           </div>
+          </details>
         </section>
       </div>
 
@@ -830,8 +877,28 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
   const migas = items => items.map(([t, h]) => h ? '<a href="' + h + '">' + esc(t) + '</a>' : '<span>' + esc(t) + '</span>').join('<span aria-hidden="true">›</span>');
   const presetsHTML = () => Object.keys(WEIGHT_PRESETS).map(k =>
     '<button type="button" class="btn" data-wp="' + k + '" aria-pressed="' + (state.wPreset === k) + '">' + WEIGHT_PRESETS[k].t + '</button>').join('');
+  const VISTA_INFO = {
+    rotaciones: { tab: 'Plan a 3 años', ey: 'Comparar rotaciones', q: '¿Qué plan te conviene para los próximos 3 años?' },
+    cultivo: { tab: 'Qué sembrar ahora', ey: 'Próximo cultivo', q: '¿Qué te conviene sembrar ahora?' },
+  };
   function renderCtx() {
     let k, h1, sub, der;
+    $('ctx').dataset.vista = esLote(state.vista) ? state.vista : '';
+    if (esLote(state.vista)) {
+      const { campo, lote } = actual(), v = state.vista, info = VISTA_INFO[v];
+      k = migas([['Resumen general', '#/inicio'], [campo.nombre, '#/campo/' + campo.id], [lote.nombre]]);
+      const opts = CAMPOS.map(c => '<optgroup label="' + esc(c.nombre) + '">' +
+        c.lotes.map(l => '<option value="' + l.id + '"' + (l.id === lote.id ? ' selected' : '') + '>' + esc(l.nombre) + '</option>').join('') + '</optgroup>').join('');
+      const tabs = '<nav class="vtabs" role="tablist" aria-label="Análisis del lote">' + Object.keys(VISTA_INFO).map(x =>
+        '<a role="tab" href="' + hrefLote(lote.id, x) + '" aria-selected="' + (x === v) + '">' + ICON[x] + VISTA_INFO[x].tab + '</a>').join('') + '</nav>';
+      $('ctx').innerHTML = '<div class="ctx-l"><div class="ctx-k">' + k + '</div>' +
+        '<span class="ctx-ey">' + ICON[v] + esc(info.ey) + '</span>' +
+        '<h1 id="page-h1" tabindex="-1">' + esc(info.q) + '</h1>' +
+        '<p class="ctx-lote"><b>' + esc(lote.nombre) + '</b> · ' + esc(campo.nombre) + ' · ' + lote.superficie + ' ha</p>' +
+        '<p class="ctx-s">' + esc(campo.provincia + ' · ' + climaTexto(campo, lote)) + '</p>' + tabs + '</div>' +
+        '<div class="ctx-r"><label>Lote <select id="ctx-lote">' + opts + '</select></label></div>';
+      return;
+    }
     if (state.vista === 'recorrido') {
       k = migas([['Resumen general', '#/inicio'], ['Recorrido']]);
       h1 = 'El campo, hectárea por hectárea';
@@ -1033,14 +1100,32 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     const { campo, lote } = actual();
     let r;
     try { r = calcular(campo, lote); } catch (e) { $('results').innerHTML = '<div class="card empty">Revisá las prioridades: ' + esc(e.message) + '</div>'; return; }
-    if (state.abierto === null && r.top[0]) state.abierto = r.top[0].cultivo;
+    if (state.abierto === null) state.abierto = '';
     const leyenda = Object.keys(COL).map(k => '<span><i style="background:' + COL[k] + '"></i>' + M.COMPONENTES_NOMBRE[k] + ' ' + pct(r.pesos[k]) + ' %</span>').join('');
     const lista = r.top.length ? r.top.map(e => itemHTML(e, e.cultivo === state.abierto)).join('') : '<div class="card empty">Ningún cultivo del catálogo es viable para este lote en la fecha elegida. Probá otra fecha de siembra.</div>';
     const desc = r.descartados.length
       ? '<details class="card disc"><summary>' + r.descartados.length + ' cultivos descartados para esta fecha</summary><ul>' +
         r.descartados.map(d => '<li><b>' + esc(d.nombre) + '</b>: ' + esc(d.razones[0]) + '</li>').join('') + '</ul></details>' : '';
-    $('results').innerHTML = rotacionHTML(r.rotacion_actual) +
-      '<div class="rank-head"><h2>Top ' + r.top.length + ' para sembrar el ' + fmtF(r.fecha_siembra) + '</h2></div><div class="legend">' + leyenda + '</div>' +
+    // Veredicto: el mejor cultivo para esta fecha, con el porqué en pocas líneas.
+    const t0 = r.top[0];
+    let hero = '';
+    if (t0) {
+      const fuertes = Object.entries(t0.componentes).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([k]) => M.COMPONENTES_NOMBRE[k].toLowerCase());
+      const f = t0.apt.factores, peor = Object.keys(f).reduce((a, k) => f[k] < f[a] ? k : a, Object.keys(f)[0]);
+      const pros = ['Se destaca en ' + fuertes.join(' y ') + '.',
+        t0.tipo === 'cobertura' ? 'Es un cultivo de cobertura: protege y mejora el suelo para la próxima campaña, no da ingreso directo.' : 'Margen estimado: USD ' + t0.margen_usd_ha + '/ha.'];
+      const riesgo = t0.alertas[0] || (f[peor] < .8 ? 'Lo que más lo limita: ' + M.FACTORES_NOMBRE[peor] + ' (' + Math.round(f[peor] * 100) + ' %).' : '');
+      const sig = r.top[1];
+      hero = '<section class="card verdict cul"><div class="v-ey">Para sembrar el ' + fmtF(t0.siembra) + '</div>' +
+        '<h2>Sembrá <b>' + esc(t0.nombre) + '</b></h2>' +
+        '<p class="v-score"><b>' + Math.round(t0.score) + ' pts</b> · aptitud ' + Math.round(t0.aptitud_pct) + ' % · cosecha estimada ' + fmtF(t0.cosecha_estimada) +
+        (sig ? ' · le sigue ' + esc(sig.nombre) + ' (' + Math.round(sig.score) + ')' : '') + '</p>' +
+        '<ul class="v-why">' + pros.map(t => '<li class="pos"><b>+</b><span>' + esc(t) + '</span></li>').join('') +
+        (riesgo ? '<li class="neg"><b>−</b><span>' + esc(riesgo) + '</span></li>' : '') + '</ul>' +
+        '<div class="v-actions"><span class="hint">Cambiá la fecha en «Ajustes» para ver qué conviene en otro momento.</span></div></section>';
+    }
+    $('results').innerHTML = hero + rotacionHTML(r.rotacion_actual) +
+      '<div class="rank-head"><h2>Las ' + r.top.length + ' mejores opciones para el ' + fmtF(r.fecha_siembra) + '</h2></div><div class="legend">' + leyenda + '</div>' +
       lista + desc +
       '<section class="card foot"><b>Qué hay detrás de estos números</b><ul>' +
       '<li>Clima: promedio mensual ' + M.FUENTE_CLIMA.periodo + ' de NASA POWER (temperatura a 2 m y precipitación) en la celda de NASA POWER de cada lote (unos 55 × 60 km). Es climatología, no el pronóstico de esta campaña. SMAP y MODIS/Landsat están planificados.</li>' +
@@ -1204,21 +1289,28 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     } catch (err) { $('results').innerHTML = '<div class="card empty">Revisá las prioridades: ' + esc(err.message) + '</div>'; return; }
     const base = r.rotaciones[0], m = r.mejor;
     const escAct = ce.escenarios.find(e => e.id === state.escenario) || ce.escenarios[0];
-    const pre = escAct.id === 'promedio' ? '' : 'Con el clima de <b>' + esc(escAct.campania) + '</b> repetido 3 años, ';
-    const cap = t => pre ? t.charAt(0).toLowerCase() + t.slice(1) : t;
-    const lead = pre + cap(m.id === 'actual'
-      ? 'Tu rotación actual queda primera, con <b>' + Math.round(m.score) + '</b> puntos según tus prioridades.'
-      : 'Según tus prioridades, <b>' + esc(m.nombre) + '</b> suma <b>' + Math.round(m.score) + '</b> puntos, <b>' + Math.round(m.score - base.score) + '</b> más que tu rotación actual.');
     const ini = M.parseFecha(base.inicio), c0 = ini.getUTCFullYear() - (ini.getUTCMonth() < 6 ? 1 : 0);
     const camp = y => y + '/' + String(y + 1).slice(2);
-    const head = '<section class="card rsum"><div class="rsum-top"><h2>Tus rotaciones · campañas ' + camp(c0) + ' a ' + camp(c0 + M.HORIZONTE_ANIOS - 1) + '</h2>' +
-      '<button class="btn" type="button" id="rot-reset">Restablecer ejemplos</button></div>' +
-      '<p class="lead">' + lead + '</p>' +
-      '<p class="hint">Cada rotación tiene un puntaje de 0 a 100 según tus prioridades. Cambialas a la izquierda y mirá cómo cambia el orden.</p>' +
-      '</section>';
     const leyenda = '<div class="tl-legend"><span><i style="background:var(--r1)"></i>Cultivo comercial</span><span><i style="background:color-mix(in srgb, var(--c-suelo) 45%, var(--surface))"></i>Cobertura</span>' +
       '<span><i style="background:repeating-linear-gradient(135deg, var(--surface-2) 0 3px, var(--surface) 3px 6px)"></i>Barbecho (suelo desnudo)</span></div>';
-    $('results').innerHTML = head + escTablaHTML(ce) + leyenda + r.rotaciones.map((e, i) => rotCardHTML(e, i, m.id, ce)).join('') + ejesHTML(r) + evidenciaHTML();
+    // Veredicto: la respuesta de la página en una tarjeta.
+    const iM = r.rotaciones.indexOf(m), lista = (iM > 0 ? difClima(ce.filas[iM], ce.filas[0]) : []).concat(m.diferencias || []);
+    const pros = lista.filter(d => d[0] === '+').slice(0, 3), contra = lista.filter(d => d[0] === '-').slice(0, 1);
+    const segunda = r.rotaciones.filter(e => e.id !== m.id && e.pasos).sort((a, b) => b.score - a.score)[0];
+    const titulo = m.id === 'actual' ? 'Tu rotación actual sigue siendo <b>la mejor</b>' : 'Te conviene <b>' + esc(m.nombre) + '</b>';
+    const puntaje = '<b>' + Math.round(m.score) + ' pts</b> según tus prioridades · ' + (m.id === 'actual'
+      ? (segunda ? 'la siguiente es ' + esc(segunda.nombre) + ' con ' + Math.round(segunda.score) : '')
+      : '<b>+' + Math.round(m.score - base.score) + '</b> frente a tu rotación actual (' + Math.round(base.score) + ')');
+    const why = pros.concat(contra).map(([sg, t]) => '<li class="' + (sg === '+' ? 'pos' : 'neg') + '"><b>' + (sg === '+' ? '+' : '−') + '</b><span>' + esc(t) + '</span></li>').join('');
+    const head = '<section class="card verdict rot"><div class="v-ey">Plan para las campañas ' + camp(c0) + ' a ' + camp(c0 + M.HORIZONTE_ANIOS - 1) +
+      (escAct.id === 'promedio' ? '' : ' · con el clima de ' + esc(escAct.campania)) + '</div>' +
+      '<h2>' + titulo + '</h2><p class="v-score">' + puntaje + '</p>' + (why ? '<ul class="v-why">' + why + '</ul>' : '') +
+      '<div class="v-actions"><span class="hint">Puntaje de 0 a 100. Cambiá las prioridades en «Ajustes» y mirá cómo cambia.</span>' +
+      '<button class="btn" type="button" id="rot-reset">Restablecer ejemplos</button></div></section>';
+    const tlCmp = '<section class="card tl-cmp" aria-label="Las 3 rotaciones en el tiempo"><div class="rank-head"><h2>Las 3 rotaciones en el tiempo</h2></div>' +
+      r.rotaciones.map((e, i) => e.pasos ? '<div class="tl-row"><span class="rn"><span class="rtag sm" style="--rc:' + ROT_COL[i] + '">' + ROT_TAG[i] + '</span><span>' + esc(e.nombre) + '</span></span>' +
+        '<div class="tlw">' + timelineHTML(e, ROT_COL[i]) + '</div><span class="sc num">' + Math.round(e.score) + '</span></div>' : '').join('') + leyenda + '</section>';
+    $('results').innerHTML = head + tlCmp + escTablaHTML(ce) + '<div class="rank-head"><h2>Detalle de cada rotación</h2></div>' + r.rotaciones.map((e, i) => rotCardHTML(e, i, m.id, ce)).join('') + ejesHTML(r) + evidenciaHTML();
     $('results').querySelectorAll('[data-esc]').forEach(b => b.addEventListener('click', () => { state.escenario = b.dataset.esc; render(); }));
     $('rot-reset').addEventListener('click', () => { lote.rotacion_habitual = lote._rotOrig.slice(); delete state.alts[lote.id]; render(); });
     $('results').querySelectorAll('.x').forEach(b => b.addEventListener('click', () => {
@@ -1320,7 +1412,11 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
   }
   function updateMapa() {
     const campo = campoMapa(), enLote = esLote(state.vista), { lote } = actual(), rs = enLote ? mejoraLote(campo, lote) : null;
-    $('map-info').innerHTML = !enLote
+    let topCul = null;
+    if (enLote && state.vista === 'cultivo') { try { topCul = calcular(campo, lote).top[0] || null; } catch (e) { topCul = null; } }
+    $('map-info').innerHTML = topCul
+      ? '<b>' + esc(lote.nombre) + '</b>: para sembrar el ' + fmtF(state.siembra) + ' conviene <b>' + esc(topCul.nombre) + '</b> (' + Math.round(topCul.score) + ' pts). Las etiquetas del mapa muestran el mejor cultivo de cada lote.'
+      : !enLote
       ? 'Tocá un lote en el mapa o en la tabla para abrir su comparación de rotaciones.'
       : rs
         ? '<b>' + esc(lote.nombre) + '</b>: ' + (rs.delta > .5
@@ -1986,6 +2082,12 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     // El resumen se vuelve a generar entero: antes se rescata el mapa para no destruir el de Leaflet.
     if (dash) $('map-holder').appendChild($('mapcard'));
     $('view-dash').hidden = !dash; $('view-lote').hidden = dash;
+    $('view-lote').dataset.vista = dash ? '' : state.vista;
+    if (!dash && mapa.m && mapa.cultivo) {
+      // Próximo cultivo: la capa de cultivo recomendado se prende; en el plan a 3 años estorba.
+      if (state.vista === 'cultivo') { if (!mapa.m.hasLayer(mapa.cultivo)) mapa.m.addLayer(mapa.cultivo); }
+      else if (mapa.m.hasLayer(mapa.cultivo)) mapa.m.removeLayer(mapa.cultivo);
+    }
     renderMenu(); renderCtx();
     if (dash) renderDash(); else renderResults();
     ubicarMapa();
