@@ -89,7 +89,7 @@
       rastrojo: .90, erosion: .80, raiz: .60, tol_sequia: .90, tol_anegamiento: .30 }),
   };
 
-  const PESOS_DEFECTO = { ingreso: .30, salud_suelo: .25, ahorro_insumos: .15, resiliencia: .15, cumplimiento: .15 };
+  const PESOS_DEFECTO = { ingreso: .25, rapidez: .15, salud_suelo: .20, ahorro_insumos: .15, resiliencia: .15, cumplimiento: .10 };
   const PESO_MAX = 0.60;
   const N_BASE_SUELO = 60;
 
@@ -106,8 +106,20 @@
     agua: 'agua del ciclo', ph: 'pH', textura: 'textura', drenaje: 'drenaje', pendiente: 'pendiente',
   };
   const COMPONENTES_NOMBRE = {
-    ingreso: 'Ingreso', salud_suelo: 'Salud del suelo', ahorro_insumos: 'Ahorro de insumos',
-    resiliencia: 'Resiliencia', cumplimiento: 'Cumplimiento',
+    ingreso: 'Mayor rendimiento',
+    rapidez: 'Menor espera a siembra',
+    salud_suelo: 'Mejor salud de suelo',
+    ahorro_insumos: 'Ahorro de insumos',
+    resiliencia: 'Resiliencia climática',
+    cumplimiento: 'Cumplimiento',
+  };
+  const COMPONENTES_DESC = {
+    ingreso: 'Prioriza rinde esperado y margen económico',
+    rapidez: 'Siembra inmediata en ventana óptima y ciclo más corto',
+    salud_suelo: 'Rastrojo, rotación de familias y menor erosión',
+    ahorro_insumos: 'Aprovecha fijación de N y crédito del antecesor',
+    resiliencia: 'Tolerancia a sequía o anegamiento del lote',
+    cumplimiento: 'Evita monocultivo y erosión en pendiente',
   };
 
   /* ---------- fechas (UTC) ---------- */
@@ -254,10 +266,23 @@
     const bal = balanceNutrientes(cid, lote);
     const [salud, notaDiv] = saludSuelo(cid, lote);
     const [cumpl, motivos] = cumplimiento(c, cid, lote.historial, lote.pendiente);
+
+    // Rapidez: siembra inmediata en ventana óptima (65%) + ciclo corto para liberar el lote antes (35%)
+    const factorCicloCorto = clamp(1 - (c.ciclo_dias - 90) / 100);
+    const rapidezScore = clamp(0.65 * apt.factores.epoca + 0.35 * factorCicloCorto);
+
     Object.assign(base, {
       descartado: false, margen_usd_ha: Math.round(margen), rend_relativo_t_ha: Math.round(rend * 100) / 100,
-      balance: bal, comp: { ingreso: null, salud_suelo: salud, ahorro_insumos: 1 - clamp(bal.n_a_reponer / 150),
-        resiliencia: resiliencia(cid, lote), cumplimiento: cumpl },
+      ciclo_dias: c.ciclo_dias,
+      balance: bal,
+      comp: {
+        ingreso: null,
+        rapidez: rapidezScore,
+        salud_suelo: salud,
+        ahorro_insumos: 1 - clamp(bal.n_a_reponer / 150),
+        resiliencia: resiliencia(cid, lote),
+        cumplimiento: cumpl
+      },
       notaDiv, motivos, siembra: fmtISO(siembra), cosecha_estimada: fmtISO(addDias(siembra, c.ciclo_dias)),
     });
     return base;
@@ -340,7 +365,7 @@
     return Object.assign(out, { viable: true, score: ev.score, idoneidad: idon, posicion: pos, nota });
   }
 
-  const API = { CULTIVOS, ZONAS, FUENTE_CLIMA, TEXTURAS, DRENAJES, PESOS_DEFECTO, PESO_MAX, COMPONENTES_NOMBRE, FACTORES_NOMBRE,
+  const API = { CULTIVOS, ZONAS, FUENTE_CLIMA, TEXTURAS, DRENAJES, PESOS_DEFECTO, PESO_MAX, COMPONENTES_NOMBRE, COMPONENTES_DESC, FACTORES_NOMBRE,
     recomendar, normalizarPesos, parseFecha, fmtISO, addDias };
   if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.Motor = API;
 })(typeof window !== 'undefined' ? window : globalThis);
