@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Asistente de rotación de cultivos</title>
+<title>TerraFutures — Soporte de Decisiones Agrícolas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -411,6 +411,15 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
 .evid .tag { margin-right: 6px; }
 .conf { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 13px; }
 .conf b { color: var(--warn); }
+/* V0.3 Diagnóstico Climático NASA & V0.6 Índice de Resiliencia */
+.risk-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-top: 10px; }
+.risk-box { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--surface-2); display: grid; gap: 4px; }
+.risk-box .rk-top { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 600; }
+.risk-badge { font-family: var(--mono); font-size: 11px; padding: 1px 7px; border-radius: 999px; font-weight: 600; }
+.risk-badge.alto { background: color-mix(in srgb, var(--bad) 15%, var(--surface)); color: var(--bad); border: 1px solid color-mix(in srgb, var(--bad) 40%, var(--border)); }
+.risk-badge.medio { background: color-mix(in srgb, var(--warn) 15%, var(--surface)); color: var(--warn); border: 1px solid color-mix(in srgb, var(--warn) 40%, var(--border)); }
+.risk-badge.bajo { background: color-mix(in srgb, var(--good) 15%, var(--surface)); color: var(--good); border: 1px solid color-mix(in srgb, var(--good) 40%, var(--border)); }
+.resil-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-family: var(--mono); padding: 2px 8px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--c-resil) 45%, var(--border)); background: color-mix(in srgb, var(--c-resil) 12%, var(--surface)); color: var(--text); }
 @media (prefers-reduced-motion: no-preference) { .meter > i, .stackbar i { transition: width .25s ease; } }
 </style>
 </head>
@@ -421,7 +430,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
     </button>
     <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><ellipse cx="12" cy="12" rx="9" ry="4.5" transform="rotate(-35 12 12)"/><circle cx="12" cy="12" r="2.1" fill="#fc3d21" stroke="#fc3d21"/><path d="M18.8 5.5h.1M5.1 18.2h.1" stroke-width="2.4"/></svg></span>
-    <span>Asistente de rotación</span>
+    <span>TerraFutures <span class="sub" style="font-weight:400;margin-left:4px">· Rotación & Clima</span></span>
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
     <span class="pill">Clima: NASA POWER</span>
@@ -1321,10 +1330,10 @@ window.POWER_CLIMATOLOGY = {"fuente":"NASA POWER (Prediction Of Worldwide Energy
   const PRESETS = [['14 nov', '2026-11-14'], ['10 ene', '2027-01-10'], ['10 may', '2027-05-10'], ['20 jun', '2027-06-20']];
 
   const WEIGHT_PRESETS = {
-    equilibrado: { t: 'Equilibrado',       w: { ingreso: .25, rapidez: .15, salud_suelo: .20, ahorro_insumos: .15, resiliencia: .15, cumplimiento: .10 } },
-    rendimiento: { t: 'Mayor rendimiento', w: { ingreso: .55, rapidez: .10, salud_suelo: .10, ahorro_insumos: .10, resiliencia: .08, cumplimiento: .07 } },
-    rapidez:     { t: 'Menor espera',      w: { ingreso: .15, rapidez: .55, salud_suelo: .10, ahorro_insumos: .07, resiliencia: .07, cumplimiento: .06 } },
-    suelo:       { t: 'Mejor salud suelo', w: { ingreso: .10, rapidez: .10, salud_suelo: .50, ahorro_insumos: .12, resiliencia: .10, cumplimiento: .08 } },
+    equilibrado: { t: 'Equilibrado',        w: { ingreso: .25, rapidez: .15, salud_suelo: .20, ahorro_insumos: .15, resiliencia: .15, cumplimiento: .10 } },
+    rendimiento: { t: 'Máx. rentabilidad',  w: { ingreso: .55, rapidez: .10, salud_suelo: .10, ahorro_insumos: .10, resiliencia: .08, cumplimiento: .07 } },
+    resiliencia: { t: 'Máx. resiliencia',   w: { ingreso: .12, rapidez: .08, salud_suelo: .20, ahorro_insumos: .10, resiliencia: .42, cumplimiento: .08 } },
+    suelo:       { t: 'Salud de suelo',     w: { ingreso: .10, rapidez: .10, salud_suelo: .50, ahorro_insumos: .12, resiliencia: .10, cumplimiento: .08 } },
   };
 
   const $ = id => document.getElementById(id);
@@ -1757,6 +1766,42 @@ window.POWER_CLIMATOLOGY = {"fuente":"NASA POWER (Prediction Of Worldwide Energy
       Object.keys(COL).map(k => '<span>' + M.COMPONENTES_NOMBRE[k] + ' <b>' + Math.round(e.componentes[k]) + '</b></span>').join('') + '</div>' +
       '<div class="ev"><h4 class="section-label">Evidencia</h4>' + evid + '</div></div></article>';
   }
+  /* ---------- V0.2 & V0.3: Diagnóstico Climático NASA POWER por lote ---------- */
+  function diagnosticoClimaticoHTML(campo, lote) {
+    const cl = climaLote(campo, lote), zid = cl.zid, z = M.ZONAS[zid];
+    if (!z) return '';
+    const rz = M.riesgoZona(zid);
+    const lluviaAnual = Math.round(z.precip.reduce((a, b) => a + b, 0));
+    const tempMedia = (z.temp.reduce((a, b) => a + b, 0) / 12).toFixed(1);
+    // Déficit hídrico estival (Dic-Ene-Feb) vs demanda típica estival (~420 mm)
+    const lluviaEstival = Math.round(z.precip[11] + z.precip[0] + z.precip[1]);
+    const freqSeca = rz ? Math.round((rz.secas / rz.n) * 100) : 20;
+    const nivSeq = freqSeca >= 25 ? ['alto', 'ALTO'] : freqSeca >= 15 ? ['medio', 'MEDIO'] : ['bajo', 'BAJO'];
+
+    // Estrés térmico estival (temperatura media Ene/Dic)
+    const tVerano = Math.max(z.temp[0], z.temp[11]);
+    const nivTerm = tVerano >= 25.5 ? ['alto', 'ALTO'] : tVerano >= 23.8 ? ['medio', 'MEDIO'] : ['bajo', 'BAJO'];
+
+    // Riesgo hídrico / anegamiento (combinando lluvias extremas de la celda + drenaje/pendiente del lote)
+    const anegLote = lote.drenaje === 'pobre' || (lote.drenaje === 'moderado' && lote.pendiente < 1);
+    const nivAneg = (anegLote && (rz?.humedas || 0) >= 3) ? ['alto', 'ALTO'] : (anegLote || (rz?.humedas || 0) >= 4) ? ['medio', 'MEDIO'] : ['bajo', 'BAJO'];
+
+    return '<details class="card disc" open>' +
+      '<summary>Diagnóstico climático NASA POWER (' + esc(z.referencia) + ' · ' + esc(M.FUENTE_CLIMA.periodo) + ')</summary>' +
+      '<div style="margin-top:10px;display:grid;gap:12px">' +
+      '<p class="hint">Indicadores calculados sobre ' + (rz ? rz.n : 24) + ' campañas reales de NASA POWER para la celda del lote (' + lluviaAnual + ' mm/año · ' + tempMedia + ' °C media anual).</p>' +
+      '<div class="risk-grid">' +
+        '<div class="risk-box"><div class="rk-top"><span>Déficit hídrico estival</span><span class="risk-badge ' + nivSeq[0] + '">' + nivSeq[1] + '</span></div>' +
+        '<span class="sub">Lluvia Dic–Feb: <b>' + lluviaEstival + ' mm</b>. ' + (rz ? rz.secas + ' de ' + rz.n + ' campañas con anomalía ≤ −20 % (peor: ' + rz.peor.campania + ', ' + rz.peor.anomalia_pct + ' %).' : '') + '</span></div>' +
+        '<div class="risk-box"><div class="rk-top"><span>Estrés térmico en floración</span><span class="risk-badge ' + nivTerm[0] + '">' + nivTerm[1] + '</span></div>' +
+        '<span class="sub">Media enero: <b>' + z.temp[0].toFixed(1) + ' °C</b>. Golpes de calor en floración de maíz/soja reducen cuaje si coincide con déficit hídrico.</span></div>' +
+        '<div class="risk-box"><div class="rk-top"><span>Exceso hídrico / anegamiento</span><span class="risk-badge ' + nivAneg[0] + '">' + nivAneg[1] + '</span></div>' +
+        '<span class="sub">Drenaje <b>' + NOMBRE_DREN[lote.drenaje].toLowerCase() + '</b> (pend. ' + lote.pendiente + ' %) + ' + (rz ? rz.humedas + ' campañas húmedas (≥ +20 % lluvia).' : 'serie histórica.') + '</span></div>' +
+      '</div>' +
+      '<div class="clima-grid uno" style="margin-top:4px">' + climaZonaHTML(zid) + '</div>' +
+      '</div></details>';
+  }
+
   function renderCultivo() {
     const { campo, lote } = actual();
     let r;
@@ -1767,7 +1812,7 @@ window.POWER_CLIMATOLOGY = {"fuente":"NASA POWER (Prediction Of Worldwide Energy
     const desc = r.descartados.length
       ? '<details class="card disc"><summary>' + r.descartados.length + ' cultivos descartados para esta fecha</summary><ul>' +
         r.descartados.map(d => '<li><b>' + esc(d.nombre) + '</b>: ' + esc(d.razones[0]) + '</li>').join('') + '</ul></details>' : '';
-    $('results').innerHTML = rotacionHTML(r.rotacion_actual) +
+    $('results').innerHTML = diagnosticoClimaticoHTML(campo, lote) + rotacionHTML(r.rotacion_actual) +
       '<div class="rank-head"><h2>Top ' + r.top.length + ' para sembrar el ' + fmtF(r.fecha_siembra) + '</h2></div><div class="legend">' + leyenda + '</div>' +
       lista + desc +
       '<section class="card foot"><b>Qué hay detrás de estos números</b><ul>' +
@@ -1849,9 +1894,13 @@ window.POWER_CLIMATOLOGY = {"fuente":"NASA POWER (Prediction Of Worldwide Energy
           '<li class="' + (sg === '+' ? 'pos' : 'neg') + '"><b>' + (sg === '+' ? '+' : '−') + '</b><span>' + esc(t) + '</span></li>').join('') + '</ul></div>'
       : (i > 0 ? '<p class="hint">Sin diferencias marcadas frente a tu rotación actual.</p>' : '');
     const alertas = e.alertas.slice(0, 3).map(a => '<div class="alert">' + esc(a) + '</div>').join('');
+    // V0.6 Índice de Resiliencia compuesto (0-100): estabilidad climática NASA POWER (50%) + diversidad botánica (25%) + cobertura viva (25%)
+    const divScore = Math.min(1, I.familias / 3);
+    const cobScore = I.cobertura_pct / 100;
+    const indiceResil = Math.round(100 * (0.50 * e.comp.resiliencia + 0.25 * divScore + 0.25 * cobScore));
     return '<article class="card rcard' + (best ? ' best' : '') + '" style="--rc:' + color + '">' +
       '<header class="rhead"><span class="rtag">' + ROT_TAG[i] + '</span><div class="rname"><b>' + esc(e.nombre) + '</b><span class="sub">' +
-      (best ? 'Mejor según tus prioridades' : 'Puesto ' + e.posicion + ' de 3') + '</span></div>' +
+      (best ? 'Mejor según tus prioridades' : 'Puesto ' + e.posicion + ' de 3') + ' · <span class="resil-pill" title="Combina estabilidad en los peores años NASA POWER (50%), diversidad de familias (25%) y suelo cubierto (25%)">Resiliencia ' + indiceResil + '/100</span></span></div>' +
       '<div class="rscore num">' + Math.round(e.score) + '<small>/100</small></div></header>' +
       '<div class="seq">' + seq + add + '</div>' + timelineHTML(e, color) +
       '<div class="stackbar" role="img" aria-label="Aporte de cada componente al puntaje">' + barra + '</div>' +
@@ -1946,7 +1995,7 @@ window.POWER_CLIMATOLOGY = {"fuente":"NASA POWER (Prediction Of Worldwide Energy
       '</section>';
     const leyenda = '<div class="tl-legend"><span><i style="background:var(--r1)"></i>Cultivo comercial</span><span><i style="background:color-mix(in srgb, var(--c-suelo) 45%, var(--surface))"></i>Cobertura</span>' +
       '<span><i style="background:repeating-linear-gradient(135deg, var(--surface-2) 0 3px, var(--surface) 3px 6px)"></i>Barbecho (suelo desnudo)</span></div>';
-    $('results').innerHTML = head + escTablaHTML(ce) + leyenda + r.rotaciones.map((e, i) => rotCardHTML(e, i, m.id, ce)).join('') + ejesHTML(r) + evidenciaHTML();
+    $('results').innerHTML = head + diagnosticoClimaticoHTML(campo, lote) + escTablaHTML(ce) + leyenda + r.rotaciones.map((e, i) => rotCardHTML(e, i, m.id, ce)).join('') + ejesHTML(r) + evidenciaHTML();
     $('results').querySelectorAll('[data-esc]').forEach(b => b.addEventListener('click', () => { state.escenario = b.dataset.esc; render(); }));
     $('rot-reset').addEventListener('click', () => { lote.rotacion_habitual = lote._rotOrig.slice(); delete state.alts[lote.id]; render(); });
     $('results').querySelectorAll('.x').forEach(b => b.addEventListener('click', () => {
