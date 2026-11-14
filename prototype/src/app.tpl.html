@@ -10,32 +10,30 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
-/* Dirección: interfaz neutra y silenciosa al estilo v0 (grises zinc, bordes finos, un solo botón primario).
-   Layout: menú hamburguesa con campos y lotes + panel de planificación + ranking expandible. */
+/* Dirección: interfaz silenciosa con la paleta de NASA (azul #0B3D91, rojo #FC3D21, blanco) y neutros azulados.
+   Sin logos ni insignias de NASA: las reglas de Space Apps lo prohíben.
+   Layout: menú hamburguesa (resumen, campos > lotes, análisis) + caja de contexto en cada página
+   que dice a qué campo o lote se refiere + vistas: resumen general, resumen del campo, comparar rotaciones, próximo cultivo. */
 :root {
-  --bg: #fafafa; --surface: #ffffff; --surface-2: #f4f4f5; --border: #e4e4e7;
-  --text: #09090b; --muted: #71717a; --primary: #18181b; --on-primary: #fafafa; --ring: #a1a1aa;
+  --bg: #edf3fc; --surface: #ffffff; --surface-2: #e6eefb; --border: #cfdbed;
+  --text: #0b1530; --muted: #56627d; --primary: #0b3d91; --on-primary: #ffffff; --ring: #6b8bd6;
+  --brand: #fc3d21; --on-brand: #ffffff;
   --good: #15803d; --warn: #b45309; --bad: #b91c1c;
   --c-ingreso: #2563eb; --c-rapidez: #0891b2; --c-suelo: #16a34a; --c-ahorro: #ea580c; --c-resil: #9333ea; --c-cumpl: #db2777;
   --r0: #71717a; --r1: #0d9488; --r2: #4f46e5;
+  --c-lluvia: #0284c7; --c-temp: #c2410c;
   --font: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --mono: 'Geist Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
   color-scheme: light;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #09090b; --surface: #0f0f11; --surface-2: #18181b; --border: #27272a;
-    --text: #fafafa; --muted: #a1a1aa; --primary: #fafafa; --on-primary: #09090b; --ring: #52525b;
-    --good: #4ade80; --warn: #fbbf24; --bad: #f87171;
-    --c-ingreso: #3b82f6; --c-rapidez: #22d3ee; --c-suelo: #22c55e; --c-ahorro: #fb923c; --c-resil: #a855f7; --c-cumpl: #ec4899; --r0: #a1a1aa; --r1: #2dd4bf; --r2: #a5b4fc;
-    color-scheme: dark;
-  }
-}
+/* Tema claro (blanco) por defecto para todos. El oscuro queda solo si alguien fuerza data-theme="dark". */
 :root[data-theme="dark"] {
-  --bg: #09090b; --surface: #0f0f11; --surface-2: #18181b; --border: #27272a;
-  --text: #fafafa; --muted: #a1a1aa; --primary: #fafafa; --on-primary: #09090b; --ring: #52525b;
+  --bg: #061029; --surface: #0a1838; --surface-2: #10224a; --border: #1f3566;
+  --text: #f5f7fb; --muted: #a3b2d1; --primary: #f5f7fb; --on-primary: #0b3d91; --ring: #4f72c4;
+  --brand: #fc3d21; --on-brand: #ffffff;
   --good: #4ade80; --warn: #fbbf24; --bad: #f87171;
   --c-ingreso: #3b82f6; --c-rapidez: #22d3ee; --c-suelo: #22c55e; --c-ahorro: #fb923c; --c-resil: #a855f7; --c-cumpl: #ec4899; --r0: #a1a1aa; --r1: #2dd4bf; --r2: #a5b4fc;
+  --c-lluvia: #0284c7; --c-temp: #ea580c;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -44,14 +42,20 @@ h1, h2, h3, h4, p { margin: 0; }
 h1, h2 { text-wrap: balance; }
 button, input, select, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+/* hidden tiene que ganarle a cualquier display de clase (.stack es flex). */
+[hidden] { display: none !important; }
 .mono, .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 
-.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(8px); z-index: 5; }
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px; border-bottom: 1px solid #082f70; position: sticky; top: 0; background: color-mix(in srgb, #0b3d91 94%, transparent); color: #fff; backdrop-filter: blur(8px); z-index: 5; }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: -0.01em; }
-.logo { width: 24px; height: 24px; border-radius: 6px; background: var(--primary); display: grid; place-items: center; }
-.logo svg { width: 14px; height: 14px; stroke: var(--on-primary); }
+.logo { width: 24px; height: 24px; border-radius: 6px; background: var(--brand); display: grid; place-items: center; }
+.logo svg { width: 14px; height: 14px; stroke: var(--on-brand); }
 .pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; font-size: 12px; color: var(--muted); background: var(--surface); white-space: nowrap; }
+.topbar .pill { color: #fff; background: rgb(255 255 255 / 0.12); border-color: rgb(255 255 255 / 0.28); }
+.topbar .icon-btn { color: #0b3d91; border-color: rgb(255 255 255 / 0.5); }
 .pill.sim::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--warn); }
+.brand > span:last-child { white-space: nowrap; }
+@media (max-width: 640px) { .topbar { padding: 10px 16px; } .topbar > div:last-child .pill:last-child { display: none; } }
 
 .shell { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; max-width: 1280px; margin: 0 auto; padding: 20px 16px 48px; }
 
@@ -82,7 +86,88 @@ body.drawer-open { overflow: hidden; }
 .campo-head span { color: var(--muted); font-size: 12px; }
 .lote-btn { width: 100%; text-align: left; background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 8px; cursor: pointer; display: grid; gap: 2px; }
 .lote-btn:hover { background: var(--surface-2); }
-.lote-btn[aria-current="true"] { background: var(--surface-2); border-color: var(--border); }
+.lote-btn[aria-current="true"], .lote-btn[aria-current="page"] { background: var(--surface-2); border-color: var(--border); }
+a.lote-btn { color: inherit; text-decoration: none; }
+.lote-btn .best { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Navegación del menú */
+.nav { display: grid; gap: 2px; }
+.nav-label { font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0.02em; text-transform: uppercase; padding: 14px 8px 4px; }
+.nav-ctx { font-size: 12px; color: var(--muted); padding: 0 8px 4px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 8px; min-height: 38px; border-radius: 8px; border: 1px solid transparent; color: inherit; text-decoration: none; font-weight: 500; }
+.nav-item:hover { background: var(--surface-2); }
+.nav-item[aria-current="page"] { background: var(--surface-2); border-color: var(--border); }
+.nav-item svg { width: 16px; height: 16px; stroke: currentColor; flex: none; color: var(--muted); }
+.nav-item small { display: block; color: var(--muted); font-size: 12px; font-weight: 400; }
+.nav-campo-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px; }
+.nav-tog { width: 32px; height: 32px; border: 0; background: transparent; border-radius: 6px; cursor: pointer; display: grid; place-items: center; color: var(--muted); padding: 0; }
+.nav-tog:hover { background: var(--surface-2); }
+.nav-tog svg { width: 16px; height: 16px; stroke: currentColor; }
+.nav-tog[aria-expanded="false"] svg { transform: rotate(-90deg); }
+.nav-lotes { display: grid; gap: 2px; margin: 2px 0 6px 16px; padding-left: 8px; border-left: 1px solid var(--border); }
+.nav-lotes[hidden] { display: none; }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+
+/* Caja de contexto: en cada página dice a qué campo o lote se refiere lo que estás viendo */
+.ctx { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 14px 16px;
+  background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--primary); border-radius: 12px; }
+@media (min-width: 900px) { .ctx { position: sticky; top: 68px; z-index: 4; box-shadow: 0 6px 18px -12px rgb(0 0 0 / 0.35); } }
+.ctx-l { display: grid; gap: 2px; min-width: 0; }
+.ctx-k { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0.02em; text-transform: uppercase; }
+.ctx-k a { color: inherit; text-underline-offset: 3px; }
+.ctx-k a:hover { color: var(--text); }
+.ctx h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; }
+.ctx h1:focus { outline: none; }
+.ctx-s { color: var(--muted); font-size: 13px; }
+.ctx-r { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ctx-r label { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; }
+.ctx-r select { width: auto; min-width: 180px; }
+a.btn { color: inherit; text-decoration: none; display: inline-flex; align-items: center; }
+
+/* Resumen (dashboard) */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.kpi { padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.kpi .k-l { font-size: 12px; font-weight: 500; color: var(--muted); }
+.kpi .k-v { display: flex; align-items: baseline; gap: 8px; font-size: 28px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.kpi .k-v .arrow { color: var(--muted); font-size: 18px; font-weight: 400; }
+.kpi .k-v .k-of { font-size: 15px; color: var(--muted); font-weight: 500; }
+.kpi .k-s { font-size: 12px; color: var(--muted); }
+.st { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font-size: 13px; font-weight: 700; align-self: center; }
+.st.warn { background: color-mix(in srgb, var(--warn) 16%, var(--surface)); color: var(--warn); }
+.st.good { background: color-mix(in srgb, var(--good) 16%, var(--surface)); color: var(--good); }
+.tbl-wrap { overflow-x: auto; }
+.dash-tbl { font-size: 13px; min-width: 760px; }
+.dash-tbl th, .dash-tbl td { padding: 9px 12px; vertical-align: top; }
+.dash-tbl .izq { text-align: left; }
+.dash-tbl td.lt a { font-weight: 600; color: var(--text); text-underline-offset: 3px; }
+.dash-tbl td.lt .sub { display: block; }
+.dash-tbl .warn-t { color: var(--warn); max-width: 34ch; }
+.dash-tbl tbody tr:hover { background: var(--surface-2); }
+.mej { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); }
+.clima-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px 28px; margin-top: 12px; }
+.clima { display: grid; gap: 12px; align-content: start; }
+/* Con una sola zona, lluvia y temperatura van lado a lado para que el gráfico no se estire a todo el ancho. */
+.clima-grid.uno { grid-template-columns: 1fr; }
+.clima-grid.uno .clima { grid-template-columns: 1fr 1fr; gap: 12px 28px; }
+@media (max-width: 700px) { .clima-grid.uno .clima { grid-template-columns: 1fr; } }
+.clima-grid.uno .clima > h3, .clima-grid.uno .clima > details { grid-column: 1 / -1; }
+.clima h3 { font-size: 14px; font-weight: 600; }
+.chart { margin: 0; }
+.chart figcaption { font-size: 13px; color: var(--muted); margin-bottom: 2px; }
+.chart figcaption b { color: var(--text); font-weight: 600; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart .grid { stroke: var(--border); stroke-width: 1; }
+.chart .ax { fill: var(--muted); font-size: 11px; font-family: var(--font); }
+.chart .dl { fill: var(--text); font-size: 11px; font-weight: 600; font-family: var(--mono); }
+.chart .bar { fill: var(--c-lluvia); }
+.chart .line { fill: none; stroke: var(--c-temp); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart .pt { fill: var(--c-temp); stroke: var(--surface); stroke-width: 2; }
+.chart .hit { fill: transparent; }
+.chart .hit:hover { fill: color-mix(in srgb, var(--text) 7%, transparent); }
+details.tview summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+details.tview table { margin-top: 8px; }
+.tip { position: fixed; z-index: 40; pointer-events: none; background: var(--text); color: var(--bg); font-size: 12px; font-weight: 500; padding: 4px 8px; border-radius: 6px; white-space: nowrap; }
+.tip[hidden] { display: none; }
 .lote-btn .t { display: flex; justify-content: space-between; gap: 8px; font-weight: 500; }
 .lote-btn .s { color: var(--muted); font-size: 12px; }
 .lote-btn .best { color: var(--text); font-size: 12px; }
@@ -193,9 +278,10 @@ details.disc li b { color: var(--text); font-weight: 500; }
 #map { height: 320px; background: var(--surface-2); }
 @media (max-width: 560px) { #map { height: 260px; } }
 .map-off { display: grid; place-items: center; height: 100%; color: var(--muted); padding: 16px; text-align: center; }
-.map-ctl { position: absolute; top: 10px; right: 10px; z-index: 1000; display: inline-flex; gap: 2px; padding: 3px; border-radius: 10px; background: rgb(15 15 17 / 0.72); backdrop-filter: blur(6px); }
+.map-ctl { position: absolute; top: 10px; right: 10px; z-index: 1000; display: inline-flex; gap: 2px; padding: 3px; border-radius: 10px; background: rgb(6 16 41 / 0.78); backdrop-filter: blur(6px); }
 .map-ctl button { border: 0; background: transparent; color: #e4e4e7; border-radius: 7px; padding: 5px 10px; font-size: 12px; font-weight: 500; cursor: pointer; min-height: 28px; }
-.map-ctl button[aria-pressed="true"] { background: #fafafa; color: #09090b; }
+.map-ctl button[aria-pressed="true"] { background: #ffffff; color: #0b3d91; }
+#btn-area[aria-pressed="true"] { background: #fc3d21; color: #ffffff; }
 .map-foot { display: grid; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); }
 .map-info { font-size: 14px; }
 .mej-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); align-items: center; }
@@ -205,6 +291,31 @@ details.disc li b { color: var(--text); font-weight: 500; }
 .leaflet-tooltip.lote-lbl { background: rgb(9 9 11 / 0.72); color: #fafafa; border: 0; box-shadow: none; border-radius: 6px; padding: 2px 7px; font: 500 12px/1.3 var(--font); white-space: nowrap; }
 .leaflet-tooltip.lote-lbl::before { display: none; }
 .leaflet-container { font-family: var(--font); }
+.map-ctl .sep { width: 1px; background: rgb(255 255 255 / 0.25); margin: 4px 2px; }
+#map.dibujando, #map.dibujando .leaflet-interactive { cursor: crosshair; }
+.area-res { display: grid; gap: 10px; border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: var(--surface-2); }
+.area-res[hidden] { display: none; }
+.area-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
+.area-best { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+.area-best .nm { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+.area-alt { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+
+/* Escenarios climáticos */
+.esc-sel { display: flex; flex-wrap: wrap; gap: 6px; }
+.esc-sel .btn { display: grid; gap: 0; text-align: left; padding: 6px 12px; line-height: 1.25; }
+.esc-sel .btn small { color: var(--muted); font-size: 11px; font-weight: 400; font-family: var(--mono); }
+.esc-sel .btn[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+.esc-sel .btn[aria-pressed="true"] small { color: inherit; opacity: .75; }
+.esc-tab-wrap { overflow-x: auto; margin-top: 10px; }
+.esc-tab { font-size: 13px; min-width: 420px; }
+.esc-tab td, .esc-tab th { padding: 8px 6px; }
+.esc-tab th small { display: block; font-family: var(--mono); font-weight: 400; }
+.esc-tab td.cur, .esc-tab th.cur { background: var(--surface-2); }
+.esc-tab .rcell { display: flex; align-items: center; gap: 8px; }
+.esc-tab .neg { color: var(--bad); }
+.esc-tab td.top { font-weight: 600; color: var(--text); }
+.esc-tab td { color: var(--muted); }
+.esc-tab td:first-child { color: var(--text); }
 
 /* Pestañas */
 .tabs { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); align-self: flex-start; max-width: 100%; }
@@ -216,7 +327,7 @@ details.disc li b { color: var(--text); font-weight: 500; }
 .rsum h2 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
 .rsum .lead { font-size: 15px; }
 .rsum-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
-.tl-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); }
+.tl-legend { padding: 0 4px; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); }
 .tl-legend span { display: inline-flex; align-items: center; gap: 6px; }
 .tl-legend i { width: 14px; height: 10px; border-radius: 3px; display: inline-block; border: 1px solid var(--border); }
 .rcard { padding: 16px; display: grid; gap: 12px; border-left: 4px solid var(--rc); }
@@ -267,7 +378,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
 <body>
 <header class="topbar">
   <div class="brand">
-    <button class="icon-btn" id="menu-btn" type="button" aria-label="Abrir mis campos" aria-controls="drawer" aria-expanded="false">
+    <button class="icon-btn" id="menu-btn" type="button" aria-label="Abrir menú" aria-controls="drawer" aria-expanded="false">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
     </button>
     <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V8"/><path d="M12 13c-4 0-6-2-6-6 4 0 6 2 6 6Z"/><path d="M12 10c0-3 2-5 6-5 0 4-2 5-6 5Z"/></svg></span>
@@ -280,45 +391,50 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
   </div>
 </header>
 
+<div class="scrim" id="scrim" hidden></div>
+<aside class="side" id="drawer" aria-label="Menú" inert>
+  <div class="side-head">
+    <div class="section-label">Menú</div>
+    <button class="icon-btn" id="menu-close" type="button" aria-label="Cerrar menú">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <nav class="nav" id="nav" aria-label="Navegación principal"></nav>
+  <p class="hint" style="padding:8px 8px 0">Campos y lotes de ejemplo. Todo el cálculo corre en esta página.</p>
+</aside>
+<div class="tip" id="tip" hidden></div>
+
 <div class="shell">
-  <div class="scrim" id="scrim" hidden></div>
-  <aside class="side" id="drawer" aria-label="Campos y lotes" inert>
-    <div class="side-head">
-      <div class="section-label">Mis campos</div>
-      <button class="icon-btn" id="menu-close" type="button" aria-label="Cerrar mis campos">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      </button>
-    </div>
-    <div id="side"></div>
-    <p class="hint" style="padding:0 4px">Campos y lotes de ejemplo. Todo el cálculo corre en esta página.</p>
-  </aside>
-
   <main class="main" id="main">
-    <div class="lote-head">
-      <div>
-        <h1 id="h-nombre"></h1>
-        <p id="h-sub"></p>
-      </div>
-      <div id="h-chips" class="hist"></div>
-    </div>
+    <section class="ctx" id="ctx" aria-label="Qué estás viendo"></section>
 
-    <section class="card mapcard" aria-label="Mapa de lotes">
+    <!-- El mapa es uno solo: se mueve al resumen del campo o al análisis del lote según la vista. -->
+    <div id="map-holder" hidden>
+    <section class="card mapcard" id="mapcard" aria-label="Mapa de lotes">
       <div class="map-wrap">
         <div id="map"></div>
         <div class="map-ctl" role="group" aria-label="Encuadre del mapa">
           <button type="button" data-modo="campo" aria-pressed="true">Campo</button>
-          <button type="button" data-modo="zona" aria-pressed="false">Celda NASA POWER</button>
+          <button type="button" data-modo="zona" aria-pressed="false">¿De dónde sale el clima?</button>
+          <span class="sep" aria-hidden="true"></span>
+          <button type="button" id="btn-area" aria-pressed="false">Seleccionar área</button>
         </div>
       </div>
       <div class="map-foot">
         <p class="map-info" id="map-info"></p>
+        <div class="area-res" id="area-res" aria-live="polite" hidden></div>
         <div class="mej-legend"><span>Mejora posible frente a la rotación actual:</span>
           <span><i style="background:#22c55e"></i>hasta 5 pts</span><span><i style="background:#f59e0b"></i>5 a 15 pts</span><span><i style="background:#ef4444"></i>más de 15 pts</span>
-          <span><i class="celda"></i>celda NASA POWER</span></div>
+          <span><i class="celda"></i>zona del dato de clima (NASA POWER)</span></div>
         <p class="hint">Campos de ejemplo: los límites siguen caminos y potreros reales de OpenStreetMap, pero los lotes y sus datos son ficticios. El clima sale de la celda de NASA POWER (0,5° × 0,625°, unos 55 × 60 km): es el mismo para todos los lotes dentro de ella.</p>
       </div>
     </section>
+    </div>
 
+    <div class="stack" id="view-dash" hidden></div>
+
+    <div class="stack" id="view-lote" hidden>
+    <div id="slot-map-lote"></div>
     <div class="cols">
       <div class="stack">
         <section class="card" aria-labelledby="t-plan">
@@ -378,12 +494,9 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       </div>
 
       <div class="stack">
-        <div class="tabs" role="tablist" aria-label="Vista de resultados">
-          <button type="button" role="tab" id="tab-rot" data-v="rotaciones">Comparar rotaciones</button>
-          <button type="button" role="tab" id="tab-cul" data-v="cultivo">Próximo cultivo</button>
-        </div>
         <div class="stack" id="results" aria-live="polite"></div>
       </div>
+    </div>
     </div>
   </main>
 </div>
@@ -437,7 +550,8 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
   ];
   const lotesPlano = CAMPOS.flatMap(c => c.lotes.map(l => ({ campo: c, lote: l })));
 
-  const state = { sel: 'l1', siembra: '2026-11-14', cosecha: '', pesos: Object.assign({}, M.PESOS_DEFECTO), wPreset: 'equilibrado', abierto: null, vista: 'rotaciones', alts: {} };
+  // vista: 'inicio' (resumen general) | 'campo' (resumen de un campo) | 'rotaciones' | 'cultivo' (análisis de un lote)
+  const state = { sel: 'l1', campo: 'c1', siembra: '2026-11-14', cosecha: '', pesos: Object.assign({}, M.PESOS_DEFECTO), wPreset: 'equilibrado', abierto: null, vista: 'inicio', alts: {}, expand: {}, escenario: 'promedio' };
   const actual = () => lotesPlano.find(x => x.lote.id === state.sel);
   const input = (campo, lote) => ({
     zona: campo.zona, textura: lote.textura, ph: lote.ph, drenaje: lote.drenaje, pendiente: lote.pendiente, riego: lote.riego,
@@ -447,23 +561,88 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     return M.recomendar(input(campo, lote), M.parseFecha(state.siembra), state.cosecha ? M.parseFecha(state.cosecha) : null, state.pesos, 5);
   }
 
-  /* ---------- barra lateral ---------- */
-  function renderSide() {
-    $('side').innerHTML = CAMPOS.map(c => {
-      const lotes = c.lotes.map(l => {
-        let mejor = '';
-        try { const r = calcular(c, l); mejor = r.top[0] ? 'Mejor hoy: ' + r.top[0].nombre + ' · ' + Math.round(r.top[0].score) : 'Sin cultivos viables'; } catch (e) { mejor = ''; }
-        return '<button class="lote-btn" type="button" data-id="' + l.id + '" aria-current="' + (l.id === state.sel) + '">' +
-          '<span class="t"><span>' + esc(l.nombre) + '</span><span class="mono sub">' + l.superficie + ' ha</span></span>' +
-          '<span class="s">' + NOMBRE_TEX[l.textura] + ' · pH ' + l.ph + '</span><span class="best">' + esc(mejor) + '</span></button>';
-      }).join('');
-      return '<div class="card campo"><div class="campo-head"><b>' + esc(c.nombre) + '</b><span>' + esc(c.provincia) + ' · ' + c.lotes.length + (c.lotes.length === 1 ? ' lote' : ' lotes') + '</span></div>' + lotes + '</div>';
-    }).join('');
-    $('side').querySelectorAll('.lote-btn').forEach(b => b.addEventListener('click', () => { state.sel = b.dataset.id; state.abierto = null; loadLote(); setDrawer(false); }));
+  /* ---------- rutas ----------
+     #/inicio · #/campo/<campo> · #/rotaciones/<lote> · #/cultivo/<lote>
+     Van en el hash para que funcionen el botón atrás, los links directos y GitHub Pages sin servidor. */
+  const VISTAS_LOTE = { rotaciones: 'Comparar rotaciones', cultivo: 'Próximo cultivo' };
+  const esLote = v => v === 'rotaciones' || v === 'cultivo';
+  const vistaAnalisis = () => esLote(state.vista) ? state.vista : 'rotaciones';
+  const hrefLote = (id, v) => '#/' + (v || vistaAnalisis()) + '/' + id;
+  const campoDe = id => CAMPOS.find(c => c.id === id);
+  const haDe = lotes => lotes.reduce((s, l) => s + l.superficie, 0);
+  const nLotes = n => n + (n === 1 ? ' lote' : ' lotes');
+
+  function leerRuta() {
+    const [v, id] = location.hash.replace(/^#\/?/, '').split('/');
+    if (esLote(v) && lotesPlano.some(x => x.lote.id === id)) return { vista: v, sel: id };
+    if (v === 'campo' && campoDe(id)) return { vista: 'campo', campo: id };
+    return { vista: 'inicio' };
   }
+  function aplicarRuta(enfocar) {
+    const r = leerRuta();
+    state.vista = r.vista;
+    let sel = r.sel || state.sel;
+    if (r.campo) {
+      state.campo = r.campo;
+      // El análisis del menú apunta a un lote de este campo.
+      if (actual().campo.id !== r.campo) sel = campoDe(r.campo).lotes[0].id;
+    }
+    if (sel !== state.sel) { state.sel = sel; state.abierto = null; loadLote(); }
+    render();
+    if (enfocar) { window.scrollTo(0, 0); $('page-h1').focus({ preventScroll: true }); }
+  }
+  const ir = h => { if (location.hash === h) aplicarRuta(true); else location.hash = h; };
+  window.addEventListener('hashchange', () => aplicarRuta(true));
 
   /* ---------- menú hamburguesa ---------- */
-  function setDrawer(abrir) {
+  const ic = d => '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
+  const ICON = {
+    inicio: ic('<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>'),
+    campo: ic('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 12h18M11 5v14"/>'),
+    rotaciones: ic('<path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 21v-5h-5"/>'),
+    cultivo: ic('<path d="M12 21V8"/><path d="M12 13c-4 0-6-2-6-6 4 0 6 2 6 6Z"/><path d="M12 10c0-3 2-5 6-5 0 4-2 5-6 5Z"/>'),
+    chev: ic('<path d="M6 9l6 6 6-6"/>'),
+  };
+  function renderMenu() {
+    const v = state.vista, av = vistaAnalisis(), pag = c => c ? ' aria-current="page"' : '';
+    let h = '<a class="nav-item" href="#/inicio"' + pag(v === 'inicio') + '>' + ICON.inicio + '<span>Resumen general</span></a>';
+    h += '<div class="nav-label">Mis campos</div>';
+    h += CAMPOS.map(c => {
+      const abierto = state.expand[c.id] !== false;
+      const lotes = c.lotes.map(l => {
+        const r = mejoraLote(c, l), d = r ? Math.round(r.delta) : 0;
+        const best = !r ? '' : d > 0
+          ? '<i class="dot" style="background:' + MEJ_COL[nivelMejora(r.delta)] + '"></i>Mejora posible +' + d + ' pts'
+          : 'Tu rotación actual es la mejor';
+        return '<a class="lote-btn" href="' + hrefLote(l.id, av) + '"' + (esLote(v) && l.id === state.sel ? ' aria-current="true"' : '') + '>' +
+          '<span class="t"><span>' + esc(l.nombre) + '</span><span class="mono sub">' + l.superficie + ' ha</span></span>' +
+          '<span class="s">' + NOMBRE_TEX[l.textura] + ' · pH ' + l.ph + '</span><span class="best">' + best + '</span></a>';
+      }).join('');
+      return '<div class="nav-campo"><div class="nav-campo-row">' +
+        '<a class="nav-item" href="#/campo/' + c.id + '"' + pag(v === 'campo' && state.campo === c.id) + '>' + ICON.campo +
+        '<span>' + esc(c.nombre) + '<small>' + esc(c.provincia) + ' · ' + nLotes(c.lotes.length) + ' · ' + haDe(c.lotes) + ' ha</small></span></a>' +
+        '<button class="nav-tog" type="button" data-tog="' + c.id + '" aria-expanded="' + abierto + '" aria-controls="nav-l-' + c.id + '" aria-label="Lotes de ' + esc(c.nombre) + '">' + ICON.chev + '</button></div>' +
+        '<div class="nav-lotes" id="nav-l-' + c.id + '"' + (abierto ? '' : ' hidden') + '>' + lotes + '</div></div>';
+    }).join('');
+    const { campo, lote } = actual();
+    h += '<div class="nav-label">Análisis del lote</div><p class="nav-ctx">' + esc(lote.nombre) + ' · ' + esc(campo.nombre) + '</p>';
+    h += Object.keys(VISTAS_LOTE).map(k => '<a class="nav-item" href="' + hrefLote(state.sel, k) + '"' + pag(v === k) + '>' + ICON[k] + '<span>' + VISTAS_LOTE[k] + '</span></a>').join('');
+    $('nav').innerHTML = h;
+  }
+  $('nav').addEventListener('click', e => {
+    const tog = e.target.closest('.nav-tog');
+    if (tog) {
+      const id = tog.dataset.tog, abrir = tog.getAttribute('aria-expanded') !== 'true';
+      state.expand[id] = abrir; tog.setAttribute('aria-expanded', String(abrir)); $('nav-l-' + id).hidden = !abrir;
+      return;
+    }
+    const a = e.target.closest('a[href^="#/"]');
+    if (!a) return;
+    // Si el link es la página actual no hay hashchange: solo se cierra el menú.
+    if (a.getAttribute('href') === location.hash) { e.preventDefault(); setDrawer(false); } else setDrawer(false, false);
+  });
+
+  function setDrawer(abrir, devolverFoco = true) {
     const d = $('drawer'), btn = $('menu-btn');
     if (d.classList.contains('open') === abrir) return;
     d.classList.toggle('open', abrir);
@@ -471,13 +650,48 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     $('scrim').hidden = !abrir;
     document.body.classList.toggle('drawer-open', abrir);
     btn.setAttribute('aria-expanded', String(abrir));
-    if (abrir) (d.querySelector('.lote-btn[aria-current="true"]') || $('menu-close')).focus();
-    else btn.focus();
+    if (abrir) (d.querySelector('[aria-current="page"]') || d.querySelector('.nav-item') || $('menu-close')).focus();
+    else if (devolverFoco) btn.focus();
   }
   $('menu-btn').addEventListener('click', () => setDrawer(true));
   $('menu-close').addEventListener('click', () => setDrawer(false));
   $('scrim').addEventListener('click', () => setDrawer(false));
   document.addEventListener('keydown', e => { if (e.key === 'Escape') setDrawer(false); });
+
+  /* ---------- caja de contexto ---------- */
+  const migas = items => items.map(([t, h]) => h ? '<a href="' + h + '">' + esc(t) + '</a>' : '<span>' + esc(t) + '</span>').join('<span aria-hidden="true">›</span>');
+  const presetsHTML = () => Object.keys(WEIGHT_PRESETS).map(k =>
+    '<button type="button" class="btn" data-wp="' + k + '" aria-pressed="' + (state.wPreset === k) + '">' + WEIGHT_PRESETS[k].t + '</button>').join('');
+  function renderCtx() {
+    let k, h1, sub, der;
+    if (esLote(state.vista)) {
+      const { campo, lote } = actual(), otra = state.vista === 'rotaciones' ? 'cultivo' : 'rotaciones';
+      k = migas([['Resumen general', '#/inicio'], [campo.nombre, '#/campo/' + campo.id], [VISTAS_LOTE[state.vista]]]);
+      h1 = lote.nombre;
+      sub = campo.nombre + ' · ' + lote.superficie + ' ha · ' + campo.provincia + ' · clima NASA POWER ' + M.FUENTE_CLIMA.periodo + ', ' + M.ZONAS[campo.zona].referencia;
+      const opts = CAMPOS.map(c => '<optgroup label="' + esc(c.nombre) + '">' +
+        c.lotes.map(l => '<option value="' + l.id + '"' + (l.id === lote.id ? ' selected' : '') + '>' + esc(l.nombre) + '</option>').join('') + '</optgroup>').join('');
+      der = '<label>Lote <select id="ctx-lote">' + opts + '</select></label><a class="btn" href="' + hrefLote(lote.id, otra) + '">' + VISTAS_LOTE[otra] + '</a>';
+    } else {
+      const c = state.vista === 'campo' ? campoDe(state.campo) : null, lotes = c ? c.lotes : lotesPlano.map(x => x.lote);
+      k = c ? migas([['Resumen general', '#/inicio'], ['Resumen del campo']]) : '<span>Resumen general</span>';
+      h1 = c ? c.nombre : 'Todos tus campos';
+      sub = (c ? c.provincia : CAMPOS.length + ' campos') + ' · ' + nLotes(lotes.length) + ' · ' + haDe(lotes) + ' ha · campaña desde el ' + fmtF(state.siembra);
+      der = '<span class="hint">Prioridades</span><div class="w-presets" role="group" aria-label="Prioridades">' + presetsHTML() + '</div>';
+    }
+    $('ctx').innerHTML = '<div class="ctx-l"><div class="ctx-k">' + k + '</div><h1 id="page-h1" tabindex="-1">' + esc(h1) + '</h1><p class="ctx-s">' + esc(sub) + '</p></div><div class="ctx-r">' + der + '</div>';
+  }
+  function aplicarPreset(k) {
+    state.wPreset = k; state.pesos = Object.assign({}, WEIGHT_PRESETS[k].w);
+    renderWeightPresets(); renderWeights(); render();
+  }
+  $('ctx').addEventListener('change', e => { if (e.target.id === 'ctx-lote') ir(hrefLote(e.target.value)); });
+  $('ctx').addEventListener('click', e => {
+    const b = e.target.closest('[data-wp]');
+    if (!b) return;
+    aplicarPreset(b.dataset.wp);
+    const nb = $('ctx').querySelector('[data-wp="' + b.dataset.wp + '"]'); if (nb) nb.focus();
+  });
 
   /* ---------- controles ---------- */
   function fillSelect(el, valores, nombres, sel) {
@@ -490,10 +704,8 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     }
   }
   function loadLote() {
-    const { campo, lote } = actual();
-    $('h-nombre').textContent = lote.nombre;
-    $('h-sub').textContent = campo.nombre + ' · ' + lote.superficie + ' ha';
-    $('h-chips').innerHTML = '<span class="pill">' + esc(campo.provincia) + '</span><span class="pill" title="Punto de referencia de la zona, no del campo exacto">NASA POWER ' + esc(M.FUENTE_CLIMA.periodo) + ' · ' + esc(M.ZONAS[campo.zona].referencia) + '</span>';
+    // Carga los controles del lote seleccionado. Lo que se dibuja después lo decide render().
+    const { lote } = actual();
     fillSelect($('p-textura'), M.TEXTURAS, NOMBRE_TEX, lote.textura);
     fillSelect($('p-drenaje'), M.DRENAJES, NOMBRE_DREN, lote.drenaje);
     $('p-ph').value = lote.ph; $('p-pend').value = lote.pendiente; $('p-riego').checked = lote.riego;
@@ -503,7 +715,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     const opts = ['<option value="">Ninguno registrado</option>'].concat(Object.keys(M.CULTIVOS).map(k => '<option value="' + k + '">' + M.CULTIVOS[k].nombre + '</option>'));
     $('f-antecesor').innerHTML = opts.join('');
     $('f-antecesor').value = lote.historial.length ? lote.historial[lote.historial.length - 1] : '';
-    origenes(lote); renderHist(); renderSide(); renderResults();
+    origenes(lote); renderHist();
   }
   function renderHist() {
     const { lote } = actual();
@@ -545,7 +757,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       refresh();
     }));
   }
-  function refresh() { renderSide(); renderResults(); }
+  function refresh() { render(); }
 
   function bindControls() {
     $('f-siembra').addEventListener('change', e => { if (e.target.value) { state.siembra = e.target.value; renderPresets(); refresh(); } });
@@ -683,15 +895,29 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     return '<div><div class="tl" role="img" aria-label="Calendario: ' + esc(resumen) + '">' + segs + '</div><div class="ticks" aria-hidden="true">' + ticks + '</div></div>';
   }
 
-  function rotCardHTML(e, i, mejorId) {
+  // Línea de clima frente a la rotación actual (sale de la prueba con el año seco).
+  function difClima(fila, base) {
+    const out = [];
+    if (fila && base && fila.malo != null && base.malo != null) {
+      const d = fila.malo - base.malo, txt = Math.round(fila.malo) + ' pts (tu actual: ' + Math.round(base.malo) + ')';
+      if (d >= 3) out.push(['+', 'Más estable en años malos (1 de cada 10): ' + txt + '.']);
+      else if (d <= -3) out.push(['-', 'Más frágil en años malos (1 de cada 10): ' + txt + '.']);
+      const df = fila.fallos - base.fallos;
+      if (df >= 2) out.push(['-', 'Algún cultivo falla por clima en ' + fila.fallos + ' de ' + fila.n + ' campañas (tu actual: ' + base.fallos + ').']);
+      else if (df <= -2) out.push(['+', 'Menos cosechas fallidas por clima: ' + fila.fallos + ' de ' + fila.n + ' campañas (tu actual: ' + base.fallos + ').']);
+    }
+    return out;
+  }
+  function rotCardHTML(e, i, mejorId, ce) {
     const color = ROT_COL[i], I = e.indicadores, best = e.id === mejorId;
     const seq = e.secuencia.map((c, j) => '<span class="schip' + (M.CULTIVOS[c].tipo === 'cobertura' ? ' cob' : '') + '">' + esc(M.CULTIVOS[c].nombre) +
       (e.secuencia.length > 1 ? '<button type="button" class="x" data-rot="' + i + '" data-del="' + j + '" aria-label="Quitar ' + esc(M.CULTIVOS[c].nombre) + '">×</button>' : '') + '</span>').join('<span class="arrow">→</span>');
     const add = '<select class="add" data-rot="' + i + '" aria-label="Agregar cultivo a ' + esc(e.nombre) + '"><option value="">+ Agregar</option>' +
       Object.keys(M.CULTIVOS).map(k => '<option value="' + k + '">' + M.CULTIVOS[k].nombre + (M.CULTIVOS[k].tipo === 'cobertura' ? ' (cobertura)' : '') + '</option>').join('') + '</select>';
     const barra = Object.keys(COL).map(k => '<i style="width:' + Math.max(0, e.aporte[k]) + '%;background:' + COL[k] + '" title="' + M.COMPONENTES_NOMBRE[k] + ': ' + e.aporte[k].toFixed(1) + ' pts"></i>').join('');
-    const difs = e.diferencias.length
-      ? '<div class="difs"><h4 class="section-label">Frente a tu rotación actual</h4><ul>' + e.diferencias.map(([sg, t]) =>
+    const lista = (i > 0 && ce ? difClima(ce.filas[i], ce.filas[0]) : []).concat(e.diferencias);
+    const difs = lista.length
+      ? '<div class="difs"><h4 class="section-label">Frente a tu rotación actual</h4><ul>' + lista.map(([sg, t]) =>
           '<li class="' + (sg === '+' ? 'pos' : 'neg') + '"><b>' + (sg === '+' ? '+' : '−') + '</b><span>' + esc(t) + '</span></li>').join('') + '</ul></div>'
       : (i > 0 ? '<p class="hint">Sin diferencias marcadas frente a tu rotación actual.</p>' : '');
     const alertas = e.alertas.slice(0, 3).map(a => '<div class="alert">' + esc(a) + '</div>').join('');
@@ -707,10 +933,13 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       difs + (alertas ? '<div class="alerts">' + alertas + '</div>' : '') + '</article>';
   }
 
+  // En el comparador, "resiliencia" mide la tolerancia de los cultivos a los riesgos cargados del lote;
+  // la respuesta al clima real está en la Prueba de clima. Nombres que no se pisen entre sí.
+  const EJE_NOMBRE = { resiliencia: 'Tolerancia a sequía y anegamiento del lote', cumplimiento: 'Evita monocultivo y erosión', rapidez: 'Siembra a tiempo' };
   function ejesHTML(r) {
     const rows = Object.keys(COL).map(k => {
       const max = Math.max(...r.rotaciones.map(e => e.componentes[k]));
-      return '<div class="eje"><div class="eje-h"><span><i style="background:' + COL[k] + '"></i>' + M.COMPONENTES_NOMBRE[k] + '</span><span class="hint">peso ' + pct(r.pesos[k]) + ' %</span></div>' +
+      return '<div class="eje"><div class="eje-h"><span><i style="background:' + COL[k] + '"></i>' + (EJE_NOMBRE[k] || M.COMPONENTES_NOMBRE[k]) + '</span><span class="hint">peso ' + pct(r.pesos[k]) + ' %</span></div>' +
         r.rotaciones.map((e, i) => '<div class="ebar"><span class="rtag sm" style="--rc:' + ROT_COL[i] + '">' + ROT_TAG[i] + '</span><span class="track"><i style="width:' + e.componentes[k] + '%;background:' + ROT_COL[i] + '"></i></span>' +
           '<span class="v num' + (e.componentes[k] === max ? ' top' : '') + '">' + Math.round(e.componentes[k]) + '</span></div>').join('') + '</div>';
     }).join('');
@@ -719,7 +948,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
 
   function evidenciaHTML() {
     const filas = [
-      ['Clima de cada campaña', 'NASA POWER', 'Climatología mensual ' + M.FUENTE_CLIMA.periodo + ' en un punto de referencia de la zona. Es el año promedio, no un pronóstico. GPM IMERG y SMAP están planificados.'],
+      ['Clima de cada campaña', 'NASA POWER', 'Temperatura y lluvia mensual ' + M.FUENTE_CLIMA.periodo + ' en un punto de referencia de la zona: el promedio o una campaña real (seca o húmeda). No es un pronóstico. GPM IMERG y SMAP están planificados.'],
       ['Requisitos y ventanas de siembra', 'supuesto', 'Catálogo ilustrativo, a validar con EcoCrop (FAO) e INTA.'],
       ['Márgenes', 'supuesto', 'Precios y costos de ejemplo. Referencia fija: USD ' + M.REF_MARGEN_ANUAL + '/ha/año equivale a 100.'],
       ['Parámetros del lote', 'dataset / productor', 'El origen de cada uno está en el panel de parámetros.'],
@@ -729,31 +958,74 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       '<div class="conf"><span>Confianza: <b>baja</b> (catálogo de cultivos y precios de ejemplo)</span><span class="sub">Requiere validación local: demanda de agua de cada cultivo, nutrientes del suelo, mercado y maquinaria.</span></div></section>';
   }
 
+  const inputEsc = (campo, lote) => Object.assign(input(campo, lote), { escenario: state.escenario });
+  const signo = n => (n > 0 ? '+' : n < 0 ? '−' : '±') + Math.abs(Math.round(n));
+
+  function escSelHTML(ce) {
+    return '<div class="esc-sel" role="group" aria-label="Escenario climático">' + ce.escenarios.map(e =>
+      '<button type="button" class="btn" data-esc="' + e.id + '" aria-pressed="' + (state.escenario === e.id) + '">' + e.nombre +
+      '<small>' + esc(e.campania) + ' · ' + e.total + ' mm' + (e.id === 'promedio' ? '' : ' (' + signo(e.anomalia_pct) + ' %)') + '</small></button>').join('') + '</div>';
+  }
+  function escTablaHTML(ce) {
+    const seco = ce.escenarios.find(e => e.id === 'seco');
+    const filas = ce.filas, top = filas.filter(f => f.malo != null).sort((a, b) => b.malo - a.malo);
+    const nom = f => '<b>' + esc(f.id === 'actual' ? 'tu rotación actual' : f.nombre) + '</b>';
+    let lead = 'No hay serie anual suficiente para probar las rotaciones.';
+    if (top.length) {
+      const empatadas = top.filter(f => top[0].malo - f.malo < 2);
+      lead = 'Probadas contra <b>' + ce.n_campanias + ' campañas reales</b> (' + esc(ce.periodo) + '): ' +
+        (empatadas.length > 1 ? empatadas.map(nom).join(' y ') + ' son igual de estables' : 'la más estable es ' + nom(top[0])) +
+        '. En un año malo (1 de cada 10) mantiene' + (empatadas.length > 1 ? 'n' : '') + ' unos <b>' + Math.round(top[0].malo) + '</b> pts' +
+        (top[0].id === 'actual' ? '.' : '; tu rotación actual, ' + Math.round(filas[0].malo) + '.');
+    }
+    const best = k => Math.max(...filas.map(f => f[k] ?? -1));
+    const cel = (v, k, extra) => '<td class="num' + (v != null && v === best(k) ? ' top' : '') + (extra || '') + '">' + (v == null ? '—' : Math.round(v)) + '</td>';
+    const head = '<tr><th>Rotación</th><th>Año típico<small>mediana</small></th><th>Año malo<small>1 de cada 10</small></th>' +
+      (seco ? '<th>Sequía<small>' + esc(seco.campania) + '</small></th>' : '') + '<th>Campañas con<small>cosecha fallida</small></th></tr>';
+    const rows = filas.map((f, i) => '<tr><td><span class="rcell"><span class="rtag sm" style="--rc:' + ROT_COL[i] + '">' + ROT_TAG[i] + '</span>' + esc(f.nombre) + '</span></td>' +
+      cel(f.mediana, 'mediana') + cel(f.malo, 'malo') + (seco ? cel(f.scores.seco, null) : '') +
+      '<td class="num">' + f.fallos + ' de ' + f.n + '</td></tr>').join('');
+    return '<section class="card card-pad"><div class="rank-head"><h2>Prueba de clima</h2><span class="hint">¿Cómo le va a cada rotación según cómo venga el año?</span></div>' +
+      '<p class="lead" style="margin-top:8px">' + lead + '</p>' +
+      '<div class="esc-tab-wrap"><table class="esc-tab"><thead>' + head + '</thead><tbody>' + rows + '</tbody></table></div>' +
+      '<p class="hint" style="margin-top:8px">Cada rotación se simula en cada campaña real (julio a junio) de NASA POWER, repitiendo ese clima las 3 campañas. ' +
+      'Es una prueba de estrés, no un pronóstico. Si el clima de un año no alcanza para un cultivo ya sembrado, se cuenta como cosecha muy mala (' + Math.round(M.PISO_CLIMA * 100) + ' % de aptitud), no como cero.</p>' +
+      '<p class="hint" style="margin:12px 0 6px">Ver las rotaciones de abajo con el clima de:</p>' + escSelHTML(ce) + '</section>';
+  }
+
   function renderRotaciones() {
     const { campo, lote } = actual();
-    let r;
+    let r, ce;
     try {
-      r = M.compararRotaciones(input(campo, lote), rotacionesDe(lote), M.parseFecha(state.siembra), state.pesos);
+      r = M.compararRotaciones(inputEsc(campo, lote), rotacionesDe(lote), M.parseFecha(state.siembra), state.pesos);
+      ce = M.compararEscenarios(input(campo, lote), rotacionesDe(lote), M.parseFecha(state.siembra), state.pesos);
     } catch (err) { $('results').innerHTML = '<div class="card empty">Revisá las prioridades: ' + esc(err.message) + '</div>'; return; }
     const base = r.rotaciones[0], m = r.mejor;
-    const lead = m.id === 'actual'
+    const escAct = ce.escenarios.find(e => e.id === state.escenario) || ce.escenarios[0];
+    const pre = escAct.id === 'promedio' ? '' : 'Con el clima de <b>' + esc(escAct.campania) + '</b> repetido 3 años, ';
+    const cap = t => pre ? t.charAt(0).toLowerCase() + t.slice(1) : t;
+    const lead = pre + cap(m.id === 'actual'
       ? 'Tu rotación actual queda primera, con <b>' + Math.round(m.score) + '</b> puntos según tus prioridades.'
-      : 'Según tus prioridades, <b>' + esc(m.nombre) + '</b> suma <b>' + Math.round(m.score) + '</b> puntos, <b>' + Math.round(m.score - base.score) + '</b> más que tu rotación actual.';
-    const head = '<section class="card rsum"><div class="rsum-top"><h2>' + M.HORIZONTE_ANIOS + ' años desde el ' + fmtF(base.inicio) + '</h2>' +
+      : 'Según tus prioridades, <b>' + esc(m.nombre) + '</b> suma <b>' + Math.round(m.score) + '</b> puntos, <b>' + Math.round(m.score - base.score) + '</b> más que tu rotación actual.');
+    const ini = M.parseFecha(base.inicio), c0 = ini.getUTCFullYear() - (ini.getUTCMonth() < 6 ? 1 : 0);
+    const camp = y => y + '/' + String(y + 1).slice(2);
+    const head = '<section class="card rsum"><div class="rsum-top"><h2>Tus rotaciones · campañas ' + camp(c0) + ' a ' + camp(c0 + M.HORIZONTE_ANIOS - 1) + '</h2>' +
       '<button class="btn" type="button" id="rot-reset">Restablecer ejemplos</button></div>' +
       '<p class="lead">' + lead + '</p>' +
-      '<p class="hint">Mové las prioridades de la izquierda y mirá cómo cambia el orden. Podés quitar o agregar cultivos en cada rotación.</p>' +
-      '<div class="tl-legend"><span><i style="background:var(--r1)"></i>Cultivo comercial</span><span><i style="background:color-mix(in srgb, var(--c-suelo) 45%, var(--surface))"></i>Cobertura</span>' +
-      '<span><i style="background:repeating-linear-gradient(135deg, var(--surface-2) 0 3px, var(--surface) 3px 6px)"></i>Barbecho (suelo desnudo)</span></div></section>';
-    $('results').innerHTML = head + r.rotaciones.map((e, i) => rotCardHTML(e, i, m.id)).join('') + ejesHTML(r) + evidenciaHTML();
-    $('rot-reset').addEventListener('click', () => { lote.rotacion_habitual = lote._rotOrig.slice(); delete state.alts[lote.id]; renderResults(); });
+      '<p class="hint">Cada rotación tiene un puntaje de 0 a 100 según tus prioridades. Cambialas a la izquierda y mirá cómo cambia el orden.</p>' +
+      '</section>';
+    const leyenda = '<div class="tl-legend"><span><i style="background:var(--r1)"></i>Cultivo comercial</span><span><i style="background:color-mix(in srgb, var(--c-suelo) 45%, var(--surface))"></i>Cobertura</span>' +
+      '<span><i style="background:repeating-linear-gradient(135deg, var(--surface-2) 0 3px, var(--surface) 3px 6px)"></i>Barbecho (suelo desnudo)</span></div>';
+    $('results').innerHTML = head + escTablaHTML(ce) + leyenda + r.rotaciones.map((e, i) => rotCardHTML(e, i, m.id, ce)).join('') + ejesHTML(r) + evidenciaHTML();
+    $('results').querySelectorAll('[data-esc]').forEach(b => b.addEventListener('click', () => { state.escenario = b.dataset.esc; render(); }));
+    $('rot-reset').addEventListener('click', () => { lote.rotacion_habitual = lote._rotOrig.slice(); delete state.alts[lote.id]; render(); });
     $('results').querySelectorAll('.x').forEach(b => b.addEventListener('click', () => {
       const i = Number(b.dataset.rot), seq = rotacionesDe(lote)[i].seq.slice();
-      seq.splice(Number(b.dataset.del), 1); setSeq(lote, i, seq); renderResults();
+      seq.splice(Number(b.dataset.del), 1); setSeq(lote, i, seq); render();
     }));
     $('results').querySelectorAll('select.add').forEach(sel => sel.addEventListener('change', () => {
       if (!sel.value) return;
-      const i = Number(sel.dataset.rot); setSeq(lote, i, rotacionesDe(lote)[i].seq.concat([sel.value])); renderResults();
+      const i = Number(sel.dataset.rot); setSeq(lote, i, rotacionesDe(lote)[i].seq.concat([sel.value])); render();
     }));
   }
 
@@ -777,7 +1049,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
   const nivelMejora = d => d <= 5 ? 0 : d <= 15 ? 1 : 2;
   function mejoraLote(campo, lote) {
     try {
-      const r = M.compararRotaciones(input(campo, lote), rotacionesDe(lote), M.parseFecha(state.siembra), state.pesos);
+      const r = M.compararRotaciones(inputEsc(campo, lote), rotacionesDe(lote), M.parseFecha(state.siembra), state.pesos);
       return r.mejor ? { delta: r.mejor.score - r.rotaciones[0].score, mejor: r.mejor, actual: r.rotaciones[0] } : null;
     } catch (e) { return null; }
   }
@@ -800,47 +1072,304 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     lotesPlano.forEach(({ campo, lote }) => {
       const p = L.polygon(poligono(campo, lote.geo), { color: '#fff', weight: 1.5, fillOpacity: .4 }).addTo(m);
       p.bindTooltip('', { permanent: true, direction: 'center', className: 'lote-lbl' });
-      p.on('click', () => { if (state.sel !== lote.id) { state.sel = lote.id; state.abierto = null; loadLote(); } });
+      p.on('click', () => { if (area.activo) return; ir(hrefLote(lote.id)); });
       mapa.capas[lote.id] = p;
     });
     m.attributionControl.addAttribution('Lotes trazados con datos © OpenStreetMap');
     mapa.m = m;
-    document.querySelectorAll('.map-ctl button').forEach(b => b.addEventListener('click', () => { mapa.modo = b.dataset.modo; encuadrar(true); }));
+    document.querySelectorAll('.map-ctl button[data-modo]').forEach(b => b.addEventListener('click', () => { mapa.modo = b.dataset.modo; encuadrar(true); }));
+    initArea(m);
   }
+  const campoMapa = () => state.vista === 'campo' ? campoDe(state.campo) : actual().campo;
   function encuadrar(animar) {
     if (!mapa.m) return;
-    const { campo } = actual();
+    const campo = campoMapa();
     mapa.campo = campo.id;
-    document.querySelectorAll('.map-ctl button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.modo === mapa.modo)));
+    document.querySelectorAll('.map-ctl button[data-modo]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.modo === mapa.modo)));
     const pts = mapa.modo === 'zona' ? celdaPower(M.ZONAS[campo.zona]) : campo.lotes.flatMap(l => poligono(campo, l.geo));
     mapa.m.fitBounds(L.latLngBounds(pts), { padding: [28, 28], animate: animar });
   }
   function updateMapa() {
-    const { campo, lote } = actual(), rs = mejoraLote(campo, lote);
-    $('map-info').innerHTML = rs
-      ? '<b>' + esc(lote.nombre) + '</b>: ' + (rs.delta > .5
-        ? 'la mejor rotación según tus prioridades es <b>' + esc(rs.mejor.nombre) + '</b> (' + Math.round(rs.mejor.score) + ' pts), ' + Math.round(rs.delta) + ' más que la actual.'
-        : 'tu rotación actual es la mejor según tus prioridades (' + Math.round(rs.actual.score) + ' pts).')
-      : '';
+    const campo = campoMapa(), enLote = esLote(state.vista), { lote } = actual(), rs = enLote ? mejoraLote(campo, lote) : null;
+    $('map-info').innerHTML = !enLote
+      ? 'Tocá un lote en el mapa o en la tabla para abrir su comparación de rotaciones.'
+      : rs
+        ? '<b>' + esc(lote.nombre) + '</b>: ' + (rs.delta > .5
+          ? 'la mejor rotación según tus prioridades es <b>' + esc(rs.mejor.nombre) + '</b> (' + Math.round(rs.mejor.score) + ' pts), ' + Math.round(rs.delta) + ' más que la actual.'
+          : 'tu rotación actual es la mejor según tus prioridades (' + Math.round(rs.actual.score) + ' pts).') +
+          (state.escenario === 'promedio' ? '' : ' <span class="hint">Mostrando el ' + esc(M.ESCENARIOS[campo.zona][state.escenario].nombre.toLowerCase()) + ' ' + esc(M.ESCENARIOS[campo.zona][state.escenario].campania) + '.</span>')
+        : '';
     if (!mapa.m) return;
-    if (mapa.campo !== campo.id) encuadrar(mapa.campo !== null);
+    // Reencuadrar solo si cambió el campo o el lugar de la página donde está el mapa (no pisa el zoom del usuario).
+    const slot = $('mapcard').parentNode.id;
+    if (mapa.campo !== campo.id || mapa.slot !== slot) { mapa.slot = slot; encuadrar(false); }
     lotesPlano.forEach(({ campo: c, lote: l }) => {
-      const p = mapa.capas[l.id], r = l.id === lote.id ? rs : mejoraLote(c, l), sel = l.id === lote.id;
+      const sel = enLote && l.id === lote.id, p = mapa.capas[l.id], r = sel ? rs : mejoraLote(c, l);
       p.setStyle({ fillColor: MEJ_COL[r ? nivelMejora(r.delta) : 0], color: sel ? '#fff' : 'rgba(255,255,255,.7)', weight: sel ? 3.5 : 1.5, fillOpacity: sel ? .5 : .32 });
       p.setTooltipContent(esc(l.nombre.replace(/^Lote /, '')) + (r && r.delta > .5 ? ' · +' + Math.round(r.delta) : ''));
       if (sel) p.bringToFront();
     });
+    analizarArea();
   }
 
+  /* ---------- selección de un área en el mapa (suelo SIMULADO) ----------
+     Arrastrar sobre el mapa marca un rectángulo (o tocar dos esquinas, en pantallas táctiles).
+     El suelo del área se inventa de forma determinística a partir de sus coordenadas
+     (misma área → mismos valores); el clima es el de NASA POWER del punto de referencia más cercano. */
+  const area = { activo: false, ini: null, presionado: false, arrastro: false, ultMouse: 0, rect: null, b: null };
+  function hashNum(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967296; }
+  function sueloSimulado(lat, lon) {
+    const k = lat.toFixed(3) + ',' + lon.toFixed(3), r = i => hashNum(k + '#' + i);
+    return {
+      textura: M.TEXTURAS[Math.floor(r(1) * M.TEXTURAS.length)],
+      ph: Math.round((5.6 + r(2) * 1.8) * 10) / 10,
+      drenaje: ['bueno', 'bueno', 'moderado', 'moderado', 'pobre', 'excesivo'][Math.floor(r(3) * 6)],
+      pendiente: Math.round(r(4) * 8) / 2,
+      riesgos: { sequia: Math.round((.2 + r(5) * .6) * 20) / 20, anegamiento: Math.round((.2 + r(6) * .6) * 20) / 20 },
+    };
+  }
+  function kmEntre(a, b) {
+    const dy = (a[0] - b[0]) * 110.574, dx = (a[1] - b[1]) * 111.320 * Math.cos((a[0] + b[0]) / 2 * Math.PI / 180);
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+  function zonaCercana(lat, lon) {
+    let mejor = null, dist = Infinity;
+    for (const id of Object.keys(M.ZONAS)) { const d = kmEntre([lat, lon], [M.ZONAS[id].lat, M.ZONAS[id].lon]); if (d < dist) { dist = d; mejor = id; } }
+    return [mejor, dist];
+  }
+  function hoyISO() {
+    const d = new Date(), p = n => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  }
+  function setDibujo(on) {
+    area.activo = on; area.ini = null; area.presionado = false;
+    const b = $('btn-area');
+    b.setAttribute('aria-pressed', String(on)); b.textContent = on ? 'Cancelar' : 'Seleccionar área';
+    $('map').classList.toggle('dibujando', on);
+    if (on) {
+      mapa.m.dragging.disable();
+      $('area-res').hidden = false;
+      $('area-res').innerHTML = '<p class="sub">Arrastrá sobre el mapa para marcar el área. En pantallas táctiles, tocá dos esquinas opuestas.</p>';
+    } else {
+      mapa.m.dragging.enable();
+      if (!area.b) $('area-res').hidden = true;
+    }
+  }
+  function dibujarRect(b) {
+    if (area.rect) area.rect.setBounds(b);
+    else area.rect = L.rectangle(b, { color: '#38bdf8', weight: 2.5, fillColor: '#38bdf8', fillOpacity: .18, interactive: false }).addTo(mapa.m);
+  }
+  function borrarArea() {
+    if (area.rect) { area.rect.remove(); area.rect = null; }
+    area.b = null; $('area-res').hidden = true; $('area-res').innerHTML = '';
+  }
+  function terminarArea(b) {
+    area.fin = Date.now();
+    setDibujo(false);
+    area.b = b; dibujarRect(b);
+    analizarArea();
+  }
+  function analizarArea() {
+    const b = area.b; if (!b) return;
+    const c = b.getCenter(), sw = b.getSouthWest(), ne = b.getNorthEast();
+    const ha = Math.abs(ne.lat - sw.lat) * 110.574 * Math.abs(ne.lng - sw.lng) * 111.320 * Math.cos(c.lat * Math.PI / 180) * 100;
+    const [zid, km] = zonaCercana(c.lat, c.lng), z = M.ZONAS[zid], s = sueloSimulado(c.lat, c.lng), hoy = hoyISO();
+    let r;
+    try {
+      r = M.recomendar({ zona: zid, textura: s.textura, ph: s.ph, drenaje: s.drenaje, pendiente: s.pendiente, riego: false,
+        riesgos: s.riesgos, rotacion_habitual: [], historial: [] }, M.parseFecha(hoy), null, state.pesos, 3);
+    } catch (e) { $('area-res').innerHTML = '<div class="alert">Revisá las prioridades: ' + esc(e.message) + '</div>'; return; }
+    const best = r.top[0], fmtHa = ha >= 100 ? Math.round(ha).toLocaleString('es-AR') : ha.toLocaleString('es-AR', { maximumFractionDigits: 1 });
+    const cuerpo = best
+      ? '<div class="area-best"><span class="sub">Mejor para sembrar hoy (' + fmtF(hoy) + '):</span>' +
+        '<span class="nm">' + esc(best.nombre) + '</span>' +
+        '<span class="kind' + (best.tipo === 'cobertura' ? ' cob' : '') + '">' + (best.tipo === 'cobertura' ? 'Cobertura' : 'Comercial') + '</span>' +
+        '<span class="mono">' + Math.round(best.score) + '/100</span>' +
+        '<span class="sub">aptitud ' + Math.round(best.aptitud_pct) + ' % · cosecha est. ' + fmtF(best.cosecha_estimada) + '</span></div>' +
+        (best.alertas.length ? '<div class="alert">' + esc(best.alertas[0]) + '</div>' : '') +
+        (r.top.length > 1 ? '<div class="area-alt"><span class="sub">Otras opciones:</span>' +
+          r.top.slice(1).map(e => '<span class="chip">' + esc(e.nombre) + ' · ' + Math.round(e.score) + '</span>').join('') + '</div>' : '')
+      : '<div class="alert">Ningún cultivo del catálogo es viable para sembrar hoy en esta área.</div>';
+    $('area-res').hidden = false;
+    $('area-res').innerHTML =
+      '<div class="area-head"><b>Área seleccionada · ' + fmtHa + ' ha</b><span class="pill sim">Suelo simulado</span></div>' + cuerpo +
+      '<p class="sub">Suelo inventado para esta área (no es un dato real): ' + NOMBRE_TEX[s.textura].toLowerCase() + ', pH ' + s.ph +
+      ', drenaje ' + NOMBRE_DREN[s.drenaje].toLowerCase() + ', pendiente ' + s.pendiente + ' %. Clima: NASA POWER ' + esc(M.FUENTE_CLIMA.periodo) +
+      ' del punto ' + esc(z.referencia) + ', a ' + Math.round(km) + ' km.' +
+      (km > 100 ? ' Está lejos del área: el clima puede no representarla.' : '') + ' Usa tus prioridades actuales.</p>' +
+      '<div><button class="btn" type="button" id="area-x">Borrar área</button></div>';
+    $('area-x').addEventListener('click', borrarArea);
+  }
+  function initArea(m) {
+    $('btn-area').addEventListener('click', () => setDibujo(!area.activo));
+    // Eventos de puntero nativos en fase de captura: cubren mouse, lápiz y touch, y Leaflet no los recibe
+    // mientras se dibuja. Arrastrar = rectángulo; un toque sin arrastrar fija la primera esquina y el siguiente la cierra.
+    const cont = m.getContainer();
+    const enControl = ev => ev.target.closest && ev.target.closest('.leaflet-control');
+    cont.addEventListener('pointerdown', ev => {
+      if (!area.activo || ev.button > 0 || enControl(ev)) return;
+      ev.preventDefault(); ev.stopPropagation();
+      const ll = m.mouseEventToLatLng(ev);
+      if (area.ini) { terminarArea(L.latLngBounds(area.ini, ll)); return; }
+      area.ini = ll; area.presionado = true; area.x0 = ev.clientX; area.y0 = ev.clientY;
+      try { cont.setPointerCapture(ev.pointerId); } catch (e) { /* sin captura */ }
+      dibujarRect(L.latLngBounds(ll, ll));
+    }, true);
+    cont.addEventListener('pointermove', ev => {
+      if (!area.activo || !area.ini) return;
+      ev.stopPropagation();
+      dibujarRect(L.latLngBounds(area.ini, m.mouseEventToLatLng(ev)));
+    }, true);
+    cont.addEventListener('pointerup', ev => {
+      if (!area.activo || !area.ini || !area.presionado) return;
+      ev.stopPropagation();
+      area.presionado = false;
+      const movio = Math.hypot(ev.clientX - area.x0, ev.clientY - area.y0) > 8;
+      if (movio) terminarArea(L.latLngBounds(area.ini, m.mouseEventToLatLng(ev)));
+    }, true);
+    cont.addEventListener('click', ev => { if (area.activo || Date.now() - area.fin < 400) ev.stopPropagation(); }, true);
+  }
+
+  /* ---------- resumen (dashboard) ---------- */
+  const pond = (filas, f) => { let s = 0, w = 0; for (const x of filas) { s += f(x) * x.lote.superficie; w += x.lote.superficie; } return w ? s / w : 0; };
+  function renderDash() {
+    const c = state.vista === 'campo' ? campoDe(state.campo) : null;
+    const filas = lotesPlano.filter(x => !c || x.campo.id === c.id)
+      .map(x => ({ campo: x.campo, lote: x.lote, r: mejoraLote(x.campo, x.lote) })).filter(x => x.r);
+    if (!filas.length) { $('view-dash').innerHTML = '<div class="card empty">No se pudo calcular el resumen. Revisá las prioridades en el análisis de un lote.</div>'; return; }
+    const ha = filas.reduce((s, x) => s + x.lote.superficie, 0), anios = M.HORIZONTE_ANIOS;
+    const ind = (x, k, q) => x.r[q].indicadores[k];
+    const scA = pond(filas, x => x.r.actual.score), scB = pond(filas, x => x.r.mejor.score);
+    const cobA = pond(filas, x => ind(x, 'cobertura_pct', 'actual')), cobB = pond(filas, x => ind(x, 'cobertura_pct', 'mejor'));
+    const barA = pond(filas, x => ind(x, 'barbecho_dias', 'actual')), barB = pond(filas, x => ind(x, 'barbecho_dias', 'mejor'));
+    const mejorables = filas.filter(x => x.r.delta > 5), alertados = filas.filter(x => x.r.actual.alertas.length);
+    const flecha = (a, b, suf) => '<span>' + Math.round(a) + suf + '</span><span class="arrow" aria-hidden="true">→</span><span>' + Math.round(b) + suf + '</span>';
+    const kpi = (lbl, val, sub) => '<div class="card kpi"><span class="k-l">' + lbl + '</span><span class="k-v">' + val + '</span><span class="k-s">' + sub + '</span></div>';
+    const kpis = '<div class="kpis">' +
+      kpi('Puntaje promedio', flecha(scA, scB, ''), 'Rotación actual → mejor alternativa, ponderado por superficie') +
+      kpi('Lotes que pueden mejorar', '<span>' + mejorables.length + '</span><span class="k-of">de ' + filas.length + '</span>', 'Más de 5 puntos de mejora · ' + ha + ' ha en total') +
+      kpi('Suelo cubierto', flecha(cobA, cobB, ' %'), 'Promedio a ' + anios + ' años, actual → mejor alternativa') +
+      kpi('Suelo desnudo', flecha(barA, barB, ' d'), 'Días de barbecho en ' + anios + ' años, actual → mejor alternativa') +
+      kpi('Alertas en la rotación actual',
+        alertados.length ? '<span class="st warn" aria-hidden="true">!</span><span>' + alertados.length + '</span><span class="k-of">' + (alertados.length === 1 ? 'lote' : 'lotes') + '</span>'
+                         : '<span class="st good" aria-hidden="true">✓</span><span>Ninguna</span>',
+        alertados.length ? esc(alertados.map(x => x.lote.nombre).join(', ')) : 'Sin alertas con estas prioridades y fecha') +
+      '</div>';
+
+    const filasT = filas.slice().sort((a, b) => b.r.delta - a.r.delta).map(x => {
+      const d = Math.round(x.r.delta), misma = x.r.mejor.id === 'actual', al = x.r.actual.alertas;
+      return '<tr><td class="izq lt"><a href="' + hrefLote(x.lote.id, 'rotaciones') + '">' + esc(x.lote.nombre) + '</a>' +
+        (c ? '' : '<span class="sub">' + esc(x.campo.nombre) + '</span>') +
+        (al.length ? '<span class="sub warn-t">! ' + esc(al[0]) + '</span>' : '') + '</td>' +
+        '<td class="mono">' + x.lote.superficie + '</td>' +
+        '<td class="izq">' + esc(x.r.actual.secuencia.map(corto).join(' → ')) + '</td><td class="mono">' + Math.round(x.r.actual.score) + '</td>' +
+        '<td class="izq">' + (misma ? '<span class="sub">La actual</span>' : esc(x.r.mejor.nombre)) + '</td><td class="mono">' + Math.round(x.r.mejor.score) + '</td>' +
+        '<td><span class="mej"><i class="dot" style="background:' + MEJ_COL[nivelMejora(x.r.delta)] + '"></i>' + (d > 0 ? '+' + d : '0') + '</span></td>' +
+        '<td class="mono">' + ind(x, 'cobertura_pct', 'actual') + ' → ' + ind(x, 'cobertura_pct', 'mejor') + ' %</td></tr>';
+    }).join('');
+    const tabla = '<section class="card"><div class="card-pad rank-head"><h2>' + (c ? 'Lotes del campo' : 'Tus lotes') + '</h2>' +
+      '<span class="hint">Ordenados por mejora posible · tocá un lote para ver la comparación</span></div>' +
+      '<div class="tbl-wrap"><table class="dash-tbl"><thead><tr><th class="izq">Lote</th><th>ha</th><th class="izq">Rotación actual</th><th>Pts</th>' +
+      '<th class="izq">Mejor alternativa</th><th>Pts</th><th>Mejora</th><th>Suelo cubierto</th></tr></thead><tbody>' + filasT + '</tbody></table></div></section>';
+
+    const zonas = [...new Set(filas.map(x => x.campo.zona))];
+    const clima = '<section class="card card-pad"><div class="rank-head"><h2>Clima de referencia · NASA POWER</h2>' +
+      '<span class="hint">Promedio mensual ' + esc(M.FUENTE_CLIMA.periodo) + ' en un punto por zona · no es el pronóstico de esta campaña</span></div>' +
+      '<div class="clima-grid' + (zonas.length === 1 ? ' uno' : '') + '">' + zonas.map(climaZonaHTML).join('') + '</div></section>';
+
+    const pr = state.wPreset ? WEIGHT_PRESETS[state.wPreset].t : 'personalizadas';
+    const pie = '<section class="card foot"><b>Cómo leer este resumen</b><ul>' +
+      '<li>Los puntajes usan las mismas reglas que «Comparar rotaciones», con tus prioridades (' + esc(pr) + ') y una campaña que arranca el ' + fmtF(state.siembra) + '.</li>' +
+      '<li>Las alternativas de cada lote son ejemplos armados por el equipo. Se editan en la comparación de cada lote.</li>' +
+      '<li>El clima sale de NASA POWER y es el mismo para todos los lotes de una celda de unos 55 × 60 km.</li>' +
+      '<li>Catálogo de cultivos, precios y lotes ilustrativos. El resumen apoya la decisión del productor, no la reemplaza.</li></ul></section>';
+
+    $('view-dash').innerHTML = kpis + (c ? '<div id="slot-map-dash"></div>' : '') + tabla + clima + pie;
+  }
+
+  /* ---------- gráficos de clima (SVG) ----------
+     Una serie por gráfico, un solo eje: lluvia en barras (magnitud desde 0) y temperatura en línea
+     (el 0 °C no es una base natural). Etiqueta solo en el máximo (y el mínimo de temperatura); el resto en el tooltip y en la tabla. */
+  const MES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  const MES_L = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  const CW = 480, CH = 150, PL = 34, PR = 8, PT = 18, PB = 22, PW = CW - PL - PR, PH = CH - PT - PB, COLW = PW / 12;
+  const yPix = (v, lo, hi) => PT + PH - (v - lo) / (hi - lo) * PH;
+  const f1 = x => x.toFixed(1);
+  function ejeSVG(lo, hi, paso) {
+    let g = '';
+    for (let v = lo; v <= hi + 1e-9; v += paso) {
+      const y = f1(yPix(v, lo, hi));
+      g += '<line class="grid" x1="' + PL + '" x2="' + (CW - PR) + '" y1="' + y + '" y2="' + y + '"/><text class="ax" x="' + (PL - 6) + '" y="' + (+y + 3.5) + '" text-anchor="end">' + v + '</text>';
+    }
+    return g + MES.map((m, i) => '<text class="ax" x="' + f1(PL + COLW * (i + .5)) + '" y="' + (CH - 5) + '" text-anchor="middle">' + m[0] + '</text>').join('');
+  }
+  const hitsSVG = (vals, fmt) => vals.map((v, i) => '<rect class="hit" x="' + f1(PL + COLW * i) + '" y="' + PT + '" width="' + f1(COLW) + '" height="' + PH + '" data-tip="' + esc(MES_L[i] + ': ' + fmt(v)) + '"/>').join('');
+  function barrasSVG(vals) {
+    const max = Math.max(...vals), paso = max > 150 ? 50 : 25, hi = Math.ceil(max / paso) * paso, bw = COLW * .62;
+    const barras = vals.map((v, i) => {
+      const x = PL + COLW * i + (COLW - bw) / 2, y = yPix(v, 0, hi), h = PT + PH - y, r = Math.min(4, h, bw / 2);
+      return '<path class="bar" d="M' + f1(x) + ',' + f1(y + h) + 'V' + f1(y + r) + 'Q' + f1(x) + ',' + f1(y) + ' ' + f1(x + r) + ',' + f1(y) +
+        'H' + f1(x + bw - r) + 'Q' + f1(x + bw) + ',' + f1(y) + ' ' + f1(x + bw) + ',' + f1(y + r) + 'V' + f1(y + h) + 'Z"/>';
+    }).join('');
+    const im = vals.indexOf(max);
+    const etq = '<text class="dl" x="' + f1(PL + COLW * (im + .5)) + '" y="' + f1(yPix(max, 0, hi) - 5) + '" text-anchor="middle">' + Math.round(max) + '</text>';
+    return '<svg viewBox="0 0 ' + CW + ' ' + CH + '" role="img" aria-label="Precipitación mensual en milímetros, de enero a diciembre: ' + vals.map(Math.round).join(', ') + '">' +
+      ejeSVG(0, hi, paso) + barras + etq + hitsSVG(vals, v => Math.round(v) + ' mm') + '</svg>';
+  }
+  function lineaSVG(vals) {
+    const mn = Math.min(...vals), mx = Math.max(...vals), lo = Math.floor((mn - 3) / 5) * 5, hi = Math.ceil((mx + 2) / 5) * 5;
+    const pts = vals.map((v, i) => [PL + COLW * (i + .5), yPix(v, lo, hi)]);
+    const d = 'M' + pts.map(p => f1(p[0]) + ',' + f1(p[1])).join('L');
+    const etq = (i, dy) => '<text class="dl" x="' + f1(pts[i][0]) + '" y="' + f1(pts[i][1] + dy) + '" text-anchor="middle">' + f1(vals[i]) + '</text>';
+    return '<svg viewBox="0 0 ' + CW + ' ' + CH + '" role="img" aria-label="Temperatura media mensual en grados, de enero a diciembre: ' + vals.map(f1).join(', ') + '">' +
+      ejeSVG(lo, hi, 5) + '<path class="line" d="' + d + '"/>' +
+      pts.map(p => '<circle class="pt" cx="' + f1(p[0]) + '" cy="' + f1(p[1]) + '" r="4"/>').join('') +
+      etq(vals.indexOf(mx), -10) + etq(vals.indexOf(mn), 18) + hitsSVG(vals, v => f1(v) + ' °C') + '</svg>';
+  }
+  function climaZonaHTML(zid) {
+    const z = M.ZONAS[zid], lluvia = z.precip.reduce((a, b) => a + b, 0), tm = z.temp.reduce((a, b) => a + b, 0) / 12;
+    const filas = MES.map((m, i) => '<tr><td>' + m + '</td><td class="mono">' + Math.round(z.precip[i]) + '</td><td class="mono">' + f1(z.temp[i]) + '</td></tr>').join('');
+    return '<div class="clima"><h3>' + esc(z.nombre) + ' <span class="sub">· ' + esc(z.referencia) + '</span></h3>' +
+      '<figure class="chart"><figcaption>Precipitación mensual · <b>' + Math.round(lluvia) + ' mm</b> al año</figcaption>' + barrasSVG(z.precip) + '</figure>' +
+      '<figure class="chart"><figcaption>Temperatura media · <b>' + f1(tm) + ' °C</b> en el año</figcaption>' + lineaSVG(z.temp) + '</figure>' +
+      '<details class="tview"><summary>Ver como tabla</summary><table><thead><tr><th>Mes</th><th>Lluvia (mm)</th><th>Temp. (°C)</th></tr></thead><tbody>' + filas + '</tbody></table></details></div>';
+  }
+  // Tooltip compartido para todo lo que tenga data-tip.
+  const tip = $('tip');
+  document.addEventListener('mouseover', e => {
+    const t = e.target.closest && e.target.closest('[data-tip]');
+    if (!t) { tip.hidden = true; return; }
+    tip.textContent = t.getAttribute('data-tip'); tip.hidden = false;
+  });
+  document.addEventListener('mousemove', e => {
+    if (tip.hidden) return;
+    tip.style.left = Math.max(8, Math.min(e.clientX + 12, innerWidth - tip.offsetWidth - 8)) + 'px';
+    tip.style.top = Math.max(8, e.clientY - 34) + 'px';
+  });
+
+  /* ---------- render general ---------- */
   function renderResults() {
-    updateMapa();
-    for (const t of ['tab-rot', 'tab-cul']) $(t).setAttribute('aria-selected', String($(t).dataset.v === state.vista));
     if (state.vista === 'rotaciones') renderRotaciones(); else renderCultivo();
   }
-  ['tab-rot', 'tab-cul'].forEach(t => $(t).addEventListener('click', () => { state.vista = $(t).dataset.v; renderResults(); }));
+  function ubicarMapa() {
+    const slot = state.vista === 'campo' ? $('slot-map-dash') : esLote(state.vista) ? $('slot-map-lote') : null;
+    if (!slot) return;
+    if ($('mapcard').parentNode !== slot) slot.appendChild($('mapcard'));
+    if (mapa.m) mapa.m.invalidateSize(false);
+    updateMapa();
+  }
+  function render() {
+    const dash = !esLote(state.vista);
+    // El resumen se vuelve a generar entero: antes se rescata el mapa para no destruir el de Leaflet.
+    if (dash) $('map-holder').appendChild($('mapcard'));
+    $('view-dash').hidden = !dash; $('view-lote').hidden = dash;
+    renderMenu(); renderCtx();
+    if (dash) renderDash(); else renderResults();
+    ubicarMapa();
+  }
 
   $('f-siembra').value = state.siembra;
-  renderPresets(); renderWeightPresets(); renderWeights(); bindControls(); initMapa(); loadLote();
+  renderPresets(); renderWeightPresets(); renderWeights(); bindControls(); initMapa(); loadLote(); aplicarRuta(false);
 })();
 </script>
 </body>

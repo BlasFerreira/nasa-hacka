@@ -6,4 +6,4 @@
 
 Climate comes from NASA POWER (monthly climatology 2001-2025 at one reference point per zone). Refresh it with `node prototype/src/fetch_power.js`, then rebuild with `node prototype/src/build.js`. Crop values, soils and plots are illustrative. See `docs/documento_funcional.md`.
 
-Live: https://blasferreira.github.io/nasa-hacka/ (GitHub Pages, rebuilt from `prototype/src` on every push to `main` by `.github/workflows/pages.yml`).
+Live: https://asistente-rotacion-cultivos.vercel.app/ (Vercel, serves the committed `mvp-rotacion.html` as is, with no build step). After editing anything in `src/`, run `node prototype/src/build.js` and commit the regenerated HTML; `.github/workflows/check-build.yml` fails if you forget.

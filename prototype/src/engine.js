@@ -100,6 +100,35 @@
   for (const id of Object.keys(POWER.zonas)) ZONAS[id] = POWER.zonas[id];
   const FUENTE_CLIMA = { nombre: 'NASA POWER', periodo: POWER.periodo, url: POWER.url, descargado: POWER.descargado };
 
+  // Escenarios climáticos: campañas agrícolas REALES (julio a junio) de la serie de NASA POWER.
+  // promedio = climatología 2001–2025 (referencia), seco = campaña con menos lluvia, húmedo = con más lluvia.
+  // No hay escenario "año normal": ninguna campaña real se parece al promedio mes a mes.
+  const ESCENARIOS_ORDEN = ['promedio', 'seco', 'humedo'];
+  const ESCENARIOS = {}, CAMPANIAS = {};
+  const PISO_CLIMA = 0.15; // aptitud climática mínima de un cultivo ya sembrado (cosecha fallida)
+  for (const [zid, z] of Object.entries(ZONAS)) {
+    const totalProm = z.precip.reduce((a, b) => a + b, 0);
+    const camp = [], s = z.serie || {};
+    for (const y of Object.keys(s).map(Number).sort((a, b) => a - b)) {
+      if (!s[y + 1]) continue;
+      const temp = s[y + 1].temp.slice(0, 6).concat(s[y].temp.slice(6));       // ene..dic
+      const precip = s[y + 1].precip.slice(0, 6).concat(s[y].precip.slice(6)); // ene..jun de y+1, jul..dic de y
+      if (temp.concat(precip).some(v => v === null || v === undefined)) continue;
+      camp.push({ campania: y + '/' + String(y + 1).slice(2), temp, precip, total: precip.reduce((a, b) => a + b, 0) });
+    }
+    const esc = { promedio: { id: 'promedio', nombre: 'Clima promedio', campania: POWER.periodo, temp: z.temp, precip: z.precip, total: totalProm } };
+    for (const c of camp) esc['c' + c.campania.slice(0, 4)] = Object.assign({ id: 'c' + c.campania.slice(0, 4), nombre: 'Campaña ' + c.campania }, c);
+    CAMPANIAS[zid] = camp.map(c => 'c' + c.campania.slice(0, 4));
+    if (camp.length) {
+      const ord = camp.slice().sort((a, b) => a.total - b.total);
+      const elegir = (id, nombre, c) => (esc[id] = Object.assign({ id, nombre }, c));
+      elegir('seco', 'Año seco', ord[0]);
+      elegir('humedo', 'Año húmedo', ord[ord.length - 1]);
+    }
+    for (const e of Object.values(esc)) e.anomalia_pct = Math.round(100 * (e.total - totalProm) / totalProm);
+    ESCENARIOS[zid] = esc;
+  }
+
   const FACTORES_ORDEN = ['epoca', 'cosecha', 'temperatura', 'agua', 'ph', 'textura', 'drenaje', 'pendiente'];
   const FACTORES_NOMBRE = {
     epoca: 'época de siembra', cosecha: 'ventana de cosecha', temperatura: 'temperatura del ciclo',
@@ -142,8 +171,9 @@
     return [delta, addDias(d, delta)];
   }
 
-  function cicloClima(zona, inicio, dias) {
-    const z = ZONAS[zona] || ZONAS.pampa_humeda;
+  function cicloClima(zona, inicio, dias, escenario) {
+    const zz = ZONAS[zona] ? zona : 'pampa_humeda';
+    const z = (escenario && ESCENARIOS[zz][escenario]) || ZONAS[zz];
     let t = 0, p = 0;
     for (let i = 0; i < dias; i++) {
       const d = addDias(inicio, i), m = d.getUTCMonth();
@@ -187,7 +217,7 @@
   /* ---------- aptitud ---------- */
   function aptitud(cid, lote, siembra, cosechaLimite) {
     const c = CULTIVOS[cid], ciclo = c.ciclo_dias;
-    const [tMedia, precip] = cicloClima(lote.zona, siembra, ciclo);
+    const [tMedia, precip] = cicloClima(lote.zona, siembra, ciclo, lote.escenario);
     const precipEff = lote.riego ? Math.max(precip, c.agua_opt[0]) : precip;
     const f = {};
     f.epoca = clamp(1 - diasFueraVentana(siembra, c.siembra_opt) / c.margen_siembra_dias);
@@ -198,11 +228,19 @@
     f.textura = c.textura[lote.textura] ?? .5;
     f.drenaje = c.drenaje[lote.drenaje] ?? .5;
     f.pendiente = trapecio(lote.pendiente, -1, 0, c.pend_opt_max, c.pend_lim_max);
+    // En una simulación de rotación el cultivo ya está sembrado: si el clima del año no alcanza,
+    // la cosecha es muy mala (piso) en lugar de "no viable". SUPUESTO documentado.
+    let fallo = null;
+    if (lote.pisoClima) {
+      const malos = ['temperatura', 'agua'].filter(k => f[k] <= 0);
+      if (malos.length) fallo = malos.map(k => razon(k, siembra, tMedia, precipEff, lote)).join(' ');
+      for (const k of malos) f[k] = lote.pisoClima;
+    }
     const razones = [];
     for (const k of FACTORES_ORDEN) if (f[k] <= 0) razones.push(razon(k, siembra, tMedia, precipEff, lote));
     let indice = 0;
     if (!razones.length) indice = Math.exp(FACTORES_ORDEN.reduce((s, k) => s + Math.log(f[k]), 0) / FACTORES_ORDEN.length);
-    return { indice, factores: f, descartado: razones.length > 0, razones, tMedia, precip: precipEff };
+    return { indice, factores: f, descartado: razones.length > 0, razones, fallo, tMedia, precip: precipEff };
   }
   function razon(k, siembra, t, p, lote) {
     const fmt = d => String(d.getUTCDate()).padStart(2, '0') + '/' + String(d.getUTCMonth() + 1).padStart(2, '0');
@@ -419,13 +457,13 @@
           continue;
         }
       }
-      const ev = evaluarCultivo(cid, Object.assign({}, lote, { historial: hist }), siembra, null);
+      const ev = evaluarCultivo(cid, Object.assign({}, lote, { historial: hist, pisoClima: PISO_CLIMA }), siembra, null);
       const dur = diffDias(finCiclo, siembra);
       const dias = Math.max(0, diffDias(finCiclo > fin ? fin : finCiclo, siembra));
       const frac = dur > 0 ? dias / dur : 0;
       const p = { cultivo: cid, nombre: c.nombre, tipo: c.tipo, siembra: fmtISO(siembra), fin: fmtISO(finCiclo),
         desde: diffDias(siembra, inicio), dias, cortada, viable: !ev.descartado,
-        aptitud: ev.descartado ? 0 : ev.apt.indice, epoca: ev.apt.factores.epoca, razones: ev.apt.razones };
+        aptitud: ev.descartado ? 0 : ev.apt.indice, epoca: ev.apt.factores.epoca, razones: ev.apt.razones, fallo: ev.apt.fallo || null };
       if (p.viable) Object.assign(p, { margen: ev.margen_usd_ha * frac, n_rep: ev.balance.n_a_reponer * frac,
         salud: ev.comp.salud_suelo, rapidez: ev.comp.rapidez, resil: ev.comp.resiliencia, cumpl: ev.comp.cumplimiento, motivos: ev.motivos });
       pasos.push(p);
@@ -452,6 +490,7 @@
     for (const k of Object.keys(comp)) { componentes[k] = Math.round(1000 * comp[k]) / 10; aporte[k] = 100 * aptMedia * pn[k] * comp[k]; }
     const alertas = [];
     pasos.filter(p => !p.viable).forEach(p => alertas.push(p.nombre + ' (' + p.siembra.slice(0, 7) + '): no viable. ' + (p.razones[0] || '')));
+    pasos.filter(p => p.fallo).forEach(p => alertas.push(p.nombre + ' (' + p.siembra.slice(0, 7) + '): cosecha fallida por el clima del año. ' + p.fallo));
     pasos.filter(p => p.viable && p.epoca < .7).forEach(p => alertas.push(p.nombre + ' se siembra fuera de la ventana óptima (' + p.siembra + ').'));
     omitidos.forEach(o => alertas.push(o.nombre + ' no entra entre cultivos (' + o.fecha.slice(0, 7) + '): queda barbecho.'));
     const motivos = [...new Set(ok.flatMap(p => p.motivos))];
@@ -464,6 +503,7 @@
         familias: new Set(ok.map(p => CULTIVOS[p.cultivo].familia)).size,
         cultivos_anio: Math.round(10 * ok.length / anios) / 10,
         coberturas: ok.filter(p => p.tipo === 'cobertura').length,
+        fallidos: pasos.filter(p => p.fallo).length,
       },
       alertas: alertas.concat(motivos),
     };
@@ -497,7 +537,37 @@
     return { rotaciones: evs, mejor: orden[0] || null, pesos: normalizarPesos(pesos), horizonte_anios: HORIZONTE_ANIOS };
   }
 
-  const API = { CULTIVOS, ZONAS, FUENTE_CLIMA, TEXTURAS, DRENAJES, PESOS_DEFECTO, PESO_MAX, COMPONENTES_NOMBRE, COMPONENTES_DESC, FACTORES_NOMBRE,
+  // Cada rotación bajo el clima promedio, el año seco, el húmedo y TODAS las campañas reales de la serie
+  // (las 3 campañas del horizonte con el clima de ese año: prueba de estrés, no pronóstico).
+  const cuantil = (a, p) => { const b = a.slice().sort((x, y) => x - y), i = p * (b.length - 1), lo = Math.floor(i);
+    return lo + 1 < b.length ? b[lo] + (b[lo + 1] - b[lo]) * (i - lo) : b[lo]; };
+  function compararEscenarios(lote, rotaciones, inicio, pesos) {
+    const zid = ZONAS[lote.zona] ? lote.zona : 'pampa_humeda';
+    const escs = ESCENARIOS_ORDEN.filter(k => ESCENARIOS[zid][k]).map(k => ESCENARIOS[zid][k]);
+    const filas = rotaciones.map(r => ({ id: r.id, nombre: r.nombre, scores: {}, reales: [], fallos: 0 }));
+    const correr = esc => compararRotaciones(Object.assign({}, lote, { escenario: esc }), rotaciones, inicio, pesos).rotaciones;
+    for (const e of escs) correr(e.id).forEach((rr, i) => { filas[i].scores[e.id] = rr.pasos ? rr.score : null; });
+    const camps = CAMPANIAS[zid] || [];
+    for (const cid of camps) correr(cid).forEach((rr, i) => {
+      if (!rr.pasos) return;
+      filas[i].reales.push(rr.score);
+      if (rr.indicadores.fallidos) filas[i].fallos++;
+    });
+    for (const f of filas) {
+      const n = f.reales.length;
+      f.n = n;
+      f.mediana = n ? Math.round(10 * cuantil(f.reales, .5)) / 10 : null;
+      f.malo = n ? Math.round(10 * cuantil(f.reales, .1)) / 10 : null; // año malo: 1 de cada 10
+      f.peor = n ? Math.min(...f.reales) : null;
+      delete f.reales;
+    }
+    const conDatos = filas.filter(f => f.malo != null);
+    const estable = conDatos.length ? conDatos.reduce((a, f) => f.malo > a.malo ? f : a) : null;
+    return { escenarios: escs.map(e => ({ id: e.id, nombre: e.nombre, campania: e.campania, total: e.total, anomalia_pct: e.anomalia_pct })),
+      filas, n_campanias: camps.length, estable: estable ? estable.id : null, periodo: POWER.periodo };
+  }
+
+  const API = { ESCENARIOS, ESCENARIOS_ORDEN, PISO_CLIMA, compararEscenarios, CULTIVOS, ZONAS, FUENTE_CLIMA, TEXTURAS, DRENAJES, PESOS_DEFECTO, PESO_MAX, COMPONENTES_NOMBRE, COMPONENTES_DESC, FACTORES_NOMBRE,
     HORIZONTE_ANIOS, REF_MARGEN_ANUAL, recomendar, evaluarRotacion, compararRotaciones, normalizarPesos, parseFecha, fmtISO, addDias };
   if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.Motor = API;
 })(typeof window !== 'undefined' ? window : globalThis);
