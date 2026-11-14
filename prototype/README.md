@@ -1,4 +1,4 @@
-﻿# Prototype
+# Prototype
 
 - `mvp-rotacion.html`: self-contained interactive MVP (open it in a browser). Published as an artifact too.
 - `src/`: sources. `engine.js` is the recommendation engine (suitability filter + transparent score), `app.tpl.html` is the UI, `build.js` inlines the engine into `mvp-rotacion.html` (`node prototype/src/build.js`), `smoke.js` prints sample rankings (`node prototype/src/smoke.js`).
@@ -6,3 +6,4 @@
 
 Climate comes from NASA POWER (monthly climatology 2001-2025 at one reference point per zone). Refresh it with `node prototype/src/fetch_power.js`, then rebuild with `node prototype/src/build.js`. Crop values, soils and plots are illustrative. See `docs/documento_funcional.md`.
 
+Live: https://blasferreira.github.io/nasa-hacka/ (GitHub Pages, rebuilt from `prototype/src` on every push to `main` by `.github/workflows/pages.yml`).
