@@ -10,11 +10,13 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
-/* Dirección: interfaz neutra y silenciosa al estilo v0 (grises zinc, bordes finos, un solo botón primario).
+/* Dirección: interfaz silenciosa con la paleta de NASA (azul #0B3D91, rojo #FC3D21, blanco) y neutros azulados.
+   Sin logos ni insignias de NASA: las reglas de Space Apps lo prohíben.
    Layout: menú hamburguesa con campos y lotes + panel de planificación + ranking expandible. */
 :root {
-  --bg: #fafafa; --surface: #ffffff; --surface-2: #f4f4f5; --border: #e4e4e7;
-  --text: #09090b; --muted: #71717a; --primary: #18181b; --on-primary: #fafafa; --ring: #a1a1aa;
+  --bg: #f5f7fb; --surface: #ffffff; --surface-2: #eef2f9; --border: #d6deec;
+  --text: #0b1530; --muted: #56627d; --primary: #0b3d91; --on-primary: #ffffff; --ring: #6b8bd6;
+  --brand: #fc3d21; --on-brand: #ffffff;
   --good: #15803d; --warn: #b45309; --bad: #b91c1c;
   --c-ingreso: #2563eb; --c-rapidez: #0891b2; --c-suelo: #16a34a; --c-ahorro: #ea580c; --c-resil: #9333ea; --c-cumpl: #db2777;
   --r0: #71717a; --r1: #0d9488; --r2: #4f46e5;
@@ -24,16 +26,18 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #09090b; --surface: #0f0f11; --surface-2: #18181b; --border: #27272a;
-    --text: #fafafa; --muted: #a1a1aa; --primary: #fafafa; --on-primary: #09090b; --ring: #52525b;
+    --bg: #061029; --surface: #0a1838; --surface-2: #10224a; --border: #1f3566;
+    --text: #f5f7fb; --muted: #a3b2d1; --primary: #f5f7fb; --on-primary: #0b3d91; --ring: #4f72c4;
+    --brand: #fc3d21; --on-brand: #ffffff;
     --good: #4ade80; --warn: #fbbf24; --bad: #f87171;
     --c-ingreso: #3b82f6; --c-rapidez: #22d3ee; --c-suelo: #22c55e; --c-ahorro: #fb923c; --c-resil: #a855f7; --c-cumpl: #ec4899; --r0: #a1a1aa; --r1: #2dd4bf; --r2: #a5b4fc;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #09090b; --surface: #0f0f11; --surface-2: #18181b; --border: #27272a;
-  --text: #fafafa; --muted: #a1a1aa; --primary: #fafafa; --on-primary: #09090b; --ring: #52525b;
+  --bg: #061029; --surface: #0a1838; --surface-2: #10224a; --border: #1f3566;
+  --text: #f5f7fb; --muted: #a3b2d1; --primary: #f5f7fb; --on-primary: #0b3d91; --ring: #4f72c4;
+  --brand: #fc3d21; --on-brand: #ffffff;
   --good: #4ade80; --warn: #fbbf24; --bad: #f87171;
   --c-ingreso: #3b82f6; --c-rapidez: #22d3ee; --c-suelo: #22c55e; --c-ahorro: #fb923c; --c-resil: #a855f7; --c-cumpl: #ec4899; --r0: #a1a1aa; --r1: #2dd4bf; --r2: #a5b4fc;
   color-scheme: dark;
@@ -48,8 +52,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(8px); z-index: 5; }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: -0.01em; }
-.logo { width: 24px; height: 24px; border-radius: 6px; background: var(--primary); display: grid; place-items: center; }
-.logo svg { width: 14px; height: 14px; stroke: var(--on-primary); }
+.logo { width: 24px; height: 24px; border-radius: 6px; background: var(--brand); display: grid; place-items: center; }
+.logo svg { width: 14px; height: 14px; stroke: var(--on-brand); }
 .pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; font-size: 12px; color: var(--muted); background: var(--surface); white-space: nowrap; }
 .pill.sim::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--warn); }
 
@@ -193,9 +197,10 @@ details.disc li b { color: var(--text); font-weight: 500; }
 #map { height: 320px; background: var(--surface-2); }
 @media (max-width: 560px) { #map { height: 260px; } }
 .map-off { display: grid; place-items: center; height: 100%; color: var(--muted); padding: 16px; text-align: center; }
-.map-ctl { position: absolute; top: 10px; right: 10px; z-index: 1000; display: inline-flex; gap: 2px; padding: 3px; border-radius: 10px; background: rgb(15 15 17 / 0.72); backdrop-filter: blur(6px); }
+.map-ctl { position: absolute; top: 10px; right: 10px; z-index: 1000; display: inline-flex; gap: 2px; padding: 3px; border-radius: 10px; background: rgb(6 16 41 / 0.78); backdrop-filter: blur(6px); }
 .map-ctl button { border: 0; background: transparent; color: #e4e4e7; border-radius: 7px; padding: 5px 10px; font-size: 12px; font-weight: 500; cursor: pointer; min-height: 28px; }
-.map-ctl button[aria-pressed="true"] { background: #fafafa; color: #09090b; }
+.map-ctl button[aria-pressed="true"] { background: #ffffff; color: #0b3d91; }
+#btn-area[aria-pressed="true"] { background: #fc3d21; color: #ffffff; }
 .map-foot { display: grid; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); }
 .map-info { font-size: 14px; }
 .mej-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); align-items: center; }
@@ -205,6 +210,14 @@ details.disc li b { color: var(--text); font-weight: 500; }
 .leaflet-tooltip.lote-lbl { background: rgb(9 9 11 / 0.72); color: #fafafa; border: 0; box-shadow: none; border-radius: 6px; padding: 2px 7px; font: 500 12px/1.3 var(--font); white-space: nowrap; }
 .leaflet-tooltip.lote-lbl::before { display: none; }
 .leaflet-container { font-family: var(--font); }
+.map-ctl .sep { width: 1px; background: rgb(255 255 255 / 0.25); margin: 4px 2px; }
+#map.dibujando, #map.dibujando .leaflet-interactive { cursor: crosshair; }
+.area-res { display: grid; gap: 10px; border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: var(--surface-2); }
+.area-res[hidden] { display: none; }
+.area-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
+.area-best { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+.area-best .nm { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+.area-alt { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 
 /* Pestañas */
 .tabs { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); align-self: flex-start; max-width: 100%; }
@@ -308,10 +321,13 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
         <div class="map-ctl" role="group" aria-label="Encuadre del mapa">
           <button type="button" data-modo="campo" aria-pressed="true">Campo</button>
           <button type="button" data-modo="zona" aria-pressed="false">Celda NASA POWER</button>
+          <span class="sep" aria-hidden="true"></span>
+          <button type="button" id="btn-area" aria-pressed="false">Seleccionar área</button>
         </div>
       </div>
       <div class="map-foot">
         <p class="map-info" id="map-info"></p>
+        <div class="area-res" id="area-res" aria-live="polite" hidden></div>
         <div class="mej-legend"><span>Mejora posible frente a la rotación actual:</span>
           <span><i style="background:#22c55e"></i>hasta 5 pts</span><span><i style="background:#f59e0b"></i>5 a 15 pts</span><span><i style="background:#ef4444"></i>más de 15 pts</span>
           <span><i class="celda"></i>celda NASA POWER</span></div>
@@ -1304,18 +1320,19 @@ window.POWER_CLIMATOLOGY = {"fuente":"NASA POWER (Prediction Of Worldwide Energy
     lotesPlano.forEach(({ campo, lote }) => {
       const p = L.polygon(poligono(campo, lote.geo), { color: '#fff', weight: 1.5, fillOpacity: .4 }).addTo(m);
       p.bindTooltip('', { permanent: true, direction: 'center', className: 'lote-lbl' });
-      p.on('click', () => { if (state.sel !== lote.id) { state.sel = lote.id; state.abierto = null; loadLote(); } });
+      p.on('click', () => { if (area.activo) return; if (state.sel !== lote.id) { state.sel = lote.id; state.abierto = null; loadLote(); } });
       mapa.capas[lote.id] = p;
     });
     m.attributionControl.addAttribution('Lotes trazados con datos © OpenStreetMap');
     mapa.m = m;
-    document.querySelectorAll('.map-ctl button').forEach(b => b.addEventListener('click', () => { mapa.modo = b.dataset.modo; encuadrar(true); }));
+    document.querySelectorAll('.map-ctl button[data-modo]').forEach(b => b.addEventListener('click', () => { mapa.modo = b.dataset.modo; encuadrar(true); }));
+    initArea(m);
   }
   function encuadrar(animar) {
     if (!mapa.m) return;
     const { campo } = actual();
     mapa.campo = campo.id;
-    document.querySelectorAll('.map-ctl button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.modo === mapa.modo)));
+    document.querySelectorAll('.map-ctl button[data-modo]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.modo === mapa.modo)));
     const pts = mapa.modo === 'zona' ? celdaPower(M.ZONAS[campo.zona]) : campo.lotes.flatMap(l => poligono(campo, l.geo));
     mapa.m.fitBounds(L.latLngBounds(pts), { padding: [28, 28], animate: animar });
   }
@@ -1336,8 +1353,127 @@ window.POWER_CLIMATOLOGY = {"fuente":"NASA POWER (Prediction Of Worldwide Energy
     });
   }
 
+  /* ---------- selección de un área en el mapa (suelo SIMULADO) ----------
+     Arrastrar sobre el mapa marca un rectángulo (o tocar dos esquinas, en pantallas táctiles).
+     El suelo del área se inventa de forma determinística a partir de sus coordenadas
+     (misma área → mismos valores); el clima es el de NASA POWER del punto de referencia más cercano. */
+  const area = { activo: false, ini: null, presionado: false, arrastro: false, ultMouse: 0, rect: null, b: null };
+  function hashNum(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967296; }
+  function sueloSimulado(lat, lon) {
+    const k = lat.toFixed(3) + ',' + lon.toFixed(3), r = i => hashNum(k + '#' + i);
+    return {
+      textura: M.TEXTURAS[Math.floor(r(1) * M.TEXTURAS.length)],
+      ph: Math.round((5.6 + r(2) * 1.8) * 10) / 10,
+      drenaje: ['bueno', 'bueno', 'moderado', 'moderado', 'pobre', 'excesivo'][Math.floor(r(3) * 6)],
+      pendiente: Math.round(r(4) * 8) / 2,
+      riesgos: { sequia: Math.round((.2 + r(5) * .6) * 20) / 20, anegamiento: Math.round((.2 + r(6) * .6) * 20) / 20 },
+    };
+  }
+  function kmEntre(a, b) {
+    const dy = (a[0] - b[0]) * 110.574, dx = (a[1] - b[1]) * 111.320 * Math.cos((a[0] + b[0]) / 2 * Math.PI / 180);
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+  function zonaCercana(lat, lon) {
+    let mejor = null, dist = Infinity;
+    for (const id of Object.keys(M.ZONAS)) { const d = kmEntre([lat, lon], [M.ZONAS[id].lat, M.ZONAS[id].lon]); if (d < dist) { dist = d; mejor = id; } }
+    return [mejor, dist];
+  }
+  function hoyISO() {
+    const d = new Date(), p = n => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  }
+  function setDibujo(on) {
+    area.activo = on; area.ini = null; area.presionado = false;
+    const b = $('btn-area');
+    b.setAttribute('aria-pressed', String(on)); b.textContent = on ? 'Cancelar' : 'Seleccionar área';
+    $('map').classList.toggle('dibujando', on);
+    if (on) {
+      mapa.m.dragging.disable();
+      $('area-res').hidden = false;
+      $('area-res').innerHTML = '<p class="sub">Arrastrá sobre el mapa para marcar el área. En pantallas táctiles, tocá dos esquinas opuestas.</p>';
+    } else {
+      mapa.m.dragging.enable();
+      if (!area.b) $('area-res').hidden = true;
+    }
+  }
+  function dibujarRect(b) {
+    if (area.rect) area.rect.setBounds(b);
+    else area.rect = L.rectangle(b, { color: '#38bdf8', weight: 2.5, fillColor: '#38bdf8', fillOpacity: .18, interactive: false }).addTo(mapa.m);
+  }
+  function borrarArea() {
+    if (area.rect) { area.rect.remove(); area.rect = null; }
+    area.b = null; $('area-res').hidden = true; $('area-res').innerHTML = '';
+  }
+  function terminarArea(b) {
+    area.fin = Date.now();
+    setDibujo(false);
+    area.b = b; dibujarRect(b);
+    analizarArea();
+  }
+  function analizarArea() {
+    const b = area.b; if (!b) return;
+    const c = b.getCenter(), sw = b.getSouthWest(), ne = b.getNorthEast();
+    const ha = Math.abs(ne.lat - sw.lat) * 110.574 * Math.abs(ne.lng - sw.lng) * 111.320 * Math.cos(c.lat * Math.PI / 180) * 100;
+    const [zid, km] = zonaCercana(c.lat, c.lng), z = M.ZONAS[zid], s = sueloSimulado(c.lat, c.lng), hoy = hoyISO();
+    let r;
+    try {
+      r = M.recomendar({ zona: zid, textura: s.textura, ph: s.ph, drenaje: s.drenaje, pendiente: s.pendiente, riego: false,
+        riesgos: s.riesgos, rotacion_habitual: [], historial: [] }, M.parseFecha(hoy), null, state.pesos, 3);
+    } catch (e) { $('area-res').innerHTML = '<div class="alert">Revisá las prioridades: ' + esc(e.message) + '</div>'; return; }
+    const best = r.top[0], fmtHa = ha >= 100 ? Math.round(ha).toLocaleString('es-AR') : ha.toLocaleString('es-AR', { maximumFractionDigits: 1 });
+    const cuerpo = best
+      ? '<div class="area-best"><span class="sub">Mejor para sembrar hoy (' + fmtF(hoy) + '):</span>' +
+        '<span class="nm">' + esc(best.nombre) + '</span>' +
+        '<span class="kind' + (best.tipo === 'cobertura' ? ' cob' : '') + '">' + (best.tipo === 'cobertura' ? 'Cobertura' : 'Comercial') + '</span>' +
+        '<span class="mono">' + Math.round(best.score) + '/100</span>' +
+        '<span class="sub">aptitud ' + Math.round(best.aptitud_pct) + ' % · cosecha est. ' + fmtF(best.cosecha_estimada) + '</span></div>' +
+        (best.alertas.length ? '<div class="alert">' + esc(best.alertas[0]) + '</div>' : '') +
+        (r.top.length > 1 ? '<div class="area-alt"><span class="sub">Otras opciones:</span>' +
+          r.top.slice(1).map(e => '<span class="chip">' + esc(e.nombre) + ' · ' + Math.round(e.score) + '</span>').join('') + '</div>' : '')
+      : '<div class="alert">Ningún cultivo del catálogo es viable para sembrar hoy en esta área.</div>';
+    $('area-res').hidden = false;
+    $('area-res').innerHTML =
+      '<div class="area-head"><b>Área seleccionada · ' + fmtHa + ' ha</b><span class="pill sim">Suelo simulado</span></div>' + cuerpo +
+      '<p class="sub">Suelo inventado para esta área (no es un dato real): ' + NOMBRE_TEX[s.textura].toLowerCase() + ', pH ' + s.ph +
+      ', drenaje ' + NOMBRE_DREN[s.drenaje].toLowerCase() + ', pendiente ' + s.pendiente + ' %. Clima: NASA POWER ' + esc(M.FUENTE_CLIMA.periodo) +
+      ' del punto ' + esc(z.referencia) + ', a ' + Math.round(km) + ' km.' +
+      (km > 100 ? ' Está lejos del área: el clima puede no representarla.' : '') + ' Usa tus prioridades actuales.</p>' +
+      '<div><button class="btn" type="button" id="area-x">Borrar área</button></div>';
+    $('area-x').addEventListener('click', borrarArea);
+  }
+  function initArea(m) {
+    $('btn-area').addEventListener('click', () => setDibujo(!area.activo));
+    // Eventos de puntero nativos en fase de captura: cubren mouse, lápiz y touch, y Leaflet no los recibe
+    // mientras se dibuja. Arrastrar = rectángulo; un toque sin arrastrar fija la primera esquina y el siguiente la cierra.
+    const cont = m.getContainer();
+    const enControl = ev => ev.target.closest && ev.target.closest('.leaflet-control');
+    cont.addEventListener('pointerdown', ev => {
+      if (!area.activo || ev.button > 0 || enControl(ev)) return;
+      ev.preventDefault(); ev.stopPropagation();
+      const ll = m.mouseEventToLatLng(ev);
+      if (area.ini) { terminarArea(L.latLngBounds(area.ini, ll)); return; }
+      area.ini = ll; area.presionado = true; area.x0 = ev.clientX; area.y0 = ev.clientY;
+      try { cont.setPointerCapture(ev.pointerId); } catch (e) { /* sin captura */ }
+      dibujarRect(L.latLngBounds(ll, ll));
+    }, true);
+    cont.addEventListener('pointermove', ev => {
+      if (!area.activo || !area.ini) return;
+      ev.stopPropagation();
+      dibujarRect(L.latLngBounds(area.ini, m.mouseEventToLatLng(ev)));
+    }, true);
+    cont.addEventListener('pointerup', ev => {
+      if (!area.activo || !area.ini || !area.presionado) return;
+      ev.stopPropagation();
+      area.presionado = false;
+      const movio = Math.hypot(ev.clientX - area.x0, ev.clientY - area.y0) > 8;
+      if (movio) terminarArea(L.latLngBounds(area.ini, m.mouseEventToLatLng(ev)));
+    }, true);
+    cont.addEventListener('click', ev => { if (area.activo || Date.now() - area.fin < 400) ev.stopPropagation(); }, true);
+  }
+
   function renderResults() {
     updateMapa();
+    analizarArea();
     for (const t of ['tab-rot', 'tab-cul']) $(t).setAttribute('aria-selected', String($(t).dataset.v === state.vista));
     if (state.vista === 'rotaciones') renderRotaciones(); else renderCultivo();
   }
