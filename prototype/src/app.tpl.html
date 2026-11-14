@@ -48,8 +48,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px; border-bottom: 1px solid #082f70; position: sticky; top: 0; background: color-mix(in srgb, #0b3d91 94%, transparent); color: #fff; backdrop-filter: blur(8px); z-index: 5; }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: -0.01em; }
-.logo { width: 28px; height: 28px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 0 0 1px rgb(255 255 255 / .45); }
-.logo svg { width: 20px; height: 20px; stroke: #0b3d91; }
+/* Escudo de NASA sobre un fondo blanco para que se vea contra la barra azul. */
+.logo-nasa { height: 36px; width: auto; display: block; background: #fff; border-radius: 8px; padding: 3px 6px; box-shadow: 0 0 0 1px rgb(255 255 255 / .45); }
 .pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; font-size: 12px; color: var(--muted); background: var(--surface); white-space: nowrap; }
 .topbar .pill { color: #fff; background: rgb(255 255 255 / 0.12); border-color: rgb(255 255 255 / 0.28); }
 .topbar .icon-btn { color: #0b3d91; border-color: rgb(255 255 255 / 0.5); }
@@ -465,7 +465,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     <button class="icon-btn" id="menu-btn" type="button" aria-label="Abrir menú" aria-controls="drawer" aria-expanded="false">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
     </button>
-    <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><ellipse cx="12" cy="12" rx="9" ry="4.5" transform="rotate(-35 12 12)"/><circle cx="12" cy="12" r="2.1" fill="#fc3d21" stroke="#fc3d21"/><path d="M18.8 5.5h.1M5.1 18.2h.1" stroke-width="2.4"/></svg></span>
+    <img class="logo-nasa" alt="Logo de NASA" src="/*NASA_LOGO_URI*/">
     <span>Asistente de rotación</span>
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
