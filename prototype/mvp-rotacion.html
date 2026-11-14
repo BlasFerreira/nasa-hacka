@@ -15,7 +15,7 @@
    Layout: menú hamburguesa (resumen, campos > lotes, análisis) + caja de contexto en cada página
    que dice a qué campo o lote se refiere + vistas: resumen general, resumen del campo, comparar rotaciones, próximo cultivo. */
 :root {
-  --bg: #ffffff; --surface: #ffffff; --surface-2: #f3f6fb; --border: #dbe3ef;
+  --bg: #edf3fc; --surface: #ffffff; --surface-2: #e6eefb; --border: #cfdbed;
   --text: #0b1530; --muted: #56627d; --primary: #0b3d91; --on-primary: #ffffff; --ring: #6b8bd6;
   --brand: #fc3d21; --on-brand: #ffffff;
   --good: #15803d; --warn: #b45309; --bad: #b91c1c;
@@ -46,11 +46,13 @@ button, input, select, textarea { font: inherit; color: inherit; }
 [hidden] { display: none !important; }
 .mono, .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 
-.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(8px); z-index: 5; }
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px; border-bottom: 1px solid #082f70; position: sticky; top: 0; background: color-mix(in srgb, #0b3d91 94%, transparent); color: #fff; backdrop-filter: blur(8px); z-index: 5; }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: -0.01em; }
 .logo { width: 24px; height: 24px; border-radius: 6px; background: var(--brand); display: grid; place-items: center; }
 .logo svg { width: 14px; height: 14px; stroke: var(--on-brand); }
 .pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; font-size: 12px; color: var(--muted); background: var(--surface); white-space: nowrap; }
+.topbar .pill { color: #fff; background: rgb(255 255 255 / 0.12); border-color: rgb(255 255 255 / 0.28); }
+.topbar .icon-btn { color: #0b3d91; border-color: rgb(255 255 255 / 0.5); }
 .pill.sim::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--warn); }
 .brand > span:last-child { white-space: nowrap; }
 @media (max-width: 640px) { .topbar { padding: 10px 16px; } .topbar > div:last-child .pill:last-child { display: none; } }
