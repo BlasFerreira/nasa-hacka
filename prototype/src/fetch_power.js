@@ -19,6 +19,19 @@ async function bajar(p) {
   if (!r.ok) throw new Error('NASA POWER respondió ' + r.status + ' para ' + url);
   const j = await r.json();
   const T = j.properties.parameter.T2M, P = j.properties.parameter.PRECTOTCORR;
+  // Serie año por año (para escenarios climáticos): serie[año] = { temp: [12], precip: [12 mm/mes] }
+  const serie = {};
+  for (let y = START; y <= END; y++) {
+    const t = [], pr = [];
+    for (let m = 1; m <= 12; m++) {
+      const k = String(y) + String(m).padStart(2, '0');
+      const tv = T[k], pv = P[k];
+      const ok = tv !== undefined && pv !== undefined && tv > -900 && pv > -900;
+      t.push(ok ? Math.round(tv * 10) / 10 : null);
+      pr.push(ok ? Math.round(pv * dim(y, m)) : null);
+    }
+    serie[y] = { temp: t, precip: pr };
+  }
   const temp = [], precip = [];
   for (let m = 1; m <= 12; m++) {
     let ts = 0, ps = 0, n = 0;
@@ -32,7 +45,7 @@ async function bajar(p) {
     temp.push(Math.round((ts / n) * 10) / 10);
     precip.push(Math.round(ps / n));
   }
-  return { temp, precip, api: j.header && j.header.api_version };
+  return { temp, precip, serie, api: j.header && j.header.api_version };
 }
 
 (async () => {
@@ -42,12 +55,12 @@ async function bajar(p) {
     parametros: { T2M: 'Temperatura del aire a 2 m (°C)', PRECTOTCORR: 'Precipitación corregida (mm/día, convertida a mm/mes)' },
     periodo: START + '–' + END,
     descargado: new Date().toISOString().slice(0, 10),
-    nota: 'Promedio mensual de los años del período. Son puntos de referencia de la zona, no del campo exacto.',
+    nota: 'temp/precip: promedio mensual de los años del período. serie: valores mensuales de cada año (null = sin dato). Son puntos de referencia de la zona, no del campo exacto.',
     zonas: {},
   };
   for (const [id, p] of Object.entries(PUNTOS)) {
     const d = await bajar(p);
-    out.zonas[id] = { nombre: p.nombre, referencia: p.referencia, lat: p.lat, lon: p.lon, temp: d.temp, precip: d.precip };
+    out.zonas[id] = { nombre: p.nombre, referencia: p.referencia, lat: p.lat, lon: p.lon, temp: d.temp, precip: d.precip, serie: d.serie };
     console.log(id, 'T2M', d.temp.join(' '), '| precip', d.precip.join(' '), '| total', d.precip.reduce((a, b) => a + b, 0), 'mm/año');
   }
   fs.writeFileSync(path.join(__dirname, 'power_climatology.json'), JSON.stringify(out, null, 2) + '\n');

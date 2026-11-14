@@ -5,3 +5,5 @@
 - `deck/`: source files of the 7-slide demo deck (English, per the Space Apps submission rules).
 
 Climate comes from NASA POWER (monthly climatology 2001-2025 at one reference point per zone). Refresh it with `node prototype/src/fetch_power.js`, then rebuild with `node prototype/src/build.js`. Crop values, soils and plots are illustrative. See `docs/documento_funcional.md`.
+
+Live: https://asistente-rotacion-cultivos.vercel.app/ (Vercel, serves the committed `mvp-rotacion.html` as is, with no build step). After editing anything in `src/`, run `node prototype/src/build.js` and commit the regenerated HTML; `.github/workflows/check-build.yml` fails if you forget.

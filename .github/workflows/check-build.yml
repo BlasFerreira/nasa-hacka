@@ -1,0 +1,42 @@
+# Verifica que prototype/mvp-rotacion.html esté regenerado desde las fuentes.
+#
+# Vercel publica ese archivo tal cual (no corre build.js). Si alguien edita
+# app.tpl.html, engine.js o power_climatology.json y no corre el build, el sitio
+# queda desactualizado sin ningún aviso. Este chequeo lo hace visible en el PR o el push.
+#
+# Reemplaza al workflow de GitHub Pages: el MVP se publica en Vercel
+# (https://asistente-rotacion-cultivos.vercel.app/).
+name: Chequear build del MVP
+
+on:
+  push:
+    branches: [main]
+    paths: ['prototype/**', '.github/workflows/check-build.yml']
+  pull_request:
+    paths: ['prototype/**', '.github/workflows/check-build.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-al-dia:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Prueba rápida del motor
+        run: node prototype/src/smoke.js > /dev/null
+
+      - name: El HTML commiteado coincide con las fuentes
+        run: |
+          node prototype/src/build.js "$RUNNER_TEMP/mvp.html"
+          if ! cmp -s "$RUNNER_TEMP/mvp.html" prototype/mvp-rotacion.html; then
+            echo "::error file=prototype/mvp-rotacion.html::mvp-rotacion.html no está regenerado. Corré 'node prototype/src/build.js' y commiteá el resultado: Vercel publica este archivo tal cual."
+            exit 1
+          fi
+          echo "mvp-rotacion.html está al día con las fuentes."
