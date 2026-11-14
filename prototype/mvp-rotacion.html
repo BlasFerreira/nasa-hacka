@@ -14,7 +14,7 @@
   --bg: #fafafa; --surface: #ffffff; --surface-2: #f4f4f5; --border: #e4e4e7;
   --text: #09090b; --muted: #71717a; --primary: #18181b; --on-primary: #fafafa; --ring: #a1a1aa;
   --good: #15803d; --warn: #b45309; --bad: #b91c1c;
-  --c-ingreso: #2563eb; --c-suelo: #16a34a; --c-ahorro: #ea580c; --c-resil: #9333ea; --c-cumpl: #db2777;
+  --c-ingreso: #2563eb; --c-rapidez: #0891b2; --c-suelo: #16a34a; --c-ahorro: #ea580c; --c-resil: #9333ea; --c-cumpl: #db2777;
   --font: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --mono: 'Geist Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
   color-scheme: light;
@@ -24,7 +24,7 @@
     --bg: #09090b; --surface: #0f0f11; --surface-2: #18181b; --border: #27272a;
     --text: #fafafa; --muted: #a1a1aa; --primary: #fafafa; --on-primary: #09090b; --ring: #52525b;
     --good: #4ade80; --warn: #fbbf24; --bad: #f87171;
-    --c-ingreso: #3b82f6; --c-suelo: #22c55e; --c-ahorro: #fb923c; --c-resil: #a855f7; --c-cumpl: #ec4899;
+    --c-ingreso: #3b82f6; --c-rapidez: #22d3ee; --c-suelo: #22c55e; --c-ahorro: #fb923c; --c-resil: #a855f7; --c-cumpl: #ec4899;
     color-scheme: dark;
   }
 }
@@ -32,7 +32,7 @@
   --bg: #09090b; --surface: #0f0f11; --surface-2: #18181b; --border: #27272a;
   --text: #fafafa; --muted: #a1a1aa; --primary: #fafafa; --on-primary: #09090b; --ring: #52525b;
   --good: #4ade80; --warn: #fbbf24; --bad: #f87171;
-  --c-ingreso: #3b82f6; --c-suelo: #22c55e; --c-ahorro: #fb923c; --c-resil: #a855f7; --c-cumpl: #ec4899;
+  --c-ingreso: #3b82f6; --c-rapidez: #22d3ee; --c-suelo: #22c55e; --c-ahorro: #fb923c; --c-resil: #a855f7; --c-cumpl: #ec4899;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -69,7 +69,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .scrim { position: fixed; inset: 0; z-index: 15; background: rgb(0 0 0 / 0.4); }
 .scrim[hidden] { display: none; }
 body.drawer-open { overflow: hidden; }
-/* Al abrir, visibility cambia al instante (si no, focus() falla en el primer frame); al cerrar, espera a que termine el deslizamiento. */
 @media (prefers-reduced-motion: no-preference) {
   .side { transition: transform .2s ease, visibility 0s linear .2s; }
   .side.open { transition: transform .2s ease, visibility 0s; }
@@ -90,7 +89,7 @@ body.drawer-open { overflow: hidden; }
 .lote-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
 .lote-head h1 { font-size: 24px; letter-spacing: -0.02em; font-weight: 600; }
 .lote-head p { color: var(--muted); }
-.cols { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.cols { display: grid; grid-template-columns: minmax(0, 350px) minmax(0, 1fr); gap: 16px; align-items: start; }
 @media (max-width: 1060px) { .cols { grid-template-columns: 1fr; } }
 .stack { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 
@@ -113,13 +112,17 @@ input[type="range"] { width: 100%; accent-color: var(--primary); }
 .btn.primary { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
 .btn.primary:hover { opacity: 0.9; background: var(--primary); }
 .presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.w-presets { display: flex; flex-wrap: wrap; gap: 5px; }
+.w-presets .btn { font-size: 12px; padding: 3px 9px; min-height: 26px; }
+.w-presets .btn[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
 .hist { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .chip { border: 1px solid var(--border); border-radius: 6px; padding: 1px 8px; font-size: 12px; background: var(--surface-2); }
 hr { border: 0; border-top: 1px solid var(--border); width: 100%; margin: 0; }
 .hint { color: var(--muted); font-size: 12px; }
 .w-row { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: center; }
 .w-row .nm { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-.w-row .nm i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+.w-row .nm i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; flex: none; }
+.w-row .sub-hint { grid-column: 1 / -1; font-size: 11.5px; color: var(--muted); margin-top: -2px; }
 .w-row input { grid-column: 1 / -1; }
 
 /* Resultado: rotación actual */
@@ -247,7 +250,8 @@ details.disc li b { color: var(--text); font-weight: 500; }
               <span>Prioridades</span>
               <button class="btn" type="button" id="w-reset" style="min-height:26px;padding:2px 8px">Restablecer</button>
             </div>
-            <div id="weights" style="display:grid;gap:8px"></div>
+            <div class="w-presets" id="w-presets"></div>
+            <div id="weights" style="display:grid;gap:10px"></div>
             <p class="hint">Se normalizan solas. Ningún componente pesa más de 60 %.</p>
           </div>
         </section>
@@ -374,7 +378,7 @@ details.disc li b { color: var(--text); font-weight: 500; }
       rastrojo: .90, erosion: .80, raiz: .60, tol_sequia: .90, tol_anegamiento: .30 }),
   };
 
-  const PESOS_DEFECTO = { ingreso: .30, salud_suelo: .25, ahorro_insumos: .15, resiliencia: .15, cumplimiento: .15 };
+  const PESOS_DEFECTO = { ingreso: .25, rapidez: .15, salud_suelo: .20, ahorro_insumos: .15, resiliencia: .15, cumplimiento: .10 };
   const PESO_MAX = 0.60;
   const N_BASE_SUELO = 60;
 
@@ -393,8 +397,20 @@ details.disc li b { color: var(--text); font-weight: 500; }
     agua: 'agua del ciclo', ph: 'pH', textura: 'textura', drenaje: 'drenaje', pendiente: 'pendiente',
   };
   const COMPONENTES_NOMBRE = {
-    ingreso: 'Ingreso', salud_suelo: 'Salud del suelo', ahorro_insumos: 'Ahorro de insumos',
-    resiliencia: 'Resiliencia', cumplimiento: 'Cumplimiento',
+    ingreso: 'Mayor rendimiento',
+    rapidez: 'Menor espera a siembra',
+    salud_suelo: 'Mejor salud de suelo',
+    ahorro_insumos: 'Ahorro de insumos',
+    resiliencia: 'Resiliencia climática',
+    cumplimiento: 'Cumplimiento',
+  };
+  const COMPONENTES_DESC = {
+    ingreso: 'Prioriza rinde esperado y margen económico',
+    rapidez: 'Siembra inmediata en ventana óptima y ciclo más corto',
+    salud_suelo: 'Rastrojo, rotación de familias y menor erosión',
+    ahorro_insumos: 'Aprovecha fijación de N y crédito del antecesor',
+    resiliencia: 'Tolerancia a sequía o anegamiento del lote',
+    cumplimiento: 'Evita monocultivo y erosión en pendiente',
   };
 
   /* ---------- fechas (UTC) ---------- */
@@ -541,10 +557,23 @@ details.disc li b { color: var(--text); font-weight: 500; }
     const bal = balanceNutrientes(cid, lote);
     const [salud, notaDiv] = saludSuelo(cid, lote);
     const [cumpl, motivos] = cumplimiento(c, cid, lote.historial, lote.pendiente);
+
+    // Rapidez: siembra inmediata en ventana óptima (65%) + ciclo corto para liberar el lote antes (35%)
+    const factorCicloCorto = clamp(1 - (c.ciclo_dias - 90) / 100);
+    const rapidezScore = clamp(0.65 * apt.factores.epoca + 0.35 * factorCicloCorto);
+
     Object.assign(base, {
       descartado: false, margen_usd_ha: Math.round(margen), rend_relativo_t_ha: Math.round(rend * 100) / 100,
-      balance: bal, comp: { ingreso: null, salud_suelo: salud, ahorro_insumos: 1 - clamp(bal.n_a_reponer / 150),
-        resiliencia: resiliencia(cid, lote), cumplimiento: cumpl },
+      ciclo_dias: c.ciclo_dias,
+      balance: bal,
+      comp: {
+        ingreso: null,
+        rapidez: rapidezScore,
+        salud_suelo: salud,
+        ahorro_insumos: 1 - clamp(bal.n_a_reponer / 150),
+        resiliencia: resiliencia(cid, lote),
+        cumplimiento: cumpl
+      },
       notaDiv, motivos, siembra: fmtISO(siembra), cosecha_estimada: fmtISO(addDias(siembra, c.ciclo_dias)),
     });
     return base;
@@ -627,20 +656,34 @@ details.disc li b { color: var(--text); font-weight: 500; }
     return Object.assign(out, { viable: true, score: ev.score, idoneidad: idon, posicion: pos, nota });
   }
 
-  const API = { CULTIVOS, ZONAS, TEXTURAS, DRENAJES, PESOS_DEFECTO, PESO_MAX, COMPONENTES_NOMBRE, FACTORES_NOMBRE,
+  const API = { CULTIVOS, ZONAS, TEXTURAS, DRENAJES, PESOS_DEFECTO, PESO_MAX, COMPONENTES_NOMBRE, COMPONENTES_DESC, FACTORES_NOMBRE,
     recomendar, normalizarPesos, parseFecha, fmtISO, addDias };
   if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.Motor = API;
 })(typeof window !== 'undefined' ? window : globalThis);
-
 </script>
 <script>
 (function () {
   'use strict';
   const M = window.Motor;
-  const COL = { ingreso: 'var(--c-ingreso)', salud_suelo: 'var(--c-suelo)', ahorro_insumos: 'var(--c-ahorro)', resiliencia: 'var(--c-resil)', cumplimiento: 'var(--c-cumpl)' };
+  const COL = {
+    ingreso: 'var(--c-ingreso)',
+    rapidez: 'var(--c-rapidez)',
+    salud_suelo: 'var(--c-suelo)',
+    ahorro_insumos: 'var(--c-ahorro)',
+    resiliencia: 'var(--c-resil)',
+    cumplimiento: 'var(--c-cumpl)'
+  };
   const NOMBRE_TEX = { arenoso: 'Arenoso', franco_arenoso: 'Franco arenoso', franco: 'Franco', franco_limoso: 'Franco limoso', franco_arcilloso: 'Franco arcilloso', arcilloso: 'Arcilloso' };
   const NOMBRE_DREN = { excesivo: 'Excesivo', bueno: 'Bueno', moderado: 'Moderado', pobre: 'Pobre' };
   const PRESETS = [['14 nov', '2026-11-14'], ['10 ene', '2027-01-10'], ['10 may', '2027-05-10'], ['20 jun', '2027-06-20']];
+
+  const WEIGHT_PRESETS = {
+    equilibrado: { t: 'Equilibrado',       w: { ingreso: .25, rapidez: .15, salud_suelo: .20, ahorro_insumos: .15, resiliencia: .15, cumplimiento: .10 } },
+    rendimiento: { t: 'Mayor rendimiento', w: { ingreso: .55, rapidez: .10, salud_suelo: .10, ahorro_insumos: .10, resiliencia: .08, cumplimiento: .07 } },
+    rapidez:     { t: 'Menor espera',      w: { ingreso: .15, rapidez: .55, salud_suelo: .10, ahorro_insumos: .07, resiliencia: .07, cumplimiento: .06 } },
+    suelo:       { t: 'Mejor salud suelo', w: { ingreso: .10, rapidez: .10, salud_suelo: .50, ahorro_insumos: .12, resiliencia: .10, cumplimiento: .08 } },
+  };
+
   const $ = id => document.getElementById(id);
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const fmtF = iso => { const [y, m, d] = iso.split('-'); return d + '/' + m + '/' + y; };
@@ -664,7 +707,7 @@ details.disc li b { color: var(--text); font-weight: 500; }
   ];
   const lotesPlano = CAMPOS.flatMap(c => c.lotes.map(l => ({ campo: c, lote: l })));
 
-  const state = { sel: 'l1', siembra: '2026-11-14', cosecha: '', pesos: Object.assign({}, M.PESOS_DEFECTO), abierto: null };
+  const state = { sel: 'l1', siembra: '2026-11-14', cosecha: '', pesos: Object.assign({}, M.PESOS_DEFECTO), wPreset: 'equilibrado', abierto: null };
   const actual = () => lotesPlano.find(x => x.lote.id === state.sel);
   const input = (campo, lote) => ({
     zona: campo.zona, textura: lote.textura, ph: lote.ph, drenaje: lote.drenaje, pendiente: lote.pendiente, riego: lote.riego,
@@ -742,14 +785,32 @@ details.disc li b { color: var(--text); font-weight: 500; }
     $('presets').innerHTML = PRESETS.map(([t, v]) => '<button type="button" class="btn" data-v="' + v + '"' + (state.siembra === v ? ' style="border-color:var(--primary)"' : '') + '>' + t + '</button>').join('');
     $('presets').querySelectorAll('button').forEach(b => b.addEventListener('click', () => { state.siembra = b.dataset.v; $('f-siembra').value = state.siembra; renderPresets(); refresh(); }));
   }
+  function renderWeightPresets() {
+    $('w-presets').innerHTML = Object.keys(WEIGHT_PRESETS).map(k =>
+      '<button type="button" class="btn" data-wp="' + k + '" aria-pressed="' + (state.wPreset === k) + '">' + WEIGHT_PRESETS[k].t + '</button>'
+    ).join('');
+    $('w-presets').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+      const k = b.dataset.wp;
+      state.wPreset = k;
+      state.pesos = Object.assign({}, WEIGHT_PRESETS[k].w);
+      renderWeightPresets();
+      renderWeights();
+      refresh();
+    }));
+  }
   function renderWeights() {
     const n = M.normalizarPesos(state.pesos);
     $('weights').innerHTML = Object.keys(M.PESOS_DEFECTO).map(k =>
-      '<div class="w-row"><span class="nm"><i style="background:' + COL[k] + '"></i><label for="w-' + k + '">' + M.COMPONENTES_NOMBRE[k] + '</label></span>' +
-      '<span class="mono" id="wv-' + k + '">' + pct(n[k]) + ' %</span>' +
-      '<input type="range" id="w-' + k + '" min="0" max="100" step="5" value="' + Math.round(state.pesos[k] * 100) + '"></div>').join('');
+      '<div class="w-row">' +
+        '<span class="nm"><i style="background:' + COL[k] + '"></i><label for="w-' + k + '">' + M.COMPONENTES_NOMBRE[k] + '</label></span>' +
+        '<span class="mono" id="wv-' + k + '">' + pct(n[k]) + ' %</span>' +
+        '<span class="sub-hint">' + M.COMPONENTES_DESC[k] + '</span>' +
+        '<input type="range" id="w-' + k + '" min="0" max="100" step="5" value="' + Math.round(state.pesos[k] * 100) + '">' +
+      '</div>').join('');
     Object.keys(M.PESOS_DEFECTO).forEach(k => $('w-' + k).addEventListener('input', e => {
       state.pesos[k] = Number(e.target.value) / 100;
+      state.wPreset = null;
+      $('w-presets').querySelectorAll('button').forEach(btn => btn.setAttribute('aria-pressed', 'false'));
       try { const nn = M.normalizarPesos(state.pesos); Object.keys(nn).forEach(j => { $('wv-' + j).textContent = pct(nn[j]) + ' %'; }); } catch (err) { /* suma 0 */ }
       refresh();
     }));
@@ -765,7 +826,7 @@ details.disc li b { color: var(--text); font-weight: 500; }
       lote.historial = v ? lote.historial.slice(0, -1).concat([v]) : lote.historial.slice(0, -1);
       renderHist(); refresh();
     });
-    const edit = (k, v, el) => { const { lote } = actual(); lote[k] = v; lote.origen[k] = 'productor'; origenes(lote); refresh(); };
+    const edit = (k, v) => { const { lote } = actual(); lote[k] = v; lote.origen[k] = 'productor'; origenes(lote); refresh(); };
     $('p-textura').addEventListener('change', e => edit('textura', e.target.value));
     $('p-drenaje').addEventListener('change', e => edit('drenaje', e.target.value));
     $('p-ph').addEventListener('input', e => { const v = parseFloat(e.target.value); if (isFinite(v)) edit('ph', v); });
@@ -774,7 +835,13 @@ details.disc li b { color: var(--text); font-weight: 500; }
     $('p-seq').addEventListener('input', e => { const { lote } = actual(); lote.riesgos.sequia = Number(e.target.value); $('v-seq').textContent = pct(lote.riesgos.sequia) + ' %'; refresh(); });
     $('p-ane').addEventListener('input', e => { const { lote } = actual(); lote.riesgos.anegamiento = Number(e.target.value); $('v-ane').textContent = pct(lote.riesgos.anegamiento) + ' %'; refresh(); });
     $('p-notas').addEventListener('input', e => { actual().lote.notas = e.target.value; });
-    $('w-reset').addEventListener('click', () => { state.pesos = Object.assign({}, M.PESOS_DEFECTO); renderWeights(); refresh(); });
+    $('w-reset').addEventListener('click', () => {
+      state.wPreset = 'equilibrado';
+      state.pesos = Object.assign({}, M.PESOS_DEFECTO);
+      renderWeightPresets();
+      renderWeights();
+      refresh();
+    });
   }
 
   /* ---------- resultados ---------- */
@@ -805,7 +872,7 @@ details.disc li b { color: var(--text); font-weight: 500; }
     return '<article class="card item"><button class="top" type="button" aria-expanded="' + abierto + '" data-c="' + e.cultivo + '">' +
       '<div class="item-line"><span class="rk">' + e.posicion + '</span>' +
       '<div><div class="nm-line">' + esc(e.nombre) + '<span class="kind' + (cob ? ' cob' : '') + '">' + (cob ? 'Cobertura' : 'Comercial') + '</span></div>' +
-      '<div class="sub">Sembrar ' + fmtF(e.siembra) + ' · cosecha est. ' + fmtF(e.cosecha_estimada) + ' · aptitud ' + Math.round(e.aptitud_pct) + ' %</div></div>' +
+      '<div class="sub">Sembrar ' + fmtF(e.siembra) + ' · cosecha est. ' + fmtF(e.cosecha_estimada) + ' (' + e.ciclo_dias + ' d) · aptitud ' + Math.round(e.aptitud_pct) + ' %</div></div>' +
       '<div class="score num">' + Math.round(e.score) + '<small>/100</small></div></div>' +
       '<div class="stackbar" role="img" aria-label="Aporte de cada componente al score">' + barra + '</div></button>' +
       '<div class="detail"' + (abierto ? '' : ' hidden') + '>' +
@@ -846,7 +913,7 @@ details.disc li b { color: var(--text); font-weight: 500; }
   }
 
   $('f-siembra').value = state.siembra;
-  renderPresets(); renderWeights(); bindControls(); loadLote();
+  renderPresets(); renderWeightPresets(); renderWeights(); bindControls(); loadLote();
 })();
 </script>
 </body>
