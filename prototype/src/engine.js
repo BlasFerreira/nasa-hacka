@@ -1,5 +1,5 @@
 /* Motor de recomendación (port a JS del diseño del documento funcional, §8).
-   Catálogo y clima: ILUSTRATIVOS / SIMULADOS. Sin ML: scorer transparente. */
+   Clima: NASA POWER (real). Catálogo de cultivos: ILUSTRATIVO. Sin ML: scorer transparente. */
 (function (root) {
   'use strict';
 
@@ -93,14 +93,12 @@
   const PESO_MAX = 0.60;
   const N_BASE_SUELO = 60;
 
-  const ZONAS = {
-    entre_rios: { nombre: 'Entre Ríos',
-      temp: [25.5, 24.5, 22.5, 18.5, 15, 12, 11.5, 13.5, 16, 19.5, 22, 24.5],
-      precip: [120, 115, 140, 110, 60, 35, 30, 35, 60, 110, 110, 115] },
-    pampa_humeda: { nombre: 'Pampa húmeda',
-      temp: [24, 23, 20.5, 16.5, 13, 10, 9.5, 11.5, 14, 17.5, 20.5, 23],
-      precip: [115, 105, 125, 95, 55, 35, 35, 40, 55, 105, 100, 105] },
-  };
+  // Clima: climatología mensual real de NASA POWER (ver fetch_power.js y power_climatology.json).
+  // En Node se lee el JSON; en la página la build lo inlinea como window.POWER_CLIMATOLOGY.
+  const POWER = (typeof module !== 'undefined' && module.exports) ? require('./power_climatology.json') : root.POWER_CLIMATOLOGY;
+  const ZONAS = {};
+  for (const id of Object.keys(POWER.zonas)) ZONAS[id] = POWER.zonas[id];
+  const FUENTE_CLIMA = { nombre: 'NASA POWER', periodo: POWER.periodo, url: POWER.url, descargado: POWER.descargado };
 
   const FACTORES_ORDEN = ['epoca', 'cosecha', 'temperatura', 'agua', 'ph', 'textura', 'drenaje', 'pendiente'];
   const FACTORES_NOMBRE = {
@@ -342,7 +340,7 @@
     return Object.assign(out, { viable: true, score: ev.score, idoneidad: idon, posicion: pos, nota });
   }
 
-  const API = { CULTIVOS, ZONAS, TEXTURAS, DRENAJES, PESOS_DEFECTO, PESO_MAX, COMPONENTES_NOMBRE, FACTORES_NOMBRE,
+  const API = { CULTIVOS, ZONAS, FUENTE_CLIMA, TEXTURAS, DRENAJES, PESOS_DEFECTO, PESO_MAX, COMPONENTES_NOMBRE, FACTORES_NOMBRE,
     recomendar, normalizarPesos, parseFecha, fmtISO, addDias };
   if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.Motor = API;
 })(typeof window !== 'undefined' ? window : globalThis);

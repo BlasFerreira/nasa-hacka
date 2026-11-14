@@ -176,7 +176,8 @@ details.disc li b { color: var(--text); font-weight: 500; }
     <span>Asistente de rotación</span>
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
-    <span class="pill sim">Datos simulados</span>
+    <span class="pill">Clima: NASA POWER</span>
+    <span class="pill sim">Catálogo ilustrativo</span>
     <span class="pill">MVP · Nivel 1</span>
   </div>
 </header>
@@ -332,7 +333,7 @@ details.disc li b { color: var(--text); font-weight: 500; }
     const { campo, lote } = actual();
     $('h-nombre').textContent = lote.nombre;
     $('h-sub').textContent = campo.nombre + ' · ' + lote.superficie + ' ha';
-    $('h-chips').innerHTML = '<span class="pill">' + esc(campo.provincia) + '</span><span class="pill">Clima: ' + esc(M.ZONAS[campo.zona].nombre) + ' (simulado)</span>';
+    $('h-chips').innerHTML = '<span class="pill">' + esc(campo.provincia) + '</span><span class="pill" title="Punto de referencia de la zona, no del campo exacto">NASA POWER ' + esc(M.FUENTE_CLIMA.periodo) + ' · ' + esc(M.ZONAS[campo.zona].referencia) + '</span>';
     fillSelect($('p-textura'), M.TEXTURAS, NOMBRE_TEX, lote.textura);
     fillSelect($('p-drenaje'), M.DRENAJES, NOMBRE_DREN, lote.drenaje);
     $('p-ph').value = lote.ph; $('p-pend').value = lote.pendiente; $('p-riego').checked = lote.riego;
@@ -410,7 +411,7 @@ details.disc li b { color: var(--text); font-weight: 500; }
       '<div class="fbar"><span>' + M.FACTORES_NOMBRE[k] + '</span><span class="track"><i style="width:' + pct(e.apt.factores[k]) + '%"></i></span><span class="v">' + pct(e.apt.factores[k]) + '</span></div>').join('');
     const b = e.balance;
     const evid = [
-      ['Clima del ciclo', 'simulado', e.apt.tMedia.toFixed(1) + ' °C medios, ' + Math.round(e.apt.precip) + ' mm. NASA POWER y SMAP son la fuente prevista.'],
+      ['Clima del ciclo', 'NASA POWER', e.apt.tMedia.toFixed(1) + ' °C medios y ' + Math.round(e.apt.precip) + ' mm en el ciclo. Climatología mensual ' + M.FUENTE_CLIMA.periodo + ' (T2M y PRECTOTCORR) en un punto de referencia de la zona.'],
       ['Requisitos del cultivo', 'supuesto', 'Catálogo ilustrativo, a validar con EcoCrop (FAO) e INTA.'],
       ['Parámetros del lote', 'productor / dataset', 'El origen de cada uno está en el panel de parámetros.'],
     ].map(([d, o, t]) => '<div><span class="tag">' + o + '</span><b>' + d + '</b><span class="sub">' + esc(t) + '</span></div>').join('');
@@ -447,7 +448,7 @@ details.disc li b { color: var(--text); font-weight: 500; }
       '<div class="rank-head"><h2>Top ' + r.top.length + ' para sembrar el ' + fmtF(r.fecha_siembra) + '</h2></div><div class="legend">' + leyenda + '</div>' +
       lista + desc +
       '<section class="card foot"><b>Qué hay detrás de estos números</b><ul>' +
-      '<li>Clima simulado con promedios mensuales ilustrativos. NASA POWER y SMAP están planificados, no integrados.</li>' +
+      '<li>Clima: promedio mensual ' + M.FUENTE_CLIMA.periodo + ' de NASA POWER (temperatura a 2 m y precipitación) en un punto de referencia por zona. Es climatología, no el pronóstico de esta campaña. SMAP y MODIS/Landsat están planificados.</li>' +
       '<li>Catálogo de cultivos ilustrativo, a validar con EcoCrop (FAO) e INTA.</li>' +
       '<li>Los rendimientos son índices relativos para comparar cultivos, no pronósticos.</li>' +
       '<li>Reglas de cumplimiento ilustrativas, sin revisión humana.</li>' +

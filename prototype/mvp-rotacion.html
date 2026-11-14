@@ -176,7 +176,8 @@ details.disc li b { color: var(--text); font-weight: 500; }
     <span>Asistente de rotación</span>
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
-    <span class="pill sim">Datos simulados</span>
+    <span class="pill">Clima: NASA POWER</span>
+    <span class="pill sim">Catálogo ilustrativo</span>
     <span class="pill">MVP · Nivel 1</span>
   </div>
 </header>
@@ -260,8 +261,9 @@ details.disc li b { color: var(--text); font-weight: 500; }
 </div>
 
 <script>
+window.POWER_CLIMATOLOGY = {"fuente":"NASA POWER (Prediction Of Worldwide Energy Resources), comunidad AG, resolución mensual","url":"https://power.larc.nasa.gov/","parametros":{"T2M":"Temperatura del aire a 2 m (°C)","PRECTOTCORR":"Precipitación corregida (mm/día, convertida a mm/mes)"},"periodo":"2001–2025","descargado":"2026-11-14","nota":"Promedio mensual de los años del período. Son puntos de referencia de la zona, no del campo exacto.","zonas":{"entre_rios":{"nombre":"Entre Ríos","referencia":"cerca de Paraná","lat":-31.73,"lon":-60.53,"temp":[27.3,25.9,23.2,19.1,14.9,12.1,11.5,13.4,16.3,19.9,23.1,25.5],"precip":[116,130,153,124,59,32,25,39,51,106,138,139]},"pampa_humeda":{"nombre":"Pampa húmeda","referencia":"cerca de Pergamino","lat":-33.89,"lon":-60.57,"temp":[24.9,23.3,20.8,16.6,12.7,9.7,9.1,11,13.7,17.2,20.7,23.3],"precip":[125,128,139,111,68,25,34,48,66,118,110,114]}}};
 /* Motor de recomendación (port a JS del diseño del documento funcional, §8).
-   Catálogo y clima: ILUSTRATIVOS / SIMULADOS. Sin ML: scorer transparente. */
+   Clima: NASA POWER (real). Catálogo de cultivos: ILUSTRATIVO. Sin ML: scorer transparente. */
 (function (root) {
   'use strict';
 
@@ -355,14 +357,12 @@ details.disc li b { color: var(--text); font-weight: 500; }
   const PESO_MAX = 0.60;
   const N_BASE_SUELO = 60;
 
-  const ZONAS = {
-    entre_rios: { nombre: 'Entre Ríos',
-      temp: [25.5, 24.5, 22.5, 18.5, 15, 12, 11.5, 13.5, 16, 19.5, 22, 24.5],
-      precip: [120, 115, 140, 110, 60, 35, 30, 35, 60, 110, 110, 115] },
-    pampa_humeda: { nombre: 'Pampa húmeda',
-      temp: [24, 23, 20.5, 16.5, 13, 10, 9.5, 11.5, 14, 17.5, 20.5, 23],
-      precip: [115, 105, 125, 95, 55, 35, 35, 40, 55, 105, 100, 105] },
-  };
+  // Clima: climatología mensual real de NASA POWER (ver fetch_power.js y power_climatology.json).
+  // En Node se lee el JSON; en la página la build lo inlinea como window.POWER_CLIMATOLOGY.
+  const POWER = (typeof module !== 'undefined' && module.exports) ? require('./power_climatology.json') : root.POWER_CLIMATOLOGY;
+  const ZONAS = {};
+  for (const id of Object.keys(POWER.zonas)) ZONAS[id] = POWER.zonas[id];
+  const FUENTE_CLIMA = { nombre: 'NASA POWER', periodo: POWER.periodo, url: POWER.url, descargado: POWER.descargado };
 
   const FACTORES_ORDEN = ['epoca', 'cosecha', 'temperatura', 'agua', 'ph', 'textura', 'drenaje', 'pendiente'];
   const FACTORES_NOMBRE = {
@@ -604,7 +604,7 @@ details.disc li b { color: var(--text); font-weight: 500; }
     return Object.assign(out, { viable: true, score: ev.score, idoneidad: idon, posicion: pos, nota });
   }
 
-  const API = { CULTIVOS, ZONAS, TEXTURAS, DRENAJES, PESOS_DEFECTO, PESO_MAX, COMPONENTES_NOMBRE, FACTORES_NOMBRE,
+  const API = { CULTIVOS, ZONAS, FUENTE_CLIMA, TEXTURAS, DRENAJES, PESOS_DEFECTO, PESO_MAX, COMPONENTES_NOMBRE, FACTORES_NOMBRE,
     recomendar, normalizarPesos, parseFecha, fmtISO, addDias };
   if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.Motor = API;
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -680,7 +680,7 @@ details.disc li b { color: var(--text); font-weight: 500; }
     const { campo, lote } = actual();
     $('h-nombre').textContent = lote.nombre;
     $('h-sub').textContent = campo.nombre + ' · ' + lote.superficie + ' ha';
-    $('h-chips').innerHTML = '<span class="pill">' + esc(campo.provincia) + '</span><span class="pill">Clima: ' + esc(M.ZONAS[campo.zona].nombre) + ' (simulado)</span>';
+    $('h-chips').innerHTML = '<span class="pill">' + esc(campo.provincia) + '</span><span class="pill" title="Punto de referencia de la zona, no del campo exacto">NASA POWER ' + esc(M.FUENTE_CLIMA.periodo) + ' · ' + esc(M.ZONAS[campo.zona].referencia) + '</span>';
     fillSelect($('p-textura'), M.TEXTURAS, NOMBRE_TEX, lote.textura);
     fillSelect($('p-drenaje'), M.DRENAJES, NOMBRE_DREN, lote.drenaje);
     $('p-ph').value = lote.ph; $('p-pend').value = lote.pendiente; $('p-riego').checked = lote.riego;
@@ -758,7 +758,7 @@ details.disc li b { color: var(--text); font-weight: 500; }
       '<div class="fbar"><span>' + M.FACTORES_NOMBRE[k] + '</span><span class="track"><i style="width:' + pct(e.apt.factores[k]) + '%"></i></span><span class="v">' + pct(e.apt.factores[k]) + '</span></div>').join('');
     const b = e.balance;
     const evid = [
-      ['Clima del ciclo', 'simulado', e.apt.tMedia.toFixed(1) + ' °C medios, ' + Math.round(e.apt.precip) + ' mm. NASA POWER y SMAP son la fuente prevista.'],
+      ['Clima del ciclo', 'NASA POWER', e.apt.tMedia.toFixed(1) + ' °C medios y ' + Math.round(e.apt.precip) + ' mm en el ciclo. Climatología mensual ' + M.FUENTE_CLIMA.periodo + ' (T2M y PRECTOTCORR) en un punto de referencia de la zona.'],
       ['Requisitos del cultivo', 'supuesto', 'Catálogo ilustrativo, a validar con EcoCrop (FAO) e INTA.'],
       ['Parámetros del lote', 'productor / dataset', 'El origen de cada uno está en el panel de parámetros.'],
     ].map(([d, o, t]) => '<div><span class="tag">' + o + '</span><b>' + d + '</b><span class="sub">' + esc(t) + '</span></div>').join('');
@@ -795,7 +795,7 @@ details.disc li b { color: var(--text); font-weight: 500; }
       '<div class="rank-head"><h2>Top ' + r.top.length + ' para sembrar el ' + fmtF(r.fecha_siembra) + '</h2></div><div class="legend">' + leyenda + '</div>' +
       lista + desc +
       '<section class="card foot"><b>Qué hay detrás de estos números</b><ul>' +
-      '<li>Clima simulado con promedios mensuales ilustrativos. NASA POWER y SMAP están planificados, no integrados.</li>' +
+      '<li>Clima: promedio mensual ' + M.FUENTE_CLIMA.periodo + ' de NASA POWER (temperatura a 2 m y precipitación) en un punto de referencia por zona. Es climatología, no el pronóstico de esta campaña. SMAP y MODIS/Landsat están planificados.</li>' +
       '<li>Catálogo de cultivos ilustrativo, a validar con EcoCrop (FAO) e INTA.</li>' +
       '<li>Los rendimientos son índices relativos para comparar cultivos, no pronósticos.</li>' +
       '<li>Reglas de cumplimiento ilustrativas, sin revisión humana.</li>' +
