@@ -276,6 +276,23 @@ details.disc li b { color: var(--text); font-weight: 500; }
 #map { height: 320px; background: var(--surface-2); }
 @media (max-width: 560px) { #map { height: 260px; } }
 .map-off { display: grid; place-items: center; height: 100%; color: var(--muted); padding: 16px; text-align: center; }
+.map-draw { position: absolute; left: 10px; right: 10px; bottom: 10px; z-index: 1000; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 8px 10px; border-radius: 10px; background: rgb(6 16 41 / 0.85); color: #fafafa; font-size: 13px; backdrop-filter: blur(6px); }
+.map-draw span { flex: 1 1 200px; }
+.map-draw button { border: 1px solid rgb(255 255 255 / .25); background: transparent; color: #fafafa; border-radius: 7px; padding: 4px 10px; font-size: 12px; font-weight: 500; cursor: pointer; min-height: 28px; }
+.map-draw button.pri { background: #38bdf8; border-color: #38bdf8; color: #082f49; }
+.map-draw button:disabled { opacity: .4; cursor: default; }
+#map.drawing, #map.drawing .leaflet-interactive { cursor: crosshair; }
+.nl-card { padding: 16px; display: grid; gap: 12px; border-color: color-mix(in srgb, #38bdf8 50%, var(--border)); }
+.nl-card h2 { font-size: 16px; font-weight: 600; }
+.nl-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+.nl-step { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 14px; }
+.nl-step b.ok { color: var(--good); }
+.nl-actions, .lote-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.btn.danger { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 40%, var(--border)); }
+.btn.danger.solid { background: var(--bad); color: #fff; border-color: var(--bad); }
+.nav-add { display: block; padding: 6px 8px; font-size: 12px; color: var(--muted); text-decoration: none; border-radius: 8px; }
+.nav-add:hover { background: var(--surface-2); color: var(--text); }
+.nav-reset { margin-top: 12px; width: 100%; font-size: 12px; color: var(--muted); }
 .map-ctl { position: absolute; top: 10px; right: 10px; z-index: 1000; display: inline-flex; gap: 2px; padding: 3px; border-radius: 10px; background: rgb(6 16 41 / 0.78); backdrop-filter: blur(6px); }
 .map-ctl button { border: 0; background: transparent; color: #e4e4e7; border-radius: 7px; padding: 5px 10px; font-size: 12px; font-weight: 500; cursor: pointer; min-height: 28px; }
 .map-ctl button[aria-pressed="true"] { background: #ffffff; color: #0b3d91; }
@@ -411,6 +428,12 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     <section class="card mapcard" id="mapcard" aria-label="Mapa de lotes">
       <div class="map-wrap">
         <div id="map"></div>
+        <div class="map-draw" id="map-draw" hidden role="group" aria-label="Dibujar contorno del lote">
+          <span id="draw-msg" aria-live="polite"></span>
+          <button type="button" data-d="undo">Deshacer punto</button>
+          <button type="button" data-d="cancel">Cancelar</button>
+          <button type="button" class="pri" data-d="ok">Terminar contorno</button>
+        </div>
         <div class="map-ctl" role="group" aria-label="Encuadre del mapa">
           <button type="button" data-modo="campo" aria-pressed="true">Campo</button>
           <button type="button" data-modo="zona" aria-pressed="false">¿De dónde sale el clima?</button>
@@ -469,6 +492,19 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
         <section class="card" aria-labelledby="t-lote">
           <div class="form">
             <h2 id="t-lote" class="section-label">Parámetros del lote</h2>
+            <div class="row2">
+              <div class="field"><label for="p-nombre">Nombre</label><input type="text" id="p-nombre" maxlength="40"></div>
+              <div class="field"><label for="p-sup">Superficie (ha) <span class="hint" id="p-sup-h"></span></label><input type="number" id="p-sup" min="1" max="20000" step="1"></div>
+            </div>
+            <div class="lote-actions">
+              <button class="btn" type="button" id="lote-redibujar">Redibujar en el mapa</button>
+              <button class="btn danger" type="button" id="lote-borrar">Eliminar lote</button>
+            </div>
+            <div class="alert" id="lote-borrar-conf" hidden role="alertdialog" aria-labelledby="lote-borrar-txt">
+              <span id="lote-borrar-txt"></span>
+              <span class="lote-actions"><button class="btn danger solid" type="button" id="lote-borrar-si">Sí, eliminar</button><button class="btn" type="button" id="lote-borrar-no">Cancelar</button></span>
+            </div>
+            <hr>
             <div class="row2">
               <div class="field"><label for="p-textura">Textura <span class="tag" id="o-textura"></span></label><select id="p-textura"></select></div>
               <div class="field"><label for="p-drenaje">Drenaje <span class="tag" id="o-drenaje"></span></label><select id="p-drenaje"></select></div>
@@ -546,11 +582,30 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
         riesgos: { sequia: .4, anegamiento: .3 }, rotacion_habitual: ['maiz_temprano', 'soja', 'trigo'], historial: ['maiz_temprano', 'soja'], origen: org(), notas: '' },
     ] },
   ];
-  const lotesPlano = CAMPOS.flatMap(c => c.lotes.map(l => ({ campo: c, lote: l })));
+  // Lotes creados o editados por el usuario: se guardan en este navegador (no viajan a ningún servidor).
+  const CLAVE = 'fieldshift.lotes.v1';
+  let guardado = null;
+  try {
+    guardado = JSON.parse(localStorage.getItem(CLAVE) || 'null');
+    if (guardado && Array.isArray(guardado.campos)) for (const g of guardado.campos) {
+      const c = CAMPOS.find(x => x.id === g.id);
+      if (c && Array.isArray(g.lotes)) c.lotes = g.lotes;
+    }
+  } catch (e) { guardado = null; }
+  let lotesPlano = [];
+  const reindexar = () => { lotesPlano = CAMPOS.flatMap(c => c.lotes.map(l => ({ campo: c, lote: l }))); };
+  reindexar();
 
   // vista: 'inicio' (resumen general) | 'campo' (resumen de un campo) | 'rotaciones' | 'cultivo' (análisis de un lote)
   const state = { sel: 'l1', campo: 'c1', siembra: '2026-11-14', cosecha: '', pesos: Object.assign({}, M.PESOS_DEFECTO), wPreset: 'equilibrado', abierto: null, vista: 'inicio', alts: {}, expand: {}, escenario: 'promedio' };
+  if (guardado && guardado.alts) state.alts = guardado.alts;
+  if (!lotesPlano.some(x => x.lote.id === state.sel)) state.sel = lotesPlano[0].lote.id;
   const actual = () => lotesPlano.find(x => x.lote.id === state.sel);
+  function guardar() {
+    try {
+      localStorage.setItem(CLAVE, JSON.stringify({ campos: CAMPOS.map(c => ({ id: c.id, lotes: c.lotes.map(l => Object.assign({}, l, { _rotOrig: undefined })) })), alts: state.alts }));
+    } catch (e) { /* sin almacenamiento: los cambios duran mientras la página esté abierta */ }
+  }
   const input = (campo, lote) => ({
     zona: campo.zona, textura: lote.textura, ph: lote.ph, drenaje: lote.drenaje, pendiente: lote.pendiente, riego: lote.riego,
     riesgos: lote.riesgos, rotacion_habitual: lote.rotacion_habitual, historial: lote.historial,
@@ -578,12 +633,15 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
   }
   function aplicarRuta(enfocar) {
     const r = leerRuta();
+    if (state.nuevo && !(r.vista === 'campo' && r.campo === state.nuevo.campo)) cancelarNuevo();
+    if (dib.modo === 'redibujo' && !(esLote(r.vista) && r.sel === state.sel)) dibujoFin();
     state.vista = r.vista;
     let sel = r.sel || state.sel;
     if (r.campo) {
       state.campo = r.campo;
       // El análisis del menú apunta a un lote de este campo.
-      if (actual().campo.id !== r.campo) sel = campoDe(r.campo).lotes[0].id;
+      const primero = campoDe(r.campo).lotes[0];
+      if (primero && actual().campo.id !== r.campo) sel = primero.id;
     }
     if (sel !== state.sel) { state.sel = sel; state.abierto = null; loadLote(); }
     render();
@@ -620,11 +678,13 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
         '<a class="nav-item" href="#/campo/' + c.id + '"' + pag(v === 'campo' && state.campo === c.id) + '>' + ICON.campo +
         '<span>' + esc(c.nombre) + '<small>' + esc(c.provincia) + ' · ' + nLotes(c.lotes.length) + ' · ' + haDe(c.lotes) + ' ha</small></span></a>' +
         '<button class="nav-tog" type="button" data-tog="' + c.id + '" aria-expanded="' + abierto + '" aria-controls="nav-l-' + c.id + '" aria-label="Lotes de ' + esc(c.nombre) + '">' + ICON.chev + '</button></div>' +
-        '<div class="nav-lotes" id="nav-l-' + c.id + '"' + (abierto ? '' : ' hidden') + '>' + lotes + '</div></div>';
+        '<div class="nav-lotes" id="nav-l-' + c.id + '"' + (abierto ? '' : ' hidden') + '>' + lotes +
+        '<a class="nav-add" href="#/campo/' + c.id + '" data-nuevo="' + c.id + '">+ Agregar lote</a></div></div>';
     }).join('');
     const { campo, lote } = actual();
     h += '<div class="nav-label">Análisis del lote</div><p class="nav-ctx">' + esc(lote.nombre) + ' · ' + esc(campo.nombre) + '</p>';
     h += Object.keys(VISTAS_LOTE).map(k => '<a class="nav-item" href="' + hrefLote(state.sel, k) + '"' + pag(v === k) + '>' + ICON[k] + '<span>' + VISTAS_LOTE[k] + '</span></a>').join('');
+    h += '<button class="btn nav-reset" type="button" id="reset-datos">Restaurar lotes de ejemplo</button>';
     $('nav').innerHTML = h;
   }
   $('nav').addEventListener('click', e => {
@@ -634,8 +694,13 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       state.expand[id] = abrir; tog.setAttribute('aria-expanded', String(abrir)); $('nav-l-' + id).hidden = !abrir;
       return;
     }
+    if (e.target.closest('#reset-datos')) {
+      try { localStorage.removeItem(CLAVE); } catch (err) { /* nada */ }
+      location.hash = '#/inicio'; location.reload(); return;
+    }
     const a = e.target.closest('a[href^="#/"]');
     if (!a) return;
+    if (a.dataset.nuevo) { nuevoLote(a.dataset.nuevo); if (a.getAttribute('href') === location.hash) { e.preventDefault(); setDrawer(false); render(); return; } }
     // Si el link es la página actual no hay hashchange: solo se cierra el menú.
     if (a.getAttribute('href') === location.hash) { e.preventDefault(); setDrawer(false); } else setDrawer(false, false);
   });
@@ -710,6 +775,12 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     $('p-seq').value = lote.riesgos.sequia; $('p-ane').value = lote.riesgos.anegamiento;
     $('v-seq').textContent = pct(lote.riesgos.sequia) + ' %'; $('v-ane').textContent = pct(lote.riesgos.anegamiento) + ' %';
     $('p-notas').value = lote.notas;
+    $('p-nombre').value = lote.nombre;
+    $('p-sup').value = lote.superficie; $('p-sup').disabled = !!lote.geo;
+    $('p-sup-h').textContent = lote.geo ? 'calculada del contorno' : '';
+    $('lote-borrar').disabled = lotesPlano.length <= 1;
+    $('lote-borrar').title = lotesPlano.length <= 1 ? 'Tiene que quedar al menos un lote' : '';
+    $('lote-borrar-conf').hidden = true;
     const opts = ['<option value="">Ninguno registrado</option>'].concat(Object.keys(M.CULTIVOS).map(k => '<option value="' + k + '">' + M.CULTIVOS[k].nombre + '</option>'));
     $('f-antecesor').innerHTML = opts.join('');
     $('f-antecesor').value = lote.historial.length ? lote.historial[lote.historial.length - 1] : '';
@@ -774,7 +845,20 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     $('p-riego').addEventListener('change', e => edit('riego', e.target.checked));
     $('p-seq').addEventListener('input', e => { const { lote } = actual(); lote.riesgos.sequia = Number(e.target.value); $('v-seq').textContent = pct(lote.riesgos.sequia) + ' %'; refresh(); });
     $('p-ane').addEventListener('input', e => { const { lote } = actual(); lote.riesgos.anegamiento = Number(e.target.value); $('v-ane').textContent = pct(lote.riesgos.anegamiento) + ' %'; refresh(); });
-    $('p-notas').addEventListener('input', e => { actual().lote.notas = e.target.value; });
+    $('p-notas').addEventListener('input', e => { actual().lote.notas = e.target.value; guardar(); });
+    $('p-nombre').addEventListener('change', e => { const v = e.target.value.trim(); actual().lote.nombre = v || 'Lote sin nombre'; e.target.value = actual().lote.nombre; refresh(); });
+    $('p-sup').addEventListener('change', e => { const v = Math.round(parseFloat(e.target.value)); if (isFinite(v) && v > 0) { actual().lote.superficie = v; refresh(); } });
+    $('lote-redibujar').addEventListener('click', () => {
+      if (!mapa.m) return;
+      $('mapcard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      dibujoIniciar('redibujo');
+    });
+    $('lote-borrar').addEventListener('click', () => {
+      $('lote-borrar-txt').textContent = '¿Eliminar «' + actual().lote.nombre + '»? Se borran sus datos y rotaciones.';
+      $('lote-borrar-conf').hidden = false; $('lote-borrar-no').focus();
+    });
+    $('lote-borrar-no').addEventListener('click', () => { $('lote-borrar-conf').hidden = true; $('lote-borrar').focus(); });
+    $('lote-borrar-si').addEventListener('click', borrarLote);
     $('w-reset').addEventListener('click', () => {
       state.wPreset = 'equilibrado';
       state.pesos = Object.assign({}, M.PESOS_DEFECTO);
@@ -1033,6 +1117,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
   // geo: contorno [lat, lon] (lotes de ejemplo trazados sobre caminos y potreros de OpenStreetMap,
   // con 12 m de margen) o un rectángulo {x, y, w, h} en km desde el centro del campo.
   function poligono(campo, g) {
+    if (!g) return null;            // lote sin contorno dibujado
     if (Array.isArray(g)) return g; // contorno real [lat, lon]
     const [la, lo] = campo.centro, dl = kmLon(la);
     const y0 = la + g.y * KM_LAT, x0 = lo + g.x * dl, y1 = y0 - g.h * KM_LAT, x1 = x0 + g.w * dl;
@@ -1067,16 +1152,29 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       L.circleMarker([z.lat, z.lon], { radius: 6, color: '#fff', weight: 2, fillColor: '#f59e0b', fillOpacity: 1 })
         .bindTooltip('<b>Punto NASA POWER</b> · ' + esc(z.referencia) + '<br>Clima ' + esc(M.FUENTE_CLIMA.periodo) + ' de toda la celda, no de cada lote').addTo(m);
     });
-    lotesPlano.forEach(({ campo, lote }) => {
-      const p = L.polygon(poligono(campo, lote.geo), { color: '#fff', weight: 1.5, fillOpacity: .4 }).addTo(m);
-      p.bindTooltip('', { permanent: true, direction: 'center', className: 'lote-lbl' });
-      p.on('click', () => { if (area.activo) return; ir(hrefLote(lote.id)); });
-      mapa.capas[lote.id] = p;
-    });
-    m.attributionControl.addAttribution('Lotes trazados con datos © OpenStreetMap');
     mapa.m = m;
+    syncCapas();
+    m.on('click', e => { if (dib.modo) dibujoPunto(e.latlng); });
+    m.attributionControl.addAttribution('Lotes trazados con datos © OpenStreetMap');
     document.querySelectorAll('.map-ctl button[data-modo]').forEach(b => b.addEventListener('click', () => { mapa.modo = b.dataset.modo; encuadrar(true); }));
     initArea(m);
+  }
+  // Crea, actualiza o quita los polígonos según la lista de lotes.
+  function syncCapas() {
+    if (!mapa.m) return;
+    const vivos = new Set();
+    lotesPlano.forEach(({ campo, lote }) => {
+      const pts = poligono(campo, lote.geo);
+      if (!pts) return;
+      vivos.add(lote.id);
+      let p = mapa.capas[lote.id];
+      if (p) { p.setLatLngs(pts); return; }
+      p = L.polygon(pts, { color: '#fff', weight: 1.5, fillOpacity: .4 }).addTo(mapa.m);
+      p.bindTooltip('', { permanent: true, direction: 'center', className: 'lote-lbl' });
+      p.on('click', () => { if (!dib.modo && !area.activo) ir(hrefLote(lote.id)); }); // dibujando, el clic lo toma el mapa
+      mapa.capas[lote.id] = p;
+    });
+    for (const id of Object.keys(mapa.capas)) if (!vivos.has(id)) { mapa.capas[id].remove(); delete mapa.capas[id]; }
   }
   const campoMapa = () => state.vista === 'campo' ? campoDe(state.campo) : actual().campo;
   function encuadrar(animar) {
@@ -1084,7 +1182,8 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     const campo = campoMapa();
     mapa.campo = campo.id;
     document.querySelectorAll('.map-ctl button[data-modo]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.modo === mapa.modo)));
-    const pts = mapa.modo === 'zona' ? celdaPower(M.ZONAS[campo.zona]) : campo.lotes.flatMap(l => poligono(campo, l.geo));
+    const pts = mapa.modo === 'zona' ? celdaPower(M.ZONAS[campo.zona]) : campo.lotes.flatMap(l => poligono(campo, l.geo) || []);
+    if (!pts.length) { mapa.m.setView(campo.centro, 14, { animate: animar }); return; }
     mapa.m.fitBounds(L.latLngBounds(pts), { padding: [28, 28], animate: animar });
   }
   function updateMapa() {
@@ -1102,7 +1201,9 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     const slot = $('mapcard').parentNode.id;
     if (mapa.campo !== campo.id || mapa.slot !== slot) { mapa.slot = slot; encuadrar(false); }
     lotesPlano.forEach(({ campo: c, lote: l }) => {
-      const sel = enLote && l.id === lote.id, p = mapa.capas[l.id], r = sel ? rs : mejoraLote(c, l);
+      const sel = enLote && l.id === lote.id, p = mapa.capas[l.id];
+      if (!p) return;
+      const r = sel ? rs : mejoraLote(c, l);
       p.setStyle({ fillColor: MEJ_COL[r ? nivelMejora(r.delta) : 0], color: sel ? '#fff' : 'rgba(255,255,255,.7)', weight: sel ? 3.5 : 1.5, fillOpacity: sel ? .5 : .32 });
       p.setTooltipContent(esc(l.nombre.replace(/^Lote /, '')) + (r && r.delta > .5 ? ' · +' + Math.round(r.delta) : ''));
       if (sel) p.bringToFront();
@@ -1199,7 +1300,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     $('area-x').addEventListener('click', borrarArea);
   }
   function initArea(m) {
-    $('btn-area').addEventListener('click', () => setDibujo(!area.activo));
+    $('btn-area').addEventListener('click', () => { if (dib.modo) dibujoFin(); setDibujo(!area.activo); });
     // Eventos de puntero nativos en fase de captura: cubren mouse, lápiz y touch, y Leaflet no los recibe
     // mientras se dibuja. Arrastrar = rectángulo; un toque sin arrastrar fija la primera esquina y el siguiente la cierra.
     const cont = m.getContainer();
@@ -1234,7 +1335,13 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     const c = state.vista === 'campo' ? campoDe(state.campo) : null;
     const filas = lotesPlano.filter(x => !c || x.campo.id === c.id)
       .map(x => ({ campo: x.campo, lote: x.lote, r: mejoraLote(x.campo, x.lote) })).filter(x => x.r);
-    if (!filas.length) { $('view-dash').innerHTML = '<div class="card empty">No se pudo calcular el resumen. Revisá las prioridades en el análisis de un lote.</div>'; return; }
+    const nl = c && state.nuevo && state.nuevo.campo === c.id ? nuevoHTML(c) : '';
+    if (!filas.length) {
+      $('view-dash').innerHTML = nl + (c ? '<div id="slot-map-dash"></div>' : '') + '<div class="card empty">' + (c && !c.lotes.length
+        ? 'Este campo todavía no tiene lotes. <button class="btn" type="button" data-nuevo-btn="' + c.id + '">+ Nuevo lote</button>'
+        : 'No se pudo calcular el resumen. Revisá las prioridades en el análisis de un lote.') + '</div>';
+      bindNuevo(); return;
+    }
     const ha = filas.reduce((s, x) => s + x.lote.superficie, 0), anios = M.HORIZONTE_ANIOS;
     const ind = (x, k, q) => x.r[q].indicadores[k];
     const scA = pond(filas, x => x.r.actual.score), scB = pond(filas, x => x.r.mejor.score);
@@ -1266,7 +1373,8 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
         '<td class="mono">' + ind(x, 'cobertura_pct', 'actual') + ' → ' + ind(x, 'cobertura_pct', 'mejor') + ' %</td></tr>';
     }).join('');
     const tabla = '<section class="card"><div class="card-pad rank-head"><h2>' + (c ? 'Lotes del campo' : 'Tus lotes') + '</h2>' +
-      '<span class="hint">Ordenados por mejora posible · tocá un lote para ver la comparación</span></div>' +
+      '<span class="hint">Ordenados por mejora posible · tocá un lote para ver la comparación</span>' +
+      (c && !state.nuevo ? '<button class="btn" type="button" data-nuevo-btn="' + c.id + '">+ Nuevo lote</button>' : '') + '</div>' +
       '<div class="tbl-wrap"><table class="dash-tbl"><thead><tr><th class="izq">Lote</th><th>ha</th><th class="izq">Rotación actual</th><th>Pts</th>' +
       '<th class="izq">Mejor alternativa</th><th>Pts</th><th>Mejora</th><th>Suelo cubierto</th></tr></thead><tbody>' + filasT + '</tbody></table></div></section>';
 
@@ -1282,7 +1390,8 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       '<li>El clima sale de NASA POWER y es el mismo para todos los lotes de una celda de unos 55 × 60 km.</li>' +
       '<li>Catálogo de cultivos, precios y lotes ilustrativos. El resumen apoya la decisión del productor, no la reemplaza.</li></ul></section>';
 
-    $('view-dash').innerHTML = kpis + (c ? '<div id="slot-map-dash"></div>' : '') + tabla + clima + pie;
+    $('view-dash').innerHTML = (nl || kpis) + (c ? '<div id="slot-map-dash"></div>' : '') + tabla + clima + pie;
+    bindNuevo();
   }
 
   /* ---------- gráficos de clima (SVG) ----------
@@ -1345,6 +1454,157 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     tip.style.top = Math.max(8, e.clientY - 34) + 'px';
   });
 
+  /* ---------- crear, dibujar y borrar lotes ---------- */
+  // Superficie de un contorno [lat, lon] en ha (proyección local equirectangular; error despreciable a escala de lote).
+  function areaHa(pts) {
+    if (!pts || pts.length < 3) return 0;
+    const la0 = pts.reduce((s, p) => s + p[0], 0) / pts.length, kx = 111320 * Math.cos(la0 * Math.PI / 180), ky = 110574;
+    let a = 0;
+    for (let i = 0; i < pts.length; i++) {
+      const [y1, x1] = pts[i], [y2, x2] = pts[(i + 1) % pts.length];
+      a += (x1 * kx) * (y2 * ky) - (x2 * kx) * (y1 * ky);
+    }
+    return Math.round(Math.abs(a) / 2 / 1e4);
+  }
+  const dib = { modo: null, pts: [], capa: null, marcas: null };
+  function dibujoIniciar(modo) {
+    dibujoFin();
+    if (area.activo) setDibujo(false);
+    dib.modo = modo; dib.pts = [];
+    if (mapa.m) {
+      dib.capa = L.polygon([], { color: '#38bdf8', weight: 2.5, dashArray: '6 5', fillColor: '#38bdf8', fillOpacity: .18, interactive: false }).addTo(mapa.m);
+      dib.marcas = L.layerGroup().addTo(mapa.m);
+      $('map').classList.add('drawing');
+    }
+    dibujoUI();
+  }
+  function dibujoPunto(ll) { dib.pts.push([Math.round(ll.lat * 1e5) / 1e5, Math.round(ll.lng * 1e5) / 1e5]); dibujoPintar(); }
+  function dibujoPintar() {
+    if (dib.capa) {
+      dib.capa.setLatLngs(dib.pts);
+      dib.marcas.clearLayers();
+      dib.pts.forEach((p, i) => {
+        const cierra = i === 0 && dib.pts.length >= 3;
+        const mk = L.circleMarker(p, { radius: cierra ? 7 : 4, color: '#fff', weight: 2, fillColor: '#38bdf8', fillOpacity: 1, interactive: cierra, bubblingMouseEvents: false });
+        if (cierra) mk.bindTooltip('Cerrar contorno').on('click', dibujoTerminar);
+        mk.addTo(dib.marcas);
+      });
+    }
+    dibujoUI();
+  }
+  function dibujoFin() {
+    if (dib.capa) dib.capa.remove();
+    if (dib.marcas) dib.marcas.remove();
+    dib.modo = null; dib.pts = []; dib.capa = dib.marcas = null;
+    if ($('map')) $('map').classList.remove('drawing');
+    dibujoUI();
+  }
+  function dibujoUI() {
+    const box = $('map-draw');
+    box.hidden = !dib.modo;
+    if (!dib.modo) return;
+    const n = dib.pts.length;
+    $('draw-msg').textContent = n < 3
+      ? 'Tocá el mapa en cada esquina del lote (' + n + (n === 1 ? ' punto' : ' puntos') + ', mínimo 3).'
+      : n + ' puntos · ' + areaHa(dib.pts) + ' ha. Tocá el primer punto o «Terminar contorno» para cerrarlo.';
+    box.querySelector('[data-d="ok"]').disabled = n < 3;
+    box.querySelector('[data-d="undo"]').disabled = !n;
+  }
+  function dibujoTerminar() {
+    if (dib.pts.length < 3) return;
+    const pts = dib.pts.slice(), modo = dib.modo;
+    dibujoFin();
+    if (modo === 'redibujo') {
+      const { lote } = actual();
+      lote.geo = pts; lote.superficie = areaHa(pts);
+      syncCapas(); loadLote(); render();
+    } else if (modo === 'nuevo' && state.nuevo) {
+      state.nuevo.geo = pts; state.nuevo.superficie = areaHa(pts);
+      nuevoPrevia(); render();
+    }
+  }
+  $('map-draw').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.d === 'undo') { dib.pts.pop(); dibujoPintar(); }
+    else if (b.dataset.d === 'ok') dibujoTerminar();
+    else { const era = dib.modo; dibujoFin(); if (era === 'nuevo' && state.nuevo && !state.nuevo.geo) render(); }
+  });
+
+  const ROT_TIPICAS = [
+    ['soja,maiz_tardio', 'Soja → Maíz tardío'], ['soja', 'Soja continua'], ['maiz_tardio,trigo,soja', 'Maíz → Trigo / Soja de segunda'],
+    ['maiz_temprano,soja,trigo', 'Maíz temprano → Soja → Trigo'], ['girasol,sorgo,trigo', 'Girasol → Sorgo → Trigo'],
+  ];
+  function nuevoLote(campoId) {
+    const c = campoDe(campoId);
+    state.nuevo = { campo: campoId, geo: null, superficie: '', nombre: 'Lote ' + (c.lotes.length + 1), textura: 'franco', drenaje: 'bueno', ph: 6.5, pendiente: 1, rot: ROT_TIPICAS[0][0], ant: 'soja' };
+    if (mapa.prev) { mapa.prev.remove(); mapa.prev = null; }
+    dibujoIniciar('nuevo');
+  }
+  function nuevoPrevia() {
+    if (!mapa.m) return;
+    if (mapa.prev) mapa.prev.remove();
+    mapa.prev = state.nuevo && state.nuevo.geo ? L.polygon(state.nuevo.geo, { color: '#38bdf8', weight: 2.5, fillOpacity: .25, interactive: false }).addTo(mapa.m) : null;
+  }
+  function cancelarNuevo() {
+    state.nuevo = null; if (mapa.prev) { mapa.prev.remove(); mapa.prev = null; }
+    if (dib.modo === 'nuevo') dibujoFin();
+  }
+  function nuevoHTML(c) {
+    const n = state.nuevo, sel = (id, pares, v) => '<select id="' + id + '">' + pares.map(([k, t]) => '<option value="' + k + '"' + (String(k) === String(v) ? ' selected' : '') + '>' + esc(t) + '</option>').join('') + '</select>';
+    const paso1 = n.geo
+      ? '<b class="ok">✓ Contorno listo</b><span>' + n.geo.length + ' puntos · ' + n.superficie + ' ha</span><button class="btn" type="button" id="nl-redib">Volver a dibujar</button>'
+      : (mapa.m
+        ? (dib.modo === 'nuevo' ? '<span>Marcá las esquinas del lote en el mapa de abajo.</span>' : '<button class="btn" type="button" id="nl-redib">Dibujar en el mapa</button><span class="hint">o cargá la superficie a mano</span>')
+        : '<span class="hint">Sin mapa (sin conexión): cargá la superficie a mano.</span>');
+    return '<section class="card nl-card" aria-labelledby="nl-t"><h2 id="nl-t">Nuevo lote en ' + esc(c.nombre) + '</h2>' +
+      '<div class="nl-step"><span class="section-label">1 · Contorno</span>' + paso1 + '</div>' +
+      '<div class="section-label">2 · Datos del lote</div><div class="nl-grid">' +
+      '<div class="field"><label for="nl-nombre">Nombre</label><input type="text" id="nl-nombre" maxlength="40" value="' + esc(n.nombre) + '"></div>' +
+      '<div class="field"><label for="nl-sup">Superficie (ha)</label><input type="number" id="nl-sup" min="1" step="1" value="' + esc(n.superficie) + '"' + (n.geo ? ' disabled' : '') + '></div>' +
+      '<div class="field"><label for="nl-tex">Textura</label>' + sel('nl-tex', M.TEXTURAS.map(t => [t, NOMBRE_TEX[t]]), n.textura) + '</div>' +
+      '<div class="field"><label for="nl-dren">Drenaje</label>' + sel('nl-dren', M.DRENAJES.map(d => [d, NOMBRE_DREN[d]]), n.drenaje) + '</div>' +
+      '<div class="field"><label for="nl-ph">pH</label><input type="number" id="nl-ph" min="3.5" max="9.5" step="0.1" value="' + n.ph + '"></div>' +
+      '<div class="field"><label for="nl-pend">Pendiente %</label><input type="number" id="nl-pend" min="0" max="30" step="0.5" value="' + n.pendiente + '"></div>' +
+      '<div class="field"><label for="nl-rot">Rotación actual</label>' + sel('nl-rot', ROT_TIPICAS, n.rot) + '</div>' +
+      '<div class="field"><label for="nl-ant">Último cultivo</label>' + sel('nl-ant', [['', 'Ninguno registrado']].concat(Object.keys(M.CULTIVOS).map(k => [k, M.CULTIVOS[k].nombre])), n.ant) + '</div>' +
+      '</div><p class="hint">Si no sabés algún dato, dejá el valor sugerido: después se corrige en «Parámetros del lote». La rotación se puede editar en la comparación.</p>' +
+      '<p class="alert" id="nl-err" hidden></p>' +
+      '<div class="nl-actions"><button class="btn primary" type="button" id="nl-crear">Crear lote</button><button class="btn" type="button" id="nl-cancelar">Cancelar</button></div></section>';
+  }
+  function bindNuevo() {
+    $('view-dash').querySelectorAll('[data-nuevo-btn]').forEach(b => b.addEventListener('click', () => { nuevoLote(b.dataset.nuevoBtn); render(); $('nl-nombre').focus(); }));
+    if (!state.nuevo || !$('nl-crear')) return;
+    const n = state.nuevo, campos = { 'nl-nombre': 'nombre', 'nl-sup': 'superficie', 'nl-tex': 'textura', 'nl-dren': 'drenaje', 'nl-ph': 'ph', 'nl-pend': 'pendiente', 'nl-rot': 'rot', 'nl-ant': 'ant' };
+    for (const [id, k] of Object.entries(campos)) $(id).addEventListener('input', e => { n[k] = e.target.value; });
+    if ($('nl-redib')) $('nl-redib').addEventListener('click', () => { n.geo = null; n.superficie = ''; nuevoPrevia(); dibujoIniciar('nuevo'); render(); });
+    $('nl-cancelar').addEventListener('click', () => { cancelarNuevo(); render(); });
+    $('nl-crear').addEventListener('click', crearLote);
+  }
+  function crearLote() {
+    const n = state.nuevo, c = campoDe(n.campo), err = $('nl-err');
+    const sup = n.geo ? areaHa(n.geo) : Math.round(parseFloat(n.superficie));
+    const ph = parseFloat(n.ph), pend = parseFloat(n.pendiente);
+    const falta = !(sup > 0) ? 'Dibujá el contorno en el mapa o cargá la superficie.' : !isFinite(ph) ? 'Revisá el pH.' : !isFinite(pend) ? 'Revisá la pendiente.' : '';
+    if (falta) { err.textContent = falta; err.hidden = false; return; }
+    const id = 'l' + Date.now().toString(36);
+    const lote = { id, geo: n.geo, nombre: String(n.nombre).trim() || 'Lote sin nombre', superficie: sup, textura: n.textura, ph, drenaje: n.drenaje,
+      pendiente: Math.max(0, pend), riego: false, riesgos: { sequia: .5, anegamiento: .5 }, rotacion_habitual: n.rot.split(','),
+      historial: n.ant ? [n.ant] : [], origen: { textura: 'productor', drenaje: 'productor', ph: 'productor', pendiente: 'productor', riego: D }, notas: '' };
+    c.lotes.push(lote); reindexar();
+    cancelarNuevo(); syncCapas();
+    state.sel = id; state.abierto = null; loadLote();
+    ir(hrefLote(id, 'rotaciones'));
+  }
+  function borrarLote() {
+    if (lotesPlano.length <= 1) return;
+    const { campo, lote } = actual();
+    campo.lotes = campo.lotes.filter(l => l !== lote);
+    delete state.alts[lote.id];
+    reindexar(); syncCapas();
+    state.sel = (campo.lotes[0] || lotesPlano[0].lote).id; state.abierto = null; loadLote();
+    ir('#/campo/' + campo.id);
+  }
+
   /* ---------- render general ---------- */
   function renderResults() {
     if (state.vista === 'rotaciones') renderRotaciones(); else renderCultivo();
@@ -1364,6 +1624,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     renderMenu(); renderCtx();
     if (dash) renderDash(); else renderResults();
     ubicarMapa();
+    guardar();
   }
 
   $('f-siembra').value = state.siembra;
