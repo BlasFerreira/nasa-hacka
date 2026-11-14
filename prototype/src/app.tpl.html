@@ -1411,7 +1411,9 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
   const mapa = { m: null, capas: {}, cultivo: null, modo: 'campo', campo: null };
   function initMapa() {
     if (!window.L) { $('map').innerHTML = '<div class="map-off">El mapa necesita conexión a internet.</div>'; document.querySelector('.map-ctl').hidden = true; return; }
-    const m = L.map('map', { scrollWheelZoom: false }).setView(actual().campo.centro, 13);
+    // Zoom continuo: el de Leaflet con la rueda salta de nivel en nivel; acá lo maneja zoomSuave() (rueda y touchpad).
+    const m = L.map('map', { scrollWheelZoom: false, zoomSnap: 0, zoomDelta: 0.5 }).setView(actual().campo.centro, 13);
+    zoomSuave(m);
     const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       { maxZoom: 18, attribution: 'Imágenes © Esri, Maxar, Earthstar Geographics' }).addTo(m);
     const nombres = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
@@ -1436,6 +1438,33 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     initArea(m);
     initHa();
     initFull(m);
+  }
+  // Zoom suave con rueda y touchpad. Usa el mismo camino que el pellizco táctil de Leaflet (_move con pinch):
+  // durante el gesto se escalan las imágenes ya cargadas y recién al terminar (_moveEnd) se piden las del nuevo
+  // nivel, que reemplazan a las viejas cuando llegan. Así no queda el mapa en blanco. API interna de Leaflet 1.9.4,
+  // versión fijada en el <script> de la página.
+  function zoomSuave(m) {
+    const cont = m.getContainer();
+    let enGesto = false, objetivo = 0, llFijo = null, pt = null, raf = 0;
+    const paso = () => {
+      const z = m.getZoom(), dz = objetivo - z, fin = Math.abs(dz) < 0.004;
+      const nz = fin ? objetivo : z + dz * 0.22;
+      const off = pt.subtract(m.getSize().divideBy(2));
+      m._move(m.unproject(m.project(llFijo, nz).subtract(off), nz), nz, { pinch: true, round: false });
+      if (fin) { raf = 0; enGesto = false; m._moveEnd(true); return; }
+      raf = requestAnimationFrame(paso);
+    };
+    cont.addEventListener('wheel', ev => {
+      if (ev.target.closest && ev.target.closest('.leaflet-control')) return;
+      ev.preventDefault();
+      if (!enGesto) { m._stop(); m._moveStart(true, false); enGesto = true; objetivo = m.getZoom(); }
+      const px = ev.deltaMode === 1 ? ev.deltaY * 16 : ev.deltaMode === 2 ? ev.deltaY * 400 : ev.deltaY;
+      const sens = ev.ctrlKey ? 0.012 : 0.0045;
+      objetivo = Math.max(m.getMinZoom(), Math.min(m.getMaxZoom(), objetivo - Math.max(-120, Math.min(120, px)) * sens));
+      pt = m.mouseEventToContainerPoint(ev);
+      llFijo = m.containerPointToLatLng(pt); // el punto bajo el mouse queda fijo mientras se acerca
+      if (!raf) raf = requestAnimationFrame(paso);
+    }, { passive: false });
   }
   // Recuadro de la celda de NASA POWER y su punto de consulta.
   const zonasDibujadas = new Set();
