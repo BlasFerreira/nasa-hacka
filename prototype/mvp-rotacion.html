@@ -315,7 +315,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
         <div class="mej-legend"><span>Mejora posible frente a la rotación actual:</span>
           <span><i style="background:#22c55e"></i>hasta 5 pts</span><span><i style="background:#f59e0b"></i>5 a 15 pts</span><span><i style="background:#ef4444"></i>más de 15 pts</span>
           <span><i class="celda"></i>celda NASA POWER</span></div>
-        <p class="hint">Ubicaciones y límites de ejemplo. El clima sale de la celda de NASA POWER (0,5° × 0,625°, unos 55 × 60 km): es el mismo para todos los lotes dentro de ella.</p>
+        <p class="hint">Campos de ejemplo: los límites siguen caminos y potreros reales de OpenStreetMap, pero los lotes y sus datos son ficticios. El clima sale de la celda de NASA POWER (0,5° × 0,625°, unos 55 × 60 km): es el mismo para todos los lotes dentro de ella.</p>
       </div>
     </section>
 
@@ -926,16 +926,16 @@ window.POWER_CLIMATOLOGY = {"fuente":"NASA POWER (Prediction Of Worldwide Energy
   const D = 'dataset';
   const org = () => ({ textura: D, drenaje: D, ph: D, pendiente: D, riego: D });
   const CAMPOS = [
-    { id: 'c1', nombre: 'Campo Don Mateo', provincia: 'Entre Ríos', zona: 'entre_rios', centro: [-31.668, -60.334], lotes: [
-      { id: 'l1', geo: { x: -0.6, y: 0.5, w: 1.2, h: 1.0 }, nombre: 'Lote Loma', superficie: 120, textura: 'franco_limoso', ph: 6.4, drenaje: 'bueno', pendiente: 1, riego: false,
+    { id: 'c1', nombre: 'Campo Don Mateo', provincia: 'Entre Ríos', zona: 'entre_rios', centro: [-31.671, -60.338], lotes: [
+      { id: 'l1', geo: [[-31.6679,-60.32476],[-31.67417,-60.3293],[-31.67182,-60.33458],[-31.66806,-60.3319],[-31.66789,-60.33187],[-31.66773,-60.33197],[-31.66675,-60.33347],[-31.66409,-60.33183],[-31.6642,-60.3315]], nombre: 'Lote Loma', superficie: 55, textura: 'franco_limoso', ph: 6.4, drenaje: 'bueno', pendiente: 1, riego: false,
         riesgos: { sequia: .5, anegamiento: .5 }, rotacion_habitual: ['soja', 'maiz_tardio'], historial: ['maiz_tardio', 'soja'], origen: org(), notas: '' },
-      { id: 'l2', geo: { x: -0.6, y: -0.55, w: 1.0, h: 0.8 }, nombre: 'Lote Bajo', superficie: 80, textura: 'arcilloso', ph: 6.9, drenaje: 'pobre', pendiente: .5, riego: false,
+      { id: 'l2', geo: [[-31.67414,-60.33702],[-31.67472,-60.33713],[-31.67517,-60.33737],[-31.67689,-60.33868],[-31.67634,-60.33965],[-31.67554,-60.34081],[-31.67393,-60.34341],[-31.67267,-60.34487],[-31.67118,-60.34746],[-31.6712,-60.34757],[-31.66621,-60.34644],[-31.6683,-60.34294],[-31.67152,-60.33789],[-31.67179,-60.33762],[-31.67245,-60.33727],[-31.67362,-60.33704]], nombre: 'Lote Bajo', superficie: 57, textura: 'arcilloso', ph: 6.9, drenaje: 'pobre', pendiente: .5, riego: false,
         riesgos: { sequia: .3, anegamiento: .7 }, rotacion_habitual: ['soja'], historial: ['soja', 'soja', 'soja'], origen: org(), notas: 'Tres años seguidos de soja. Se anega con lluvias fuertes.' },
-      { id: 'l3', geo: { x: 0.45, y: -0.55, w: 0.75, h: 0.8 }, nombre: 'Lote Arenoso', superficie: 60, textura: 'franco_arenoso', ph: 5.8, drenaje: 'excesivo', pendiente: 3, riego: false,
+      { id: 'l3', geo: [[-31.67947,-60.33982],[-31.67954,-60.34009],[-31.67966,-60.34022],[-31.68153,-60.34102],[-31.6801,-60.34966],[-31.6765,-60.3487],[-31.67144,-60.34762],[-31.67141,-60.34752],[-31.67284,-60.34503],[-31.67409,-60.34358],[-31.67571,-60.34096],[-31.67651,-60.3398],[-31.67707,-60.33881],[-31.6778,-60.3393],[-31.67835,-60.33955]], nombre: 'Lote Arenoso', superficie: 68, textura: 'franco_arenoso', ph: 5.8, drenaje: 'excesivo', pendiente: 3, riego: false,
         riesgos: { sequia: .7, anegamiento: .1 }, rotacion_habitual: ['girasol', 'sorgo', 'trigo'], historial: ['trigo', 'girasol'], origen: org(), notas: '' },
     ] },
-    { id: 'c2', nombre: 'Estancia La Paz', provincia: 'Buenos Aires', zona: 'pampa_humeda', centro: [-33.98, -60.45], lotes: [
-      { id: 'l4', geo: { x: -0.8, y: 0.6, w: 1.6, h: 1.25 }, nombre: 'Lote Norte', superficie: 200, textura: 'franco', ph: 6.5, drenaje: 'bueno', pendiente: .8, riego: false,
+    { id: 'c2', nombre: 'Estancia La Paz', provincia: 'Buenos Aires', zona: 'pampa_humeda', centro: [-33.977, -60.448], lotes: [
+      { id: 'l4', geo: [[-33.97704,-60.45127],[-33.97144,-60.45161],[-33.97116,-60.44268],[-33.97661,-60.44239]], nombre: 'Lote Norte', superficie: 50, textura: 'franco', ph: 6.5, drenaje: 'bueno', pendiente: .8, riego: false,
         riesgos: { sequia: .4, anegamiento: .3 }, rotacion_habitual: ['maiz_temprano', 'soja', 'trigo'], historial: ['maiz_temprano', 'soja'], origen: org(), notas: '' },
     ] },
   ];
@@ -1264,8 +1264,10 @@ window.POWER_CLIMATOLOGY = {"fuente":"NASA POWER (Prediction Of Worldwide Energy
   /* ---------- mapa ---------- */
   const KM_LAT = 1 / 110.574;
   const kmLon = lat => 1 / (111.320 * Math.cos(lat * Math.PI / 180));
-  // geo: esquina superior izquierda en km desde el centro del campo, ancho y alto en km.
+  // geo: contorno [lat, lon] (lotes de ejemplo trazados sobre caminos y potreros de OpenStreetMap,
+  // con 12 m de margen) o un rectángulo {x, y, w, h} en km desde el centro del campo.
   function poligono(campo, g) {
+    if (Array.isArray(g)) return g; // contorno real [lat, lon]
     const [la, lo] = campo.centro, dl = kmLon(la);
     const y0 = la + g.y * KM_LAT, x0 = lo + g.x * dl, y1 = y0 - g.h * KM_LAT, x1 = x0 + g.w * dl;
     return [[y0, x0], [y0, x1], [y1, x1], [y1, x0]];
@@ -1305,6 +1307,7 @@ window.POWER_CLIMATOLOGY = {"fuente":"NASA POWER (Prediction Of Worldwide Energy
       p.on('click', () => { if (state.sel !== lote.id) { state.sel = lote.id; state.abierto = null; loadLote(); } });
       mapa.capas[lote.id] = p;
     });
+    m.attributionControl.addAttribution('Lotes trazados con datos © OpenStreetMap');
     mapa.m = m;
     document.querySelectorAll('.map-ctl button').forEach(b => b.addEventListener('click', () => { mapa.modo = b.dataset.modo; encuadrar(true); }));
   }
