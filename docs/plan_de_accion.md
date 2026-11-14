@@ -51,7 +51,8 @@ Eso es **resiliencia medida con datos de NASA**, y responde bien al "what-if" qu
 
 ## Fase 0 — Setup y fijar el caso (h0–h2)
 
-- [ ] `git init`, la estructura del repo y `pyproject.toml`.
+- [ ] Estructura del repo (`data/`, `notebooks/`, `src/`, …) y `pyproject.toml`. El repo git ya existe.
+- [ ] **Inventario de datos** (`docs/data_inventory.md` o `notebooks/01_data_inventory.ipynb`): para cada dataset, resolución espacial y temporal, período cubierto, método de acceso, latencia y faltantes. Es el primer entregable del EDA y evita bajar datasets grandes a ciegas.
 - [ ] **Crear ya las cuentas de Earthdata Login** (https://urs.earthdata.nasa.gov/).
 - [ ] **Pedir ya los recortes en AppEEARS** (MODIS NDVI, SMAP L4) para los polígonos de los departamentos. Las solicitudes quedan en cola entre minutos y horas, así que conviene lanzarlas en la hora 1 para no bloquearse después.
 - [ ] Fijar `case_study.yaml`:
@@ -74,8 +75,10 @@ Fuente: **Estimaciones Agrícolas** (datos.magyp.gob.ar).
 Preguntas a responder:
 
 - **Cobertura:** cuántas filas útiles quedan por departamento, cultivo y campaña, y cuánto falta.
-- **Soja 1ra / 2da:** ¿la serie las distingue a nivel departamento? Si lo hace, permite modelar el doble cultivo trigo/soja, que es justamente una de las rotaciones alternativas.
+- **Soja 1ra / 2da:** *verificado:* datos.magyp.gob.ar tiene datasets separados de "Soja 1ra" y "Soja 2da" por departamento **desde 2000**. La soja total va desde 1941. Con esto se puede modelar el doble cultivo trigo/soja, que es una de las rotaciones alternativas, pero solo para el período 2000+.
+- **Rendimiento sobre superficie cosechada vs sembrada:** el rendimiento oficial se calcula sobre la superficie **cosechada**. En una sequía fuerte se pierden lotes enteros, y eso **no aparece en el rendimiento**. Comparar el rendimiento oficial con `producción / superficie sembrada`. Para medir resiliencia, el segundo suele ser el target más honesto.
 - **Tendencia tecnológica:** el rendimiento sube por genética y manejo, no por el clima. **Hay que quitar la tendencia** (lineal o LOESS por departamento). El target es la **anomalía**; si no, el modelo aprende "el año" y no el clima.
+  - Gotcha de leakage: si la tendencia se ajusta con todos los años, el año de test se filtra en el target. En la validación, **ajustar la tendencia dentro de cada fold**, o al menos medir cuánto cambia el resultado.
 - **Alineación campaña ↔ clima:** la campaña 2020/21 de maíz depende del clima de oct-2020 a mar-2021. Este error es fácil de cometer y no da ningún aviso.
 
 **Entregables:**
@@ -92,6 +95,7 @@ Preguntas a responder:
   - trigo → espigazón (sep–oct)
 
   Esto vale más que cualquier truco de modelado.
+- **Gotcha agronómico — maíz temprano vs tardío:** en la Zona Núcleo, el maíz tardío (siembra en diciembre) pasó de ser marginal a ocupar una parte grande del área en la última década. Su período crítico se corre a febrero. Una ventana fija de dic–ene mezcla dos cultivos distintos y genera un **cambio estructural en la serie**. Opciones: ventanas más anchas, features para las dos ventanas, o restringir el período de entrenamiento y documentarlo.
 - Comparar la precipitación de **GPM IMERG** con la de POWER y quedarse con GPM solo si cambia algo, por ejemplo en eventos extremos.
 
 **Entregables:**
@@ -108,7 +112,7 @@ Preguntas a responder:
 ### Track D — Vegetación y suelo
 
 - **MODIS MOD13Q1** (NDVI 250 m, 16 días, desde 2000): integral y pico estacional por departamento, enmascarando por cultivo si hay mapa disponible.
-- **Mapa Nacional de Cultivos (INTA):** verificar disponibilidad y campañas. Si existe para varias campañas, permite **observar secuencias de rotación reales** por píxel. Es el único camino para mirar el efecto antecesor con datos.
+- **Mapa Nacional de Cultivos (INTA):** *verificado:* hay mapas de campañas consecutivas **desde 2018/19 hasta 2024/25**, unas 7 campañas. Se distribuyen por INTA.GEO, el repositorio institucional del INTA y Zenodo, y están hechos con Landsat 8/9 + Sentinel-2. Con 7 campañas se observan unas **6 transiciones antecesor → cultivo por píxel**: alcanza para describir las rotaciones reales de la zona (qué secuencias son frecuentes) y para un análisis exploratorio del efecto antecesor. **No alcanza para entrenar un modelo de efecto rotación.** Falta confirmar el formato de descarga (raster vs vector) y la resolución.
 - **Suelo:** SoilGrids (250 m) o la cartografía de suelos de INTA, para textura, carbono orgánico y capacidad de retención. Va como feature estática y como contexto en la UI.
 - **Visual de la demo:** Sentinel-2 o HLS sobre el lote. No hace falta para el modelo.
 
@@ -117,8 +121,27 @@ Preguntas a responder:
 ### Análisis transversales del EDA
 
 1. **Tamaño muestral efectivo.** Unos 20 departamentos × 25 años × 3 cultivos ≈ 1.500 filas. Pero el clima está muy correlacionado espacialmente dentro de un mismo año, así que **la unidad efectiva es el año: ~25 realizaciones independientes**. Esto define la validación y descarta modelos con muchos parámetros.
-2. **Sanity check físico:** correlación entre las anomalías de rendimiento y los features por ventana. La sequía en el período crítico debería bajar el rendimiento del maíz.
-3. **Años de referencia:** identificarlos (por ejemplo 2008/09 y 2022/23, ambos secos con La Niña) y verificar que aparezcan como outliers negativos.
+2. **Trade-off ventana de entrenamiento vs features.** Cada fuente agregada como feature recorta la serie al año en que empieza:
+
+   | Set de features | Desde | Campañas aprox. | Uso |
+   |---|---|---|---|
+   | Solo POWER (clima + `GWETROOT`) | 1981 | ~44 | Modelo principal candidato |
+   | + MODIS NDVI | 2000 | ~25 | Comparar: ¿el NDVI compensa perder 19 años? |
+   | + soja 1ra/2da separadas | 2000 | ~25 | Necesario para el doble cultivo |
+   | + SMAP | 2015 | ~10 | ❌ No usar para entrenar: solo evidencia en la UI |
+
+   Entrenar las dos variantes (1981+ y 2000+) y comparar en la misma validación. Es un resultado del EDA en sí mismo.
+3. **Sanity check físico:** correlación entre las anomalías de rendimiento y los features por ventana. La sequía en el período crítico debería bajar el rendimiento del maíz.
+4. **Años de referencia:** identificarlos (por ejemplo 2008/09 y 2022/23, ambos secos con La Niña) y verificar que aparezcan como outliers negativos.
+5. **Colinealidad entre features climáticos** (lluvia, humedad de suelo, ET, temperatura máxima en la misma ventana): mirar la matriz de correlación. Si es alta, SHAP reparte la atribución de forma arbitraria entre features. En ese caso conviene agrupar features ("estrés hídrico en período crítico") y reportar la atribución por grupo.
+
+### Definition of done del EDA (gate para pasar a la Fase 2)
+
+- [ ] Inventario de datos completo, con resolución y período de cada fuente.
+- [ ] Tabla `(departamento, campaña, cultivo) → anomalía de rendimiento` limpia, con la decisión cosechada vs sembrada documentada.
+- [ ] Tabla de features por ventana fenológica, joineable con la anterior sin pérdidas silenciosas: contar filas antes y después del join.
+- [ ] Sanity checks físicos pasados, o documentado por qué no pasan.
+- [ ] Ventana de entrenamiento elegida (1981+ vs 2000+), con la justificación.
 
 ---
 
@@ -176,6 +199,13 @@ para cada rotación R:
   → distribución por rotación: media, P10, desvío, % de años malos
 ```
 
+**Dos refinamientos que suman mucho a la demo:**
+
+- **Escenarios condicionados por ENSO:** filtrar los años históricos por fase (Niña / neutro / Niño, según el índice ONI de NOAA). Así se puede responder *"si la próxima campaña viene Niña, ¿cómo le iría a cada rotación?"*. Es un what-if concreto y conecta con los pronósticos estacionales que el productor ya consulta.
+- **Propagar las dos incertidumbres:** a la variabilidad climática (entre años) se le suma el error del modelo, usando los residuos de la validación cruzada. Si no, la distribución sale artificialmente angosta.
+
+**Limitación a explicitar:** usar años pasados como escenarios supone **clima estacionario**. Mencionarlo en la UI y en el pitch. Como mejora opcional, mostrar la tendencia de temperatura/precipitación de POWER 1981–2025 en la zona.
+
 ---
 
 ## Fase 4 — Scorer e integración (h20–h30, solapada con la Fase 3)
@@ -232,8 +262,8 @@ Es honesta y además mucho más fuerte.
 
 ## ⚠️ Pendiente de verificar en las primeras horas
 
-Estos puntos los damos por **probables, no por confirmados**:
+Chequeados por búsqueda web el 2026-11-14. Igual conviene confirmarlos abriendo los archivos:
 
-- [ ] Si Estimaciones Agrícolas separa **soja 1ra / 2da** a nivel departamento.
-- [ ] Qué campañas cubre el **Mapa Nacional de Cultivos (INTA)** y en qué formato está disponible.
-- [ ] Cobertura reciente de MODIS (Terra está cerca del fin de su vida útil). Si faltan años recientes, usar VIIRS (VNP13A1) para continuidad.
+- [x] **Soja 1ra / 2da por departamento:** hay datasets separados desde 2000 en datos.magyp.gob.ar. *Falta:* confirmar nombres de columnas y formato CSV.
+- [x] **Mapa Nacional de Cultivos (INTA):** hay campañas 2018/19 a 2024/25 en INTA.GEO, el repositorio del INTA y Zenodo. *Falta:* confirmar formato y resolución.
+- [x] **MODIS:** la recolección científica termina en **feb-2027 (Terra)** y **sep-2027 (Aqua)**, así que la serie 2000–2025 está completa para entrenar. Para continuidad hacia adelante, usar VIIRS. ⚠️ Según el foro de Earthdata, la entrega de productos de **Suomi NPP terminó el 1-nov-2026**, así que hay que preferir los productos de **NOAA-20 (prefijo `VJ1…`)** sobre los `VNP…`. Falta verificarlo en AppEEARS.
