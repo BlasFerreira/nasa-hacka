@@ -63,7 +63,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .topbar .pill { color: #fff; background: rgb(255 255 255 / 0.12); border-color: rgb(255 255 255 / 0.28); }
 .topbar .icon-btn { color: #0b3d91; border-color: rgb(255 255 255 / 0.5); }
 .pill.sim::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--warn); }
-.brand > span:last-child { white-space: nowrap; }
+.brand > span:last-child, .brand-home span { white-space: nowrap; }
+.brand-home { display: flex; align-items: center; gap: 10px; color: inherit; text-decoration: none; border-radius: 8px; }
+.brand-home:hover span { text-decoration: underline; text-underline-offset: 4px; }
 @media (max-width: 640px) { .topbar { padding: 10px 16px; } .topbar > div:last-child .pill:last-child { display: none; } }
 
 .shell { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; max-width: 1280px; margin: 0 auto; padding: 20px 16px 48px; }
@@ -119,6 +121,11 @@ a.lote-btn { color: inherit; text-decoration: none; }
 .nav-tog:hover { background: var(--surface-2); }
 .nav-tog svg { width: 16px; height: 16px; stroke: currentColor; }
 .nav-tog[aria-expanded="false"] svg { transform: rotate(-90deg); }
+.nav-sec { display: flex; width: 100%; align-items: center; justify-content: space-between; border: 0; background: transparent; cursor: pointer; text-align: left; border-radius: 6px; }
+.nav-sec:hover { color: var(--text); }
+.nav-sec small { font-size: inherit; opacity: .8; text-transform: none; }
+.nav-sec svg { width: 16px; height: 16px; stroke: currentColor; margin-right: 8px; }
+.nav-sec[aria-expanded="false"] svg { transform: rotate(-90deg); }
 .nav-lotes { display: grid; gap: 2px; margin: 2px 0 6px 16px; padding-left: 8px; border-left: 1px solid var(--border); }
 .nav-lotes[hidden] { display: none; }
 .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
@@ -547,8 +554,10 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     <button class="icon-btn" id="menu-btn" type="button" aria-label="Abrir menú" aria-controls="drawer" aria-expanded="false">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
     </button>
-    <img class="logo-nasa" alt="Logo de NASA" src="/*NASA_LOGO_URI*/">
-    <span>Asistente de rotación</span>
+    <a class="brand-home" href="#/inicio" id="brand-home" title="Ir al resumen general">
+      <img class="logo-nasa" alt="Logo de NASA" src="/*NASA_LOGO_URI*/">
+      <span>Asistente de rotación</span>
+    </a>
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
     <span class="pill">Clima: NASA POWER</span>
@@ -889,6 +898,8 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     if (enfocar) { window.scrollTo(0, 0); $('page-h1').focus({ preventScroll: true }); }
   }
   const ir = h => { if (location.hash === h) aplicarRuta(true); else location.hash = h; };
+  // Logo y título: siempre al resumen general (si ya estás ahí, vuelve arriba).
+  $('brand-home').addEventListener('click', e => { e.preventDefault(); setDrawer(false, false); ir('#/inicio'); });
   window.addEventListener('hashchange', () => aplicarRuta(true));
 
   /* ---------- menú hamburguesa ---------- */
@@ -905,9 +916,13 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     const v = state.vista, av = vistaAnalisis(), pag = c => c ? ' aria-current="page"' : '';
     let h = '<a class="nav-item" href="#/inicio"' + pag(v === 'inicio') + '>' + ICON.inicio + '<span>Resumen general</span></a>';
     h += '<a class="nav-item" href="#/recorrido"' + pag(v === 'recorrido') + '>' + ICON.recorrido + '<span>Recorrido: el campo hectárea por hectárea<small>60 ha, paso a paso</small></span></a>';
-    h += '<div class="nav-label">Mis campos</div>';
+    // «Mis campos» también se pliega (cerrado por defecto). Usa el mismo manejador que la flecha de cada campo.
+    const camposAbiertos = state.expand.__campos === true;
+    h += '<button class="nav-label nav-sec" type="button" data-tog="__campos" aria-expanded="' + camposAbiertos + '" aria-controls="nav-l-__campos">' +
+      '<span>Mis campos <small>(' + CAMPOS.length + ')</small></span>' + ICON.chev + '</button>';
+    h += '<div id="nav-l-__campos"' + (camposAbiertos ? '' : ' hidden') + '>';
     h += CAMPOS.map(c => {
-      const abierto = state.expand[c.id] !== false;
+      const abierto = state.expand[c.id] === true; // cerrados por defecto; se abren con la flecha
       const lotes = c.lotes.map(l => {
         const r = mejoraLote(c, l), d = r ? Math.round(r.delta) : 0;
         const best = !r ? '' : d > 0
@@ -923,7 +938,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
         '<button class="nav-tog" type="button" data-tog="' + c.id + '" aria-expanded="' + abierto + '" aria-controls="nav-l-' + c.id + '" aria-label="Lotes de ' + esc(c.nombre) + '">' + ICON.chev + '</button></div>' +
         '<div class="nav-lotes" id="nav-l-' + c.id + '"' + (abierto ? '' : ' hidden') + '>' + lotes +
         '<a class="nav-add" href="#/campo/' + c.id + '" data-nuevo="' + c.id + '">+ Agregar lote</a></div></div>';
-    }).join('');
+    }).join('') + '</div>';
     const { campo, lote } = actual();
     h += '<div class="nav-label">Análisis del lote</div><p class="nav-ctx">' + esc(lote.nombre) + ' · ' + esc(campo.nombre) + '</p>';
     h += Object.keys(VISTAS_LOTE).map(k => '<a class="nav-item" href="' + hrefLote(state.sel, k) + '"' + pag(v === k) + '>' + ICON[k] + '<span>' + VISTAS_LOTE[k] + '</span></a>').join('');
@@ -931,7 +946,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     $('nav').innerHTML = h;
   }
   $('nav').addEventListener('click', e => {
-    const tog = e.target.closest('.nav-tog');
+    const tog = e.target.closest('.nav-tog, .nav-sec');
     if (tog) {
       const id = tog.dataset.tog, abrir = tog.getAttribute('aria-expanded') !== 'true';
       state.expand[id] = abrir; tog.setAttribute('aria-expanded', String(abrir)); $('nav-l-' + id).hidden = !abrir;
