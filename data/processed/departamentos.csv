@@ -1,0 +1,36 @@
+depto_id,provincia,departamento,zona,lat,lon
+06623,Buenos Aires,Pergamino,pampa_humeda,-33.8361,-60.5448
+06175,Buenos Aires,Colón,pampa_humeda,-33.8859,-61.0625
+06686,Buenos Aires,Rojas,pampa_humeda,-34.1928,-60.788
+06714,Buenos Aires,Salto,pampa_humeda,-34.2711,-60.3053
+06077,Buenos Aires,Arrecifes,pampa_humeda,-34.0118,-60.0627
+06140,Buenos Aires,Capitán Sarmiento,pampa_humeda,-34.1498,-59.854
+06070,Buenos Aires,Baradero,pampa_humeda,-33.932,-59.4928
+06770,Buenos Aires,San Pedro,pampa_humeda,-33.781,-59.7826
+06665,Buenos Aires,Ramallo,pampa_humeda,-33.5872,-60.0575
+06763,Buenos Aires,San Nicolás,pampa_humeda,-33.483,-60.2931
+06413,Buenos Aires,Junín,pampa_humeda,-34.5465,-61.0053
+06294,Buenos Aires,General Arenales,pampa_humeda,-34.2379,-61.2834
+06469,Buenos Aires,Lincoln,pampa_humeda,-35.0704,-61.6825
+06210,Buenos Aires,Chacabuco,pampa_humeda,-34.6182,-60.3543
+06112,Buenos Aires,Bragado,pampa_humeda,-35.0614,-60.604
+06224,Buenos Aires,Chivilcoy,pampa_humeda,-34.9155,-59.9584
+06351,Buenos Aires,General Pinto,pampa_humeda,-34.6696,-62.0399
+06462,Buenos Aires,Leandro N. Alem,pampa_humeda,-34.4986,-61.6126
+82028,Santa Fe,Villa Constitución,pampa_humeda,-33.4871,-60.8374
+82014,Santa Fe,Caseros,pampa_humeda,-33.225,-61.5429
+82007,Santa Fe,Belgrano,pampa_humeda,-32.6104,-61.7047
+82119,Santa Fe,San Lorenzo,pampa_humeda,-32.9413,-60.964
+82056,Santa Fe,Iriondo,pampa_humeda,-32.7061,-61.2734
+82042,Santa Fe,General López,pampa_humeda,-33.9222,-61.9397
+82084,Santa Fe,Rosario,pampa_humeda,-33.1178,-60.7232
+14063,Córdoba,Marcos Juárez,pampa_humeda,-33.0308,-62.2776
+14182,Córdoba,Unión,pampa_humeda,-32.8784,-62.7916
+30084,Entre Ríos,Paraná,entre_rios,-31.6952,-60.0412
+30021,Entre Ríos,Diamante,entre_rios,-32.228,-60.5239
+30077,Entre Ríos,Nogoyá,entre_rios,-32.2187,-59.7697
+30105,Entre Ríos,Victoria,entre_rios,-32.7839,-60.2181
+30091,Entre Ríos,Tala,entre_rios,-32.3174,-59.2673
+30113,Entre Ríos,Villaguay,entre_rios,-31.6477,-59.0595
+30070,Entre Ríos,La Paz,entre_rios,-30.8974,-59.5004
+30088,Entre Ríos,San Salvador,entre_rios,-31.5769,-58.4864

@@ -20,6 +20,14 @@ node prototype/src/build.js   # rebuild the HTML from src/
 node prototype/src/smoke.js   # print sample rankings
 ```
 
+Yield model (Argentina, 35 departments, NASA POWER + MAGyP). See [`docs/model_card.md`](docs/model_card.md):
+
+```bash
+pip install -r pipeline/requirements.txt
+python pipeline/run_all.py                    # download, features, leave-one-year-out validation (~8 min), export
+python -m unittest discover -s tests -v       # pipeline tests
+```
+
 ## Repo
 
 - `prototype/`: MVP, recommendation engine and demo deck

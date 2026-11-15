@@ -1,0 +1,6 @@
+# Datos crudos: se regeneran con `python pipeline/run_all.py` (≈100 MB). Los procesados sí se versionan.
+data/raw/*
+!data/raw/README.md
+__pycache__/
+*.pyc
+.venv/

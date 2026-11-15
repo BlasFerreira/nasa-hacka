@@ -16,7 +16,7 @@ Cada pendiente tiene un ID (`FS-xx`) y un criterio de «hecho», pensado para co
 
 Hay un MVP que funciona y está publicado (https://asistente-rotacion-cultivos.vercel.app): landing inmersiva, app de recomendación y rotaciones, vista del campo de 60 ha, PWA y sección de contribuidores. Se despliega solo con cada push a `main`.
 
-Lo que **todavía no se sostiene frente a un jurado técnico**: casi todo lo agronómico (cultivos, suelo, efectos de la rotación) es ilustrativo, hay un solo producto NASA (POWER), y el cálculo del modelo de rendimiento no está reproducible en el repo.
+Lo que **todavía no se sostiene frente a un jurado técnico**: casi todo lo agronómico (cultivos, suelo, efectos de la rotación) es ilustrativo, hay un solo producto NASA (POWER), y los efectos de la rotación no tienen fuente citada. (El modelo de rendimiento ya es reproducible: FS-01.)
 
 ---
 
@@ -46,8 +46,8 @@ Lo que **todavía no se sostiene frente a un jurado técnico**: casi todo lo agr
 ## 3. Lo que ya está hecho
 
 - **App** (`prototype/mvp-rotacion.html`): campos y lotes, filtro de aptitud, ranking de cultivos para sembrar hoy con razones, comparación de 3 rotaciones, comparación por eje, «Prueba de clima», evidencia e incertidumbre.
-- **Motor** (`prototype/src/engine.js`): puntaje transparente con 6 componentes, sin ML en la decisión. Incluye un modelo de rendimiento por clima con validación *leave-one-year-out* (`REND_MAGYP`: soja y maíz de pampa húmeda, maíz de Entre Ríos pasan el gate; el resto no y se descarta).
-- **Datos reales:** NASA POWER (clima), MAGyP (rendimientos departamentales y márgenes brutos).
+- **Motor** (`prototype/src/engine.js`): puntaje transparente con 6 componentes, sin ML en la decisión. Incluye un modelo de rendimiento por clima, reproducible desde `pipeline/`, con validación *leave-one-year-out* sobre 35 departamentos (pasan el gate soja, maíz y sorgo de pampa húmeda y soja y maíz de Entre Ríos; el resto no usa modelo).
+- **Datos reales:** NASA POWER (clima diario 1981–2025 y mensual 2001–2025), MAGyP (rendimientos departamentales y márgenes brutos).
 - **Landing y campo:** `experiencia.html` (scroll inmersivo) y `mundo.html` (campo de 60 ha).
 - **Producto:** PWA instalable, mapa a pantalla completa, rectángulo editable y selección por clic, paleta NASA, contribuidores.
 - **Operación:** Vercel conectado a GitHub, costo USD 0.
@@ -59,9 +59,9 @@ Lo que **todavía no se sostiene frente a un jurado técnico**: casi todo lo agr
 
 ### A. Credibilidad y reproducibilidad
 
-- [ ] **FS-01 · P0 · Pipeline de rendimiento reproducible.** Los números de `REND_MAGYP` están pegados en `engine.js` y el script que los generó no está en el repo. Versionar un script que descargue MAGyP, quite la tendencia, valide *leave-one-year-out* contra el baseline de solo tendencia y escriba ese JSON. *Hecho cuando:* un comando regenera los mismos valores y `docs/model_card.md` explica target, validación y límites.
-- [ ] **FS-02 · P0 · Inventario de datos.** `docs/data_inventory.md` con una fila por dataset usado o descartado: resolución espacial y temporal, período, acceso, licencia, uso y motivo si se descartó.
-- [ ] **FS-03 · P1 · Caso de estudio y decisiones.** `case_study.yaml` (región, cultivos, rotación actual, lote demo), `docs/assumptions.md` y `docs/decisions.md` con el criterio del gate de ML escrito.
+- [x] **FS-01 · P0 · Pipeline de rendimiento reproducible.** Hecho (2026-11-14): `python pipeline/run_all.py` descarga MAGyP y NASA POWER diario, arma features por ventana fenológica, valida *leave-one-year-out* contra el baseline de tendencia y escribe `prototype/src/rend_magyp.json`, que el motor lee. Detalle, resultados y límites en [`model_card.md`](model_card.md); criterio de aceptación en [`decisions.md`](decisions.md); 12 pruebas en `tests/`. Pasan el gate: soja, maíz y sorgo de pampa húmeda y soja y maíz de Entre Ríos.
+- [x] **FS-02 · P0 · Inventario de datos.** `docs/data_inventory.md` registra fuentes usadas y evaluadas, escala, periodo, acceso, licencia/estado de verificación, uso y motivo de no uso.
+- [ ] **FS-03 · P1 · Caso de estudio y decisiones.** `docs/decisions.md` ya tiene el criterio del gate (D1) y las ventanas fenológicas (D2). Faltan `case_study.yaml` (región, cultivos, rotación actual, lote demo) y `docs/assumptions.md`.
 - [ ] **FS-04 · P0 · Parámetros agronómicos con cita.** Un `crop_parameters.yaml` con Kc, ciclo, fijación de N, días de cobertura y beneficio como antecesor, cada valor con su fuente (FAO-56, INTA, AAPRESID, papers). Reemplaza al catálogo ilustrativo y respalda `salud_suelo`.
 - [ ] **FS-05 · P1 · Suelo real.** SoilGrids (o cartografía INTA) por zona: textura, carbono orgánico, pH, retención de agua. Etiquetado como dato regional, no medición del lote.
 
@@ -126,7 +126,7 @@ Reglas del reto: la entrega y el demo van en inglés; **≤7 slides o un video d
 | V0.1 Gestión de lotes | ✅ | App actual |
 | V0.2 Integración NASA | 🟡 | POWER hecho; resto en bloque B |
 | V0.3 Análisis climático | 🟡 | FS-09 |
-| V0.4 Modelo predictivo | 🟡 | Rendimiento por clima hecho; falta reproducirlo (FS-01); humedad a 7 días descartada |
+| V0.4 Modelo predictivo | 🟡 | Rendimiento por clima reproducible con LOYO (FS-01); humedad a 7 días descartada |
 | V0.5 Recomendaciones | ✅ | App actual |
 | V0.6 Simulador de rotaciones | 🟡 | Hecho con 3 escenarios; FS-10 a FS-12 |
 | V0.7 Alertas | ⛔ | Nivel 2, solo en slides |

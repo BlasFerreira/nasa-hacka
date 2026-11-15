@@ -1,0 +1,51 @@
+{
+  "soja": {
+    "dataset": "soja-siembra-cosecha-produccion-rendimiento",
+    "recurso": "Soja - serie siembra, cosecha, producción, rendimiento",
+    "url": "https://datos.magyp.gob.ar/dataset/8ae4865f-d2f2-45a2-9343-7a4a12728a90/resource/ba694aa3-99d2-4d7d-9936-60f88e36ad9a/download/soja-serie-1941-2024.csv",
+    "bytes": 923739,
+    "modificado": "2026-03-16T10:29:20.006416"
+  },
+  "maiz": {
+    "dataset": "maiz-siembra-cosecha-rendimiento-produccion",
+    "recurso": "Maíz - serie siembra, cosecha, producción, rendimiento",
+    "url": "https://datos.magyp.gob.ar/dataset/514853fc-0a78-4b6f-a42f-8e89eab784c8/resource/9a6a02f8-ef58-4250-87c2-f639fec502f1/download/maiz-serie-1923-2024.csv",
+    "bytes": 2378934,
+    "modificado": "2026-03-13T12:01:15.726539"
+  },
+  "trigo": {
+    "dataset": "trigo-siembra-cosecha-produccion-rendimiento",
+    "recurso": "Trigo - serie siembra, cosecha, producción, rendimiento",
+    "url": "https://datos.magyp.gob.ar/dataset/10105e94-c560-4b02-b15f-ef3ef764b833/resource/50f0edcc-4dfc-4afb-b78a-b164601d36ae/download/trigo-serie-1927-2025.csv",
+    "bytes": 1827173,
+    "modificado": "2026-05-07T11:31:34.846601"
+  },
+  "girasol": {
+    "dataset": "girasol-siembra-cosecha-produccion-rendimiento",
+    "recurso": "Girasol - serie siembra, cosecha, producción, rendimiento",
+    "url": "https://datos.magyp.gob.ar/dataset/e080ceb1-c369-4d11-8eaf-ed5e2a21bdf2/resource/3ce17c66-ebee-4c30-89e5-b1966df367d5/download/girasol-serie-1969-2024.csv",
+    "bytes": 811373,
+    "modificado": "2026-05-07T11:01:16.472768"
+  },
+  "sorgo": {
+    "dataset": "sorgo-siembra-cosecha-produccion-rendimiento",
+    "recurso": "Sorgo - serie siembra, cosecha, producción, rendimiento",
+    "url": "https://datos.magyp.gob.ar/dataset/d996be66-fd46-42d5-aca9-018853d54e3a/resource/2a1fe06a-e711-48a9-8b82-fae3b38bae20/download/sorgo-1969-2024.csv",
+    "bytes": 885955,
+    "modificado": "2025-12-23T14:12:49.773494"
+  },
+  "cebada": {
+    "dataset": "cebada-siembra-cosecha-produccion-rendimiento",
+    "recurso": "Cebada - serie siembra, cosecha, producción, rendimiento",
+    "url": "https://datos.magyp.gob.ar/dataset/060f3fa3-060a-4a5d-a753-b928cb00d2eb/resource/372399b2-8219-4539-a869-eea386f8b528/download/cebada-serie-1938-2025.csv",
+    "bytes": 1306006,
+    "modificado": "2026-05-07T12:02:58.150379"
+  },
+  "avena": {
+    "dataset": "avena-siembra-cosecha-produccion-rendimiento",
+    "recurso": "Avena - serie siembra, cosecha, producción, rendimiento",
+    "url": "https://datos.magyp.gob.ar/dataset/ba016ebb-7b1c-413f-92de-62fe7ca9deab/resource/df671710-6a2b-4a9a-a657-c40a6e5a9aa5/download/avena-serie-1923-2025.csv",
+    "bytes": 1672429,
+    "modificado": "2026-05-04T15:15:50.312844"
+  }
+}
