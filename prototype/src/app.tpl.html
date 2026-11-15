@@ -15,7 +15,7 @@
 <title>Asistente de rotación de cultivos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -545,6 +545,164 @@ details.lote-det > .form { padding-top: 0; }
 .opt-borr { display: grid; gap: 6px; font-size: 13px; }
 .opt-borr li { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
+/* Climate Twin 3.1 */
+.tw-haze { position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0; transition: opacity .6s ease;
+  background: linear-gradient(180deg, transparent 0%, rgb(255 170 90 / .10) 45%, rgb(255 140 70 / .16) 70%, transparent 100%); background-size: 100% 220%; }
+@media (prefers-reduced-motion: no-preference) { .tw-haze { animation: twHaze 3.2s ease-in-out infinite alternate; } }
+.tw-atmo { position: absolute; inset: 0; z-index: 1; pointer-events: none; --seco: 0; --lluvia: 0;
+  background: linear-gradient(180deg, rgb(196 150 96 / calc(var(--seco) * .9)) 0%, rgb(196 150 96 / calc(var(--seco) * .35)) 30%, transparent 55%),
+    linear-gradient(180deg, rgb(24 34 44 / calc(var(--lluvia) * .8)) 0%, rgb(24 34 44 / calc(var(--lluvia) * .35)) 45%, rgb(24 34 44 / calc(var(--lluvia) * .2)) 100%);
+  transition: background .5s linear; }
+.tw-stage::before { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; box-shadow: inset 0 0 120px 20px rgb(4 10 18 / .55); }
+@keyframes twHaze { from { background-position: 0 0; filter: blur(0); } to { background-position: 0 40%; filter: blur(1.5px); } }
+.tw-canvas canvas { transition: filter .5s ease; }
+.tw-tl .tw-def { color: var(--warn); font-family: var(--mono); font-size: 12.5px; }
+.tw-gbtn { border: 1px solid var(--good); background: rgb(100 215 164 / .1); color: var(--good); border-radius: 9px; padding: 6px 12px; font: 600 13px var(--font); cursor: pointer; min-height: 32px; }
+.tw-spark .cu { fill: #64D7A4; opacity: .85; }
+.tw-bl .tw-prism { display: inline-flex; align-items: flex-end; gap: 2px; height: 16px; } .tw-bl .tw-prism i { width: 6px; border-radius: 1px 1px 0 0; }
+/* Climate Twin 3.0: tema oscuro geoespacial solo en esta vista */
+.shell.ancho { max-width: none; padding: 10px 14px 16px; gap: 10px; }
+.shell.ancho .ctx { padding: 8px 14px; }
+.shell.ancho .ctx h1 { font-size: 18px; }
+/* Climate Twin: toda la página en el tema oscuro del visor */
+body.twin-on { background: #071421; }
+body.twin-on .topbar { background: #071421; border-bottom-color: #172d42; }
+body.twin-on .ctx { background: #0c1c2c; border-color: #1e3549; color: #F4F7FB; box-shadow: none; padding: 6px 14px; }
+body.twin-on .ctx h1 { color: #F4F7FB; font-size: 17px; }
+body.twin-on .ctx-k, body.twin-on .ctx-s { color: #A7BACB; }
+body.twin-on .ctx-k a:hover { color: #F4F7FB; }
+body.twin-on .ctx .btn { background: transparent; color: #F4F7FB; border-color: #294259; }
+body.twin-on .ctx .btn:hover { border-color: #59C9E8; color: #59C9E8; }
+.tw-view { --surface: #102235; --surface-2: #0c1b2b; --border: #294259; --text: #F4F7FB; --muted: #A7BACB; --primary: #59C9E8; --on-primary: #04121d;
+  --good: #64D7A4; --warn: #F4B85D; --bad: #EF7268; color: var(--text); background: #071421; border-radius: 16px; padding: 10px; font-size: 14px; }
+.tw-grid { display: grid; grid-template-columns: minmax(0, 1fr) clamp(300px, 25vw, 380px); gap: 10px; align-items: start; }
+.tw-view.sin-panel .tw-grid { grid-template-columns: minmax(0, 1fr); }
+.tw-view.sin-panel .tw-side { display: none; }
+.tw-main { display: grid; min-width: 0; border-radius: 14px; overflow: hidden; border: 1px solid #1b3247; }
+.tw-stage { position: relative; overflow: hidden; height: clamp(360px, calc(100dvh - 372px), 940px);
+  background: linear-gradient(180deg, #06111f 0%, #0d2338 32%, #23425b 58%, #2b4a63 72%, #2b4a63 100%); transition: background .8s ease; }
+.tw-stage[data-amb="seco"], .tw-stage[data-amb="seco-calor"] { background: linear-gradient(180deg, #0f1420 0%, #2a2a2f 32%, #5b4f40 60%, #6b5a45 74%, #6b5a45 100%); }
+.tw-stage[data-amb="calor"] { background: linear-gradient(180deg, #121423 0%, #2f2630 32%, #6a4c3c 60%, #7a5a42 74%, #7a5a42 100%); }
+.tw-stage[data-amb="lluvia"] { background: linear-gradient(180deg, #070d15 0%, #17222d 34%, #33434f 60%, #3a4b58 74%, #3a4b58 100%); }
+.tw-stage::after { content: ''; position: absolute; inset: 0; pointer-events: none; transition: background .8s ease; }
+.tw-stage[data-amb="seco"]::after, .tw-stage[data-amb="seco-calor"]::after { background: radial-gradient(120% 90% at 50% 20%, rgb(244 184 93 / .07), transparent 60%); }
+.tw-stage[data-amb="calor"]::after { background: radial-gradient(120% 90% at 50% 20%, rgb(239 114 104 / .08), transparent 60%); }
+.tw-stage[data-amb="lluvia"]::after { background: radial-gradient(120% 90% at 50% 20%, rgb(89 201 232 / .07), transparent 60%); }
+.tw-stage.tw-fade .tw-canvas { animation: twFade .45s ease; }
+@keyframes twFade { from { opacity: .35; } to { opacity: 1; } }
+.tw-canvas { position: absolute; inset: 0; animation: twFade .8s ease; }
+.tw-canvas canvas, .tw-canvas svg { display: block; width: 100%; height: 100%; touch-action: none; }
+.tw-loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 15px; }
+.tw-labels { position: absolute; inset: 0; pointer-events: none; }
+.tw-lab { position: absolute; transform: translate(-50%, -50%); white-space: nowrap; text-align: center; font: 600 14px/1.25 var(--font); color: #fff;
+  background: rgb(7 20 33 / .66); border: 1px solid rgb(244 247 251 / .16); border-radius: 9px; padding: 4px 9px; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  box-shadow: 0 4px 14px -6px rgb(0 0 0 / .7); }
+.tw-lab.sel { border-color: var(--primary); } .tw-lab.crit { border-color: var(--warn); }
+.tw-lab small { display: block; font-weight: 500; font-size: 12.5px; color: #dbe7f3; }
+.tw-lab.sel b { color: var(--primary); } .tw-lab.crit b { color: var(--warn); }
+.tw-lab .ev { color: #ffb3a6; display: inline; } .tw-lab .vs { color: #a9e3f3; } .tw-lab small + small { margin-top: 1px; }
+.tw-ov { position: absolute; z-index: 3; }
+.tw-tl { top: 12px; left: 12px; display: grid; gap: 2px; padding: 8px 12px; border-radius: 12px; background: rgb(7 20 33 / .72); border: 1px solid rgb(41 66 89 / .8); backdrop-filter: blur(8px); font-size: 13px; color: var(--muted); }
+.tw-tl .tw-date { font: 600 17px var(--mono); color: var(--text); }
+.tw-tl .tw-wx { color: var(--text); font-family: var(--mono); font-size: 12.5px; } .tw-tl .ev { color: var(--bad); }
+.tw-tag { font-size: 11px; font-weight: 600; border-radius: 6px; padding: 1px 6px; margin-left: 4px; }
+.tw-tag.real { background: rgb(100 215 164 / .15); color: var(--good); } .tw-tag.hip { background: rgb(244 184 93 / .16); color: var(--warn); }
+.tw-tr { top: 12px; right: 12px; }
+.tw-seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 11px; background: rgb(7 20 33 / .72); border: 1px solid rgb(41 66 89 / .8); backdrop-filter: blur(8px); }
+.tw-seg button { border: 0; background: transparent; color: var(--muted); border-radius: 8px; padding: 6px 12px; font: 600 13px var(--font); cursor: pointer; min-height: 32px; }
+.tw-seg button[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); }
+.tw-bl { left: 12px; bottom: 12px; display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; max-width: 62%; padding: 6px 10px; border-radius: 10px;
+  background: rgb(7 20 33 / .66); backdrop-filter: blur(8px); font-size: 12.5px; color: var(--text); }
+.tw-bl span { display: inline-flex; align-items: center; gap: 6px; } .tw-bl i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+.tw-bl .tw-ln { color: var(--muted); font-size: 11.5px; }
+.tw-br { right: 12px; bottom: 12px; display: flex; gap: 6px; align-items: center; }
+.tw-cb { width: 34px; height: 34px; border-radius: 9px; border: 1px solid rgb(41 66 89 / .9); background: rgb(7 20 33 / .72); color: var(--text); font-size: 16px; cursor: pointer; backdrop-filter: blur(8px); }
+.tw-cb:hover { border-color: var(--primary); color: var(--primary); }
+.tw-callout { position: absolute; z-index: 4; right: 12px; top: 60px; width: min(400px, 46%); background: rgb(16 34 53 / .94); color: var(--text);
+  border: 1px solid var(--warn); border-radius: 12px; padding: 10px 12px; font-size: 13px; display: grid; gap: 4px; box-shadow: 0 10px 30px -12px rgb(0 0 0 / .7); }
+.tw-callout b { color: var(--warn); }
+.tw-ch { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; } .tw-cd { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.tw-cv { display: grid; gap: 2px; border-top: 1px solid var(--border); padding-top: 6px; }
+.tw-cv strong { font: 600 17px var(--mono); color: var(--warn); white-space: nowrap; } .tw-cv span { font-size: 12px; color: var(--muted); } .tw-cb2 { display: flex; gap: 6px; justify-content: flex-end; }
+@media (prefers-reduced-motion: no-preference) { .tw-callout { animation: twIn .35s ease-out; } .tw-split, .tw-sidetag { animation: twIn .45s ease-out; } }
+@keyframes twIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.tw-split { animation-name: twFade !important; } .tw-sidetag { animation-name: twFade !important; } @keyframes twFade { from { opacity: 0; } to { opacity: 1; } } .tw-callout .tw-btn { justify-self: end; border: 1px solid var(--border); background: transparent; color: var(--text); border-radius: 8px; padding: 4px 10px; cursor: pointer; }
+.tw-split { position: absolute; top: 0; bottom: 0; width: 0; z-index: 3; border-left: 2px solid rgb(244 247 251 / .85); cursor: ew-resize; }
+.tw-split::after { content: '⇆'; position: absolute; top: 50%; left: -17px; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%;
+  background: var(--text); color: #071421; font-weight: 700; transform: translateY(-50%); box-shadow: 0 2px 12px rgb(0 0 0 / .5); }
+.tw-split-hit { position: absolute; top: 0; bottom: 0; left: -14px; width: 28px; }
+.tw-sidetag.izq { right: 10px; } .tw-sidetag.der { left: 10px; }
+.tw-sidetag { position: absolute; top: 14px; white-space: nowrap; border: 1px solid rgb(244 247 251 / .35); box-shadow: 0 4px 14px -6px rgb(0 0 0 / .6); z-index: 3; font: 700 11px var(--font); letter-spacing: .08em; text-transform: uppercase; color: var(--text);
+  background: rgb(7 20 33 / .72); padding: 4px 9px; border-radius: 7px; pointer-events: none; }
+.tw-time { background: #0c1b2b; border-top: 1px solid #1b3247; padding: 8px 12px; display: grid; gap: 6px; }
+.tw-ctrl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.tw-pbtn { width: 38px; height: 38px; border-radius: 50%; border: 0; background: var(--primary); color: var(--on-primary); font-size: 14px; font-weight: 700; cursor: pointer; }
+.tw-ibtn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text); font-size: 16px; cursor: pointer; }
+.tw-cbtn { border: 1px solid var(--warn); background: rgb(244 184 93 / .1); color: var(--warn); border-radius: 9px; padding: 6px 12px; font: 600 13px var(--font); cursor: pointer; min-height: 32px; }
+.tw-fecha { font: 600 15px var(--mono); min-width: 104px; }
+.tw-ctrl input[type="range"] { flex: 1 1 200px; accent-color: var(--primary); -webkit-appearance: none; appearance: none; height: 6px; border-radius: 999px; cursor: pointer;
+  background: linear-gradient(90deg, var(--primary) 0 var(--pct, 0%), rgb(167 186 203 / .28) var(--pct, 0%) 100%); }
+.tw-ctrl input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #f4f7fb; border: 2px solid var(--primary); box-shadow: 0 1px 4px rgb(0 0 0 / .5); }
+.tw-ctrl input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #f4f7fb; border: 2px solid var(--primary); }
+.tw-ctrl input[type="range"]:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
+.tw-ctrl select { width: auto; -webkit-appearance: none; appearance: none; background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23A7BACB' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 8px center;
+  color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 4px 24px 4px 10px; min-height: 32px; font: 600 13px var(--font); cursor: pointer; }
+.tw-sparkw { position: relative; }
+.tw-spark { width: 100%; display: block; cursor: pointer; }
+.tw-meses { display: grid; grid-template-columns: repeat(12, 1fr); padding: 0 4px; font: 500 11px var(--mono); color: #7f95a9; margin-top: 2px; }
+.tw-meses span { border-left: 1px solid #1e3549; padding-left: 4px; }
+.tw-ley1 { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: #A7BACB; margin-top: 4px; }
+.tw-ley1 span { display: inline-flex; align-items: center; gap: 6px; } .tw-ley1 i { width: 12px; height: 8px; border-radius: 2px; display: inline-block; }
+.tw-ley1 .tw-pk { color: #F4B85D; font-size: 10px; } .tw-ley1 .p-dia { background: #59C9E8; } .tw-ley1 .m-calor { background: #EF7268; } .tw-ley1 .tw-note { margin-left: auto; }
+.tw-spark .p { fill: #59C9E8; opacity: .85; } .tw-spark .pi { fill: #EF7268; } .tw-spark .t { fill: none; stroke: #F4B85D; stroke-width: 1.2; opacity: .9; } .tw-spark .h { fill: #EF7268; }
+.tw-spark .cr { fill: rgb(89 201 232 / .12); } .tw-spark .sq { fill: rgb(244 184 93 / .1); } .tw-spark .cur { stroke: #F4F7FB; stroke-width: 1.6; } .tw-spark .pk { fill: #F4B85D; }
+.tw-tip { position: absolute; top: -30px; z-index: 5; background: #102235; border: 1px solid var(--border); border-radius: 8px; padding: 3px 8px; font-size: 12px; white-space: nowrap; pointer-events: none; }
+.tw-ley2 { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); }
+.tw-ley2 span { display: inline-flex; align-items: center; gap: 6px; } .tw-ley2 i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+.tw-ley2 .p-dia { background: #59C9E8; } .tw-ley2 .p-int { background: #EF7268; } .tw-ley2 .m-calor { background: #F4B85D; }
+.tw-i-sq { background: rgb(244 184 93 / .35); } .tw-i-cr { background: rgb(89 201 232 / .35); }
+.tw-side { display: grid; gap: 8px; max-height: calc(100dvh - 140px); overflow-y: auto; position: sticky; top: 10px; }
+.tw-sec { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; }
+.tw-sec > summary { list-style: none; cursor: pointer; padding: 12px 14px; font-size: 16px; font-weight: 600; display: flex; justify-content: space-between; }
+.tw-sec > summary::-webkit-details-marker { display: none; }
+.tw-sec > summary::after { content: '▾'; color: var(--muted); transition: transform .2s; } .tw-sec:not([open]) > summary::after { transform: rotate(-90deg); }
+.tw-secb { padding: 0 14px 14px; display: grid; gap: 10px; }
+.tw-escsel { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.tw-escsel button { border: 1px solid var(--border); background: var(--surface-2); color: var(--text); border-radius: 10px; padding: 8px 10px; cursor: pointer; font: 600 13.5px var(--font); text-align: left; }
+.tw-escsel button small { display: block; font-weight: 500; font-size: 12px; color: var(--muted); }
+.tw-escsel button[aria-pressed="true"] { border-color: var(--primary); background: rgb(89 201 232 / .14); }
+.tw-escsel button:first-child { grid-column: 1 / -1; }
+.tw-sl { display: grid; gap: 2px; font-size: 13.5px; } .tw-sl input { width: 100%; accent-color: var(--primary); }
+.tw-warn { font-size: 12.5px; color: var(--warn); margin: 0; }
+.tw-note { font-size: 12.5px; color: var(--muted); margin: 0; }
+details.tw-mini summary { cursor: pointer; font-size: 12.5px; color: var(--muted); } details.tw-mini p { font-size: 12.5px; color: var(--muted); margin: 6px 0 0; }
+.tw-toggles { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; } .tw-toggles input { accent-color: var(--primary); }
+.tw-plan { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; padding: 3px; border-radius: 11px; background: var(--surface-2); border: 1px solid var(--border); }
+.tw-plan button { border: 0; background: transparent; color: var(--muted); border-radius: 8px; padding: 7px 4px; font: 600 13.5px var(--font); cursor: pointer; }
+.tw-plan button[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); } .tw-plan button:disabled { opacity: .4; cursor: not-allowed; }
+.tw-side .card { background: transparent; border: 0; padding: 0; display: grid; gap: 6px; } .tw-side .card h2 { font-size: 14px; font-weight: 600; }
+.tw-side table { font-size: 13px; } .tw-side th { color: var(--muted); }
+.tw-cmp td.pos { color: var(--good); font-weight: 600; } .tw-cmp td.neg { color: var(--bad); font-weight: 600; } .tw-cmp td.eq { color: var(--muted); }
+.tw-kv { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 13.5px; }
+.tw-kv > span { color: var(--muted); } .tw-kv > b { font-family: var(--mono); font-weight: 500; text-align: right; }
+.tw-kv i { font-style: normal; font-size: 12px; } .tw-kv i.up { color: var(--good); } .tw-kv i.dn { color: var(--bad); } .tw-kv i.eq { color: var(--muted); }
+.tw-ks { grid-column: 1 / -1; font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--primary) !important; margin-top: 6px; }
+.tw-ks em { font-style: normal; text-transform: none; letter-spacing: 0; color: var(--muted); }
+.tw-lk { all: unset; cursor: pointer; color: var(--text); text-decoration: underline dotted; text-underline-offset: 3px; }
+.tw-lotebox { border-top: 1px solid var(--border); padding-top: 10px; display: grid; gap: 8px; }
+.tw-loteh { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; } .tw-loteh b { font-size: 16px; } .tw-loteh > span { color: var(--muted); }
+.tw-chip { font-size: 12px; font-weight: 600; border-radius: 999px; padding: 2px 9px; color: #071421; background: var(--c); }
+details.tw-why { background: var(--surface-2); border-radius: 10px; padding: 8px 10px; } details.tw-why summary { cursor: pointer; font-weight: 600; font-size: 13.5px; }
+details.tw-why ul { margin: 8px 0 6px; padding-left: 18px; display: grid; gap: 4px; font-size: 13px; }
+@media (max-width: 1000px) {
+  .tw-grid { grid-template-columns: 1fr; }
+  .tw-side { max-height: none; position: static; overflow: visible; }
+  .tw-stage { height: clamp(360px, 60dvh, 640px); }
+  .tw-bl { max-width: 70%; }
+}
+@media (max-width: 560px) { .tw-tl { font-size: 12px; } .tw-tl .tw-date { font-size: 15px; } .tw-bl { display: none; } .tw-callout { width: 88%; } }
+@media (prefers-reduced-motion: reduce) { .tw-canvas, .tw-stage.tw-fade .tw-canvas { animation: none; } .tw-stage::after { transition: none; } }
+
 /* Barra fija para cambiar de propuesta y campaña */
 .opt-dock { position: sticky; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 30; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center;
   padding: 10px 12px; border-radius: 14px; background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(10px);
@@ -598,6 +756,7 @@ details.lote-det > .form { padding-top: 0; }
 .rsum-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
 .tl-legend { padding: 0 4px; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); }
 .tl-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.tw-lt { font-weight: 600; color: #F4F7FB; }
 .tl-legend i { width: 14px; height: 10px; border-radius: 3px; display: inline-block; border: 1px solid var(--border); }
 .rcard { padding: 16px; display: grid; gap: 12px; border-left: 4px solid var(--rc); }
 .rcard.best { box-shadow: 0 0 0 1px var(--rc); }
@@ -643,6 +802,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
 .conf b { color: var(--warn); }
 @media (prefers-reduced-motion: no-preference) { .meter > i, .stackbar i { transition: width .25s ease; } }
 </style>
+<!--THREE_SRC-->
 </head>
 <body>
 <header class="topbar">
@@ -821,6 +981,28 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       <div class="opt-dock" id="opt-dock" hidden role="region" aria-label="Elegir propuesta y campaña"></div>
     </div>
 
+    <!-- Climate Twin: gemelo digital geoespacial 3D del campo bajo un escenario climático. -->
+    <div class="tw-view" id="view-twin" hidden>
+      <div class="tw-grid">
+        <div class="tw-main">
+          <section class="tw-stage" id="tw-stage" aria-label="Gemelo digital 3D">
+            <div class="tw-canvas" id="tw-canvas"><div class="tw-loading" id="tw-loading">Cargando el gemelo 3D…</div></div>
+            <div class="tw-labels" id="tw-labels" aria-hidden="true"></div>
+            <div id="tw-splitbox"></div>
+            <div class="tw-ov tw-tl" id="tw-hud"></div>
+            <div class="tw-ov tw-tr" id="tw-tr"></div>
+            <div class="tw-ov tw-bl" id="tw-ley"></div>
+            <div class="tw-ov tw-br" id="tw-cam" role="group" aria-label="Cámara"></div>
+            <div class="tw-haze" id="tw-haze" aria-hidden="true"></div>
+            <div class="tw-atmo" id="tw-atmo" aria-hidden="true"></div>
+            <div id="tw-callbox"></div>
+          </section>
+          <section class="tw-time" id="tw-time" aria-label="Línea de tiempo"></section>
+        </div>
+        <aside class="tw-side" id="tw-side"></aside>
+      </div>
+    </div>
+
     <!-- Recorrido: el campo de 60 ha, paso a paso. Es mundo.html embebido, para no salir de la app. -->
     <div class="stack" id="view-recorrido" hidden>
       <iframe id="recorrido-frame" title="Recorrido: el campo hectárea por hectárea" class="recorrido-frame"></iframe>
@@ -991,6 +1173,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     if (esLote(v) && lotesPlano.some(x => x.lote.id === id)) return { vista: v, sel: id };
     if (v === 'campo' && campoDe(id)) return { vista: 'campo', campo: id };
     if (v === 'optimizar' && campoDe(id)) return { vista: 'optimizar', campo: id };
+    if (v === 'climate-twin' && campoDe(id)) return { vista: 'twin', campo: id };
     if (v === 'recorrido') return { vista: 'recorrido' };
     return { vista: 'inicio' };
   }
@@ -1103,6 +1286,15 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
   function renderCtx() {
     let k, h1, sub, der;
     $('ctx').dataset.vista = esLote(state.vista) ? state.vista : '';
+    if (state.vista === 'twin') {
+      const c = campoDe(state.campo);
+      $('ctx').innerHTML = '<div class="ctx-l"><div class="ctx-k">' + migas([['Resumen general', '#/inicio'], [c.nombre, '#/campo/' + c.id], ['Climate Twin']]) + '</div>' +
+        '<h1 id="page-h1" tabindex="-1">Climate Twin · ' + esc(c.nombre) + '</h1><p class="ctx-s" id="tw-ctx-s">' + esc(twinSubtitulo(c)) + '</p></div>' +
+        '<div class="ctx-r"><button class="btn" type="button" id="tw-panel" aria-pressed="' + tw.panel + '">' + (tw.panel ? 'Ocultar panel' : 'Mostrar panel') + '</button>' +
+        '<a class="btn" href="#/optimizar/' + c.id + '">Optimizar</a><a class="btn" href="#/campo/' + c.id + '">Volver al campo</a></div>';
+      $('tw-panel').addEventListener('click', () => { tw.panel = !tw.panel; $('view-twin').classList.toggle('sin-panel', !tw.panel); renderCtx(); });
+      return;
+    }
     if (state.vista === 'optimizar') {
       const c = campoDe(state.campo);
       $('ctx').innerHTML = '<div class="ctx-l"><div class="ctx-k">' + migas([['Resumen general', '#/inicio'], [c.nombre, '#/campo/' + c.id], ['Optimizar']]) + '</div>' +
@@ -1649,6 +1841,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       (escAct.id === 'promedio' ? '' : ' · con el clima real de ' + (escAct.secuencia != null ? escAct.secuencia + '/' + String(escAct.secuencia + 1).slice(2) + ' a ' + (escAct.secuencia + 2) + '/' + String(escAct.secuencia + 3).slice(2) : esc(escAct.campania))) + '</div>' +
       '<h2>' + titulo + '</h2><p class="v-score">' + puntaje + '</p>' + (why ? '<ul class="v-why">' + why + '</ul>' : '') +
       '<div class="v-actions"><span class="hint">Puntaje de 0 a 100. Cambiá las prioridades en «Ajustes» y mirá cómo cambia.</span>' +
+      '<a class="btn" href="#/climate-twin/' + actual().campo.id + '">Ver el campo en Climate Twin 3D</a>' +
       '<button class="btn" type="button" id="rot-reset">Restablecer ejemplos</button></div></section>';
     const tlCmp = '<section class="card tl-cmp" aria-label="Las 3 rotaciones en el tiempo"><div class="rank-head"><h2>Las 3 rotaciones en el tiempo</h2></div>' +
       r.rotaciones.map((e, i) => e.pasos ? '<div class="tl-row"><span class="rn"><span class="rtag sm" style="--rc:' + ROT_COL[i] + '">' + ROT_TAG[i] + '</span><span>' + esc(e.nombre) + '</span></span>' +
@@ -2127,7 +2320,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     }).join('');
     const tabla = '<section class="card"><div class="card-pad rank-head"><h2>' + (c ? 'Lotes del campo' : 'Tus lotes') + '</h2>' +
       '<span class="hint">Ordenados por mejora posible · tocá un lote para ver la comparación</span>' +
-      (c && c.lotes.length ? '<a class="btn primary" href="#/optimizar/' + c.id + '">Optimizar mi campo</a>' : '') +
+      (c && c.lotes.length ? '<a class="btn primary" href="#/optimizar/' + c.id + '">Optimizar mi campo</a><a class="btn" href="#/climate-twin/' + c.id + '">Climate Twin 3D</a>' : '') +
       (c && !state.nuevo ? '<button class="btn" type="button" data-nuevo-btn="' + c.id + '">+ Nuevo lote</button>' : '') + '</div>' +
       '<div class="tbl-wrap"><table class="dash-tbl"><thead><tr><th class="izq">Lote</th><th>ha</th><th class="izq">Rotación actual</th><th>Pts</th>' +
       '<th class="izq">Mejor alternativa</th><th>Pts</th><th>Mejora</th><th>Suelo cubierto</th></tr></thead><tbody>' + filasT + '</tbody></table></div></section>';
@@ -3008,6 +3201,784 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     const b = $('opt-dock').querySelector(foco); if (b) b.focus({ preventScroll: true });
   }
 
+  /* ---------- Climate Twin ----------
+     Capas (no hay fórmulas agronómicas en Three.js):
+       motor (engine.js)  → twinEvaluar(): evaluarRotacion() de cada lote con el escenario y el plan elegidos.
+       controlador        → estado `tw` (escenario, tiempo, plan, comparación) y reproducción.
+       adaptador          → twinEstado() / twinCritico(): datos del instante, eventos y momento crítico.
+       renderizador       → twinEscena(): terreno satelital, lotes, luces y efectos (solo representa).
+       interfaz           → capas del visor, panel lateral y línea de tiempo.
+     Temporalidad: el clima y los conteos diarios del motor avanzan día por día; el estrés es el resultado del ciclo
+     del cultivo; margen y cobertura son de la campaña. Los efectos ambientales ilustran el tipo de evento, no daños. */
+  const TWIN_ESC = {
+    habitual: { t: 'Clima habitual', c: 'promedio 2001–25', tipo: 'real', amb: '' },
+    sequia: { t: 'Sequía 2022/23', c: 'NASA POWER diario', tipo: 'real', amb: 'seco' },
+    calor: { t: 'Ola de calor', c: 'hipotético', tipo: 'hip', amb: 'calor' },
+    lluvias: { t: 'Lluvias intensas', c: 'hipotético', tipo: 'hip', amb: 'lluvia' },
+    combinado: { t: 'Sequía + calor', c: 'hipotético', tipo: 'hip', amb: 'seco-calor' },
+  };
+  const TWIN_HIP = { calor: { dT: 3, dp: 0 }, lluvias: { dT: 0, dp: 60 }, combinado: { dT: 3, dp: -40 } };
+  // Estrés del cultivo = 1 − aptitud del ciclo calculada por el motor (no es una probabilidad de pérdida).
+  const TWIN_EXPO = [[.75, '#64D7A4', 'bajo'], [.6, '#F4D35D', 'intermedio'], [.45, '#F4A25D', 'elevado'], [-1, '#EF7268', 'muy elevado']];
+  const expo = a => TWIN_EXPO.find(([u]) => a >= u);
+  // Colores del terreno por cultivo (esquemáticos: no representan el estado fenológico).
+  const TW_CROP = { maiz: '#3f9d4b', soja: '#7cc35a', trigo: '#d6b24c', cebada: '#cdb86a', sorgo: '#8c8a3c', girasol: '#d9c13b', cobertura: '#4fae7b', barbecho: '#8a6a4b' };
+  const TW_CROP_N = { maiz: 'Maíz', soja: 'Soja', trigo: 'Trigo', cebada: 'Cebada', sorgo: 'Sorgo', girasol: 'Girasol', cobertura: 'Cobertura', barbecho: 'Barbecho' };
+  const reduceMov = (() => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } })();
+  const tw = { campo: null, esc: 'sequia', est: 'actual', modo: 'cultivo', dT: 3, dp: 0, base: null, t: 0, tReal: 0, play: false, vel: 1, sel: null, hover: null,
+    datos: null, datosB: null, cmp: false, split: .5, efectos: !reduceMov, anim: !reduceMov, critico: null, verCrit: false, three: null, cargando: null, ultimo: 0, calcOpt: false,
+    panel: true, graf: false, sec: { sim: true, plan: true, info: true }, satelite: true, camModo: 'explorar' };
+  const MESES_C = ['Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
+  const coma1 = v => v == null ? '—' : String(Math.round(v * 10) / 10).replace('.', ',');
+  const hayOptDe = c => !!(opt.res && opt.campo === c.id);
+  const ATRIB_SAT = 'Powered by Esri · Imágenes: Esri, Maxar, Earthstar Geographics';
+
+  // Campaña de referencia para los escenarios hipotéticos: la de lluvia total más cercana a la mediana.
+  function twinBase(zid) {
+    const ids = Object.keys(M.ESCENARIOS[zid] || {}).filter(k => /^c\d{4}$/.test(k)).map(k => M.ESCENARIOS[zid][k]);
+    if (!ids.length) return null;
+    const t = ids.map(e => e.total).sort((a, b) => a - b), med = t[Math.floor(t.length / 2)];
+    return parseInt(ids.reduce((a, e) => Math.abs(e.total - med) < Math.abs(a.total - med) ? e : a).campania, 10);
+  }
+  // Zona perturbada (hipotética): misma celda, +dT °C y lluvia × (1 + dp %). ET0 no se recalcula; el umbral de calor
+  // queda el de la celda original (engine: umbralCalor respeta umbral_calor).
+  function zonaHip(zid, dT, dp) {
+    const id = zid + '~h' + dT + '_' + dp;
+    if (M.ZONAS[id]) return id;
+    const z = M.ZONAS[zid], d = M.diarioDe(zid), f = 1 + dp / 100, sT = v => v == null ? null : Math.round((v + dT) * 10) / 10, sP = v => v == null ? null : Math.round(v * f * 10) / 10;
+    const serie = {}; for (const y of Object.keys(z.serie || {})) serie[y] = { temp: z.serie[y].temp.map(sT), precip: z.serie[y].precip.map(v => v == null ? null : Math.round(v * f)) };
+    M.registrarZona(id, Object.assign({}, z, { nombre: z.nombre + ' (hipotético)', temp: z.temp.map(sT), precip: z.precip.map(v => Math.round(v * f)), serie }));
+    if (d && window.POWER_DIARIO) window.POWER_DIARIO.zonas[id] = Object.assign({}, d, { tmax: d.tmax.map(sT), tmin: d.tmin.map(sT), t2m: d.t2m.map(sT), prec: d.prec.map(sP), umbral_calor: M.umbralCalor(zid) });
+    return id;
+  }
+  const planNombre = k => k === 'actual' ? 'actual' : 'optimizado (' + ESTR[opt.est].t.toLowerCase() + ')';
+  function twinSubtitulo(c) {
+    const e = TWIN_ESC[tw.esc];
+    return c.provincia + ' · ' + nLotes(c.lotes.length) + ' · ' + haDe(c.lotes) + ' ha · escenario: ' + e.t + (e.tipo === 'hip' ? ' (hipotético)' : '') +
+      ' · ' + (tw.cmp ? 'comparando actual | optimizado' : 'plan ' + planNombre(tw.est));
+  }
+
+  /* --- motor → datos --- */
+  function twinEvaluar(c, est) {
+    const ini = M.parseFecha(state.siembra), c0 = ini.getUTCFullYear() - (ini.getUTCMonth() < 6 ? 1 : 0), jul = Date.UTC(c0, 6, 1);
+    const zBase = climaLote(c, c.lotes[0]).zid, diario = !!M.diarioDe(zBase);
+    if (tw.base == null) tw.base = twinBase(zBase);
+    const e = TWIN_ESC[tw.esc];
+    let zid = zBase, escId = 'promedio', anio = null;
+    if (tw.esc === 'sequia') { anio = 2022; escId = 'c2022'; }
+    else if (e.tipo === 'hip') { anio = tw.base; escId = 'c' + anio; zid = zonaHip(zBase, tw.dT, tw.dp); }
+    const usaOpt = est === 'optimizada' && hayOptDe(c);
+    const lotes = c.lotes.map(l => {
+      const io = usaOpt ? opt.res.lotes.indexOf(l.id) : -1; // un lote creado después de optimizar conserva su rotación
+      const seq = io >= 0 ? opt.res.props[opt.est].combo[io].seq : l.rotacion_habitual;
+      const r = M.evaluarRotacion(Object.assign(input(c, l), { zona: zid, escenario: escId }), seq, ini, state.pesos);
+      const pasos = (r ? r.pasos : []).map(p => {
+        const d0 = (M.parseFecha(p.siembra) - jul) / 864e5, d1 = (M.parseFecha(p.fin) - jul) / 864e5, n = M.CULTIVOS[p.cultivo].ciclo_dias;
+        const q = Object.assign({}, p, { d0, d1, c0: d0 + Math.floor(M.UMBRALES.critico[0] * n), c1: d0 + Math.ceil(M.UMBRALES.critico[1] * n) });
+        // Estrés acumulado: el motor multiplica la parte estructural del ciclo por los eventos diarios (calor, heladas,
+        // racha seca, lluvia contra demanda). Se recorre esa misma cuenta cortada en cada día: estAc[k] = eventos de los
+        // primeros k días. Calor, heladas y racha seca son conteos y crecen solos. El déficit compara lluvia y demanda de
+        // TODO el ciclo: en los primeros días (sin lluvia aún) daría la penalización máxima, así que su penalización se
+        // pondera por la fracción del ciclo transcurrida (k/n). Al último día coincide exactamente con la aptitud del ciclo.
+        if (q.viable && q.diario && q.diario.estres > 0 && q.aptitud > 0 && q.d1 > 0 && q.d0 < 365) {
+          const ctx = Object.assign(input(c, l), { zona: zid, escenario: escId, pisoClima: M.PISO_CLIMA, escC0: c0 }), sd = M.parseFecha(p.siembra), ac = new Float32Array(n + 1);
+          let ok = true; for (let k = 0; k <= n && ok; k++) { const r2 = M.climaDiarioCiclo(p.cultivo, ctx, sd, k); if (!r2) { ok = false; break; }
+            const f = r2.factores; ac[k] = f.calor * f.helada * f.seca * (1 - (1 - f.deficit) * k / n); }
+          if (ok && Math.abs(ac[n] - q.diario.estres) > 1e-6) ok = false; // control: al cierre debe dar lo mismo que el motor
+          if (ok) { q.estAc = ac; q.aptBase = q.aptitud / q.diario.estres; }
+        }
+        return q;
+      }).filter(p => p.d1 > 0 && p.d0 < 365);
+      const margen = pasos.filter(p => p.viable && p.d0 >= 0).reduce((s, p) => s + (p.margen || 0), 0);
+      let cub = 0; for (const p of pasos) if (p.viable) cub += Math.max(0, Math.min(365, p.d1) - Math.max(0, p.d0));
+      return { l, seq, r, pasos, margen, cobertura: Math.round(100 * cub / 365), score: r ? r.score : 0, resil: r ? Math.round(100 * r.comp.resiliencia) : 0 };
+    });
+    let serie = null;
+    if (anio != null && M.diarioDe(zid)) {
+      const sd = M.serieDiariaCampania(zid, anio);
+      if (sd) serie = { tipo: 'dia', n: sd.prec.length, prec: sd.prec, tmax: sd.tmax, gwet: sd.gwet, et0: sd.et0 };
+    }
+    if (!serie) {
+      const z = M.ESCENARIOS[zid] && M.ESCENARIOS[zid][escId] ? M.ESCENARIOS[zid][escId] : M.ZONAS[zid], orden = [6, 7, 8, 9, 10, 11, 0, 1, 2, 3, 4, 5];
+      serie = { tipo: 'mes', n: 12, prec: orden.map(m => z.precip[m]), temp: orden.map(m => z.temp[m]) };
+    }
+    const umbral = M.diarioDe(zid) ? M.umbralCalor(zid) : null;
+    // Rachas secas (≥ umbral del motor) y lluvias intensas de la serie: para la línea de tiempo.
+    const secas = [];
+    if (serie.tipo === 'dia') { let a = -1; serie.prec.forEach((v, i) => { const s = (v || 0) < M.UMBRALES.lluvia_util_mm; if (s && a < 0) a = i; if ((!s || i === serie.n - 1) && a >= 0) { const b = s ? i : i - 1; if (b - a + 1 >= M.UMBRALES.seca_dias) secas.push([a, b]); a = -1; } }); }
+    return { c, c0, jul, zid, zBase, diario, escId, anio, est, usaOpt, lotes, serie, umbral, secas };
+  }
+  // Estado de cada lote en el instante t (día o mes de la campaña), con lo que el motor cuenta día a día.
+  function twinEstado(D, t) {
+    const dia = D.serie.tipo === 'dia' ? t : t * 30.4 + 15;
+    return D.lotes.map(L => {
+      const p = L.pasos.find(x => dia >= x.d0 && dia < x.d1) || null;
+      const o = { paso: p, enCritico: !!p && dia >= p.c0 && dia <= p.c1, calorHoy: false, lluviaAc: null, demandaAc: null, calorAc: 0, seca: 0, apt: null, acum: false };
+      if (p) { o.apt = p.viable ? p.aptitud : 0;
+        if (p.estAc) { const k = Math.max(0, Math.min(p.estAc.length - 1, Math.floor(dia - p.d0) + 1)); o.apt = p.aptBase * p.estAc[k]; o.acum = true; } }
+      if (p && D.serie.tipo === 'dia') {
+        const a = Math.max(0, Math.floor(p.d0)), b = Math.min(D.serie.n - 1, Math.floor(dia)), kc = M.KC[p.cultivo] || .8;
+        let ll = 0, de = 0, s = 0;
+        for (let i = a; i <= b; i++) { const pr = D.serie.prec[i] || 0; ll += pr; de += kc * (D.serie.et0[i] || 0); s = pr < M.UMBRALES.lluvia_util_mm ? s + 1 : 0;
+          if (i >= p.c0 && i <= p.c1 && D.serie.tmax[i] != null && D.serie.tmax[i] >= D.umbral) o.calorAc++; }
+        o.lluviaAc = Math.round(ll); o.demandaAc = Math.round(de); o.seca = s;
+        o.calorHoy = o.enCritico && D.serie.tmax[Math.floor(dia)] != null && D.serie.tmax[Math.floor(dia)] >= D.umbral;
+      }
+      return o;
+    });
+  }
+  // «Ver momento crítico»: métrica explícita según el escenario.
+  //   sequía: mayor déficit hídrico de 30 días (Kc × ET0 − lluvia) sumado en las hectáreas con cultivo en período crítico
+  //           (si ninguno está en período crítico, en todas las hectáreas con cultivo).
+  //   calor:  más días de calor extremo en 7 días dentro de períodos críticos, por hectárea.
+  //   combinado: déficit de 30 días + calor de 7 días, cada uno dividido por su máximo de la campaña.
+  //   lluvias: mayor lluvia en 3 días (pico del evento climático: el motor no modela daño por lluvia intensa).
+  //   habitual (mensual): mes con menos lluvia (pico climático).
+  function twinCritico(D) {
+    const s = D.serie, n = s.n, ha = D.lotes.map(L => L.l.superficie);
+    if (s.tipo === 'mes') { let k = 0; s.prec.forEach((v, i) => { if (v < s.prec[k]) k = i; });
+      return { t: k, tipo: 'pico', titulo: 'Pico climático', metrica: 'mes con menos lluvia del promedio', valor: Math.round(s.prec[k]) + ' mm', lotes: [] }; }
+    const enCampo = (L, i) => L.pasos.find(p => i >= p.d0 && i < p.d1 && p.viable) || null;
+    const def = Array(n).fill(0), cal = Array(n).fill(0), lotesDef = Array.from({ length: n }, () => new Set()), lotesCal = Array.from({ length: n }, () => new Set());
+    for (let t = 0; t < n; t++) {
+      const critHoy = D.lotes.map(L => { const p = enCampo(L, t); return p && t >= p.c0 && t <= p.c1; }), algunoCrit = critHoy.some(Boolean);
+      D.lotes.forEach((L, j) => {
+        const p = enCampo(L, t); if (!p || (algunoCrit && !critHoy[j])) return;
+        const kc = M.KC[p.cultivo] || .8; let d = 0, h = 0;
+        for (let i = Math.max(0, t - 29); i <= t; i++) d += kc * (s.et0[i] || 0) - (s.prec[i] || 0);
+        for (let i = Math.max(0, t - 6); i <= t; i++) { const q = enCampo(L, i); if (q && i >= q.c0 && i <= q.c1 && s.tmax[i] != null && s.tmax[i] >= D.umbral) h++; }
+        if (d > 0) { def[t] += d * ha[j]; lotesDef[t].add(L.l.id); }
+        if (h > 0) { cal[t] += h * ha[j]; lotesCal[t].add(L.l.id); }
+      });
+    }
+    const arg = a => a.reduce((k, v, i) => v > a[k] ? i : k, 0), haT = ha.reduce((a, b) => a + b, 0);
+    if (tw.esc === 'lluvias') { const r3 = s.prec.map((_, t) => [0, 1, 2].reduce((a, k) => a + (s.prec[t - k] || 0), 0)), k = arg(r3);
+      return { t: k, tipo: 'pico', titulo: 'Pico del evento climático', metrica: 'mayor lluvia acumulada en 3 días', valor: Math.round(r3[k]) + ' mm', lotes: D.lotes.filter(L => enCampo(L, k)).map(L => L.l.id),
+        nota: 'El motor no modela daño por lluvia intensa ni anegamiento: es el pico del evento, no el mayor daño al cultivo.' }; }
+    let k, metrica, valor, lotes;
+    if (tw.esc === 'calor' && Math.max(...cal) > 0) { k = arg(cal); metrica = 'más días de calor extremo (≥ ' + coma1(D.umbral) + ' °C) en 7 días dentro de períodos críticos'; valor = coma1(cal[k] / haT) + ' días por ha'; lotes = [...lotesCal[k]]; }
+    else if (tw.esc === 'combinado' && (Math.max(...def) > 0 || Math.max(...cal) > 0)) {
+      const md = Math.max(...def) || 1, mc = Math.max(...cal) || 1, ix = def.map((v, i) => v / md + cal[i] / mc); k = arg(ix);
+      metrica = 'índice compuesto: déficit hídrico de 30 días + calor extremo de 7 días, cada uno relativo a su máximo de la campaña'; valor = Math.round(def[k] / haT) + ' mm de déficit y ' + coma1(cal[k] / haT) + ' días de calor por ha';
+      lotes = [...new Set([...lotesDef[k], ...lotesCal[k]])];
+    } else if (Math.max(...def) > 0) { k = arg(def); metrica = 'mayor déficit hídrico de 30 días (demanda Kc × ET0 − lluvia) en las hectáreas con cultivo en período crítico'; valor = Math.round(def[k] / haT) + ' mm por ha de campo'; lotes = [...lotesDef[k]]; }
+    else { const r = s.tmax.map(v => v ?? -99); k = arg(r); return { t: k, tipo: 'pico', titulo: 'Pico del evento climático', metrica: 'temperatura máxima de la campaña', valor: coma1(r[k]) + ' °C', lotes: [] }; }
+    return { t: k, tipo: 'estres', titulo: 'Momento de mayor estrés medible', metrica, valor, lotes };
+  }
+  function fechaT(D, t) {
+    if (D.serie.tipo === 'mes') return MESES_C[t] + (D.anio != null ? ' ' + (t < 6 ? D.anio : D.anio + 1) : ' · prom.');
+    const d = new Date(Date.UTC(D.anio, 6, 1) + t * 864e5);
+    return String(d.getUTCDate()).padStart(2, '0') + '/' + String(d.getUTCMonth() + 1).padStart(2, '0') + '/' + d.getUTCFullYear();
+  }
+  // Agregados del campo para el HUD y el comparador (todo sale de twinEvaluar).
+  function twinAgg(D) {
+    const HA = D.lotes.reduce((s, L) => s + L.l.superficie, 0);
+    let a = 0, h = 0, alto = 0;
+    D.lotes.forEach(L => L.pasos.filter(p => p.d0 >= 0 && p.tipo !== 'cobertura').forEach(p => { if (p.viable) { a += p.aptitud * L.l.superficie; h += L.l.superficie; } if (!p.viable || p.aptitud < .45) alto++; }));
+    return { margen: D.lotes.reduce((s, L) => s + L.margen * L.l.superficie, 0), cob: D.lotes.reduce((s, L) => s + L.cobertura * L.l.superficie, 0) / HA,
+      resil: D.lotes.reduce((s, L) => s + L.resil * L.l.superficie, 0) / HA, apt: h ? 100 * a / h : 0, alto };
+  }
+
+
+  function cargarThree() {
+    if (window.THREE && window.THREE.OrbitControls) return Promise.resolve(true);
+    if (tw.cargando) return tw.cargando;
+    // Three.js viene empaquetado en el HTML como texto inerte (build.js); se ejecuta recién acá. Sin él, se usa el CDN.
+    const emb = ['three-src', 'orbit-src'].map(id => document.getElementById(id));
+    if (emb.every(e => e && e.textContent.length > 1000)) {
+      try { for (const e of emb) { const sc = document.createElement('script'); sc.textContent = e.textContent; document.head.appendChild(sc); } } catch (err) { /* sigue con el CDN */ }
+      if (window.THREE && window.THREE.OrbitControls) return Promise.resolve(true);
+    }
+    const js = src => new Promise((ok, mal) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = mal; document.head.appendChild(s); });
+    tw.cargando = js('https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js')
+      .then(() => js('https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js')).then(() => true).catch(() => false);
+    return tw.cargando;
+  }
+  function webglOk() { try { const c = document.createElement('canvas'); return !!(window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl'))); } catch (e) { return false; } }
+  function twinAvanzar(now) {
+    const D = tw.datos; if (!D) return;
+    const paso = D.serie.tipo === 'dia' ? 9 * tw.vel : .55 * tw.vel; // días (o meses) por segundo
+    if (!tw.ultimo) tw.ultimo = now;
+    const dt = Math.min(.1, (now - tw.ultimo) / 1000); tw.ultimo = now;
+    const t0 = tw.t; tw.tReal = (tw.tReal ?? tw.t) + paso * dt;
+    if (tw.tReal >= D.serie.n - 1) { tw.tReal = D.serie.n - 1; tw.play = false; }
+    tw.t = Math.floor(tw.tReal);
+    if (tw.t !== t0 || !tw.play) twinPintar();
+  }
+  function irA(t) { tw.play = false; tw.t = Math.max(0, Math.min(tw.datos.serie.n - 1, t)); tw.tReal = tw.t; twinPintar(); }
+
+  function twinComparar(c) {
+    if (!hayOptDe(c)) return '';
+    const A = twinAgg(tw.cmp ? tw.datos : twinEvaluar(c, 'actual')), B = twinAgg(tw.cmp ? tw.datosB : twinEvaluar(c, 'optimizada'));
+    const f = (n, x, y, fmt, alto, tol) => { const d = y - x, eq = Math.abs(d) <= tol, cl = eq ? 'eq' : (d > 0) === alto ? 'pos' : 'neg';
+      return '<tr><td>' + n + '</td><td class="num">' + fmt(x) + '</td><td class="num">' + fmt(y) + '</td><td class="num ' + cl + '">' + (eq ? 'igual' : (d > 0 ? '+' : '−') + fmt(Math.abs(d))) + '</td></tr>'; };
+    return '<section class="card"><h2>Actual vs. optimizado <span class="hint">mismo escenario</span></h2><div class="esc-tab-wrap"><table class="esc-tab tw-cmp"><thead><tr><th></th><th>Actual</th><th>Optim.</th><th>Dif.</th></tr></thead><tbody>' +
+      f('Margen de la campaña', A.margen, B.margen, usd, true, 50) + f('Suelo cubierto', A.cob, B.cob, v => Math.round(v) + ' %', true, 1) +
+      f('Aptitud media', A.apt, B.apt, v => Math.round(v) + ' %', true, 1) + f('Resiliencia (motor)', A.resil, B.resil, v => Math.round(v), true, 1) + f('Ciclos con estrés elevado o más', A.alto, B.alto, v => String(Math.round(v)), false, 0) +
+      '</tbody></table></div><p class="tw-note">Las dos se evalúan con el mismo clima. El plan optimizado se eligió con tus prioridades en 22 tramos reales de NASA POWER: no fue optimizado para este evento en particular.</p></section>';
+  }
+
+  function twinMomentoCritico() {
+    const k = tw.critico; if (!k) return;
+    tw.verCrit = true; irA(k.t);
+    const X = tw.three; if (X) { X.volar(X.encuadre(k.lotes.length ? k.lotes : null, 'critico'), 1500); X.destello = performance.now() + (tw.anim ? 1500 : 0); }
+    const nombres = k.lotes.map(id => tw.datos.lotes.find(L => L.l.id === id)).filter(Boolean).map(L => L.l.nombre).join(', ');
+    const est = twinEstado(tw.datos, k.t), cults = [...new Set(tw.datos.lotes.map((L, i) => k.lotes.includes(L.l.id) && est[i].paso ? M.CULTIVOS[est[i].paso.cultivo].nombre : null).filter(Boolean))];
+    $('tw-callbox').innerHTML = '<div class="tw-callout" role="status"><div class="tw-ch"><b>⚑ ' + esc(k.titulo) + '</b><span class="tw-cd">' + fechaT(tw.datos, k.t) + ' · ' + esc(TWIN_ESC[tw.esc].t) + '</span></div>' +
+      '<div class="tw-cv"><span>' + esc(k.metrica) + '</span><strong>' + esc(k.valor) + '</strong></div>' +
+      (nombres ? '<span>Lotes: ' + esc(nombres) + (cults.length ? ' · cultivos: ' + esc(cults.join(', ')) : '') + '.</span>' : '') + (k.nota ? '<span class="tw-note">' + esc(k.nota) + '</span>' : '') +
+      '<div class="tw-cb2"><button class="tw-btn" type="button" id="tw-callf">Ver todo el campo</button><button class="tw-btn" type="button" id="tw-callx">Cerrar</button></div></div>';
+    const cerrar = () => { tw.verCrit = false; $('tw-callbox').innerHTML = ''; twinPintar(); if (tw.three) tw.three.volar(tw.three.encuadre(null), 900); };
+    $('tw-callx').addEventListener('click', cerrar); $('tw-callf').addEventListener('click', cerrar);
+    twinTimeline(); twinPintar();
+  }
+  function twinTick2D() { if (!tw.play || tw.three || state.vista !== 'twin') return; twinAvanzar(performance.now()); setTimeout(twinTick2D, 50); }
+
+  /* --- representación: colores, patrones y escena (solo representan resultados) --- */
+  const patronDe = p => !p ? 'barbecho' : p.tipo === 'cobertura' ? 'cobertura' : ({ maiz_temprano: 'maiz', maiz_tardio: 'maiz' })[p.cultivo] || p.cultivo;
+  function twinColor(L, e) {
+    const p = e.paso;
+    if (tw.modo === 'cultivo') return TW_CROP[patronDe(p)] || '#7a8b6a';
+    if (tw.modo === 'riesgo') return p ? (p.viable ? expo(e.apt)[1] : TWIN_EXPO[3][1]) : '#5d6b78';
+    return expo(L.score / 100 * 1.07)[1]; // resultados: puntaje de la rotación (≥ 70 / ≥ 56 / ≥ 42 / menor)
+  }
+  // Materiales agrícolas esquemáticos: hileras de plantas sobre suelo, con espaciado y tono por cultivo. Ilustran el
+  // cultivo asignado por el plan; no son observaciones satelitales ni representan su estado fenológico.
+  function texturas(T) {
+    let semilla = 7; const rnd = () => (semilla = (semilla * 16807) % 2147483647) / 2147483647;
+    const mk = (dib, rep) => { const cv = document.createElement('canvas'); cv.width = cv.height = 512; const g = cv.getContext('2d'); dib(g, 512);
+      const tx = new T.CanvasTexture(cv); tx.wrapS = tx.wrapT = T.RepeatWrapping; tx.repeat.set(rep, rep); tx.anisotropy = 8; tx.center.set(.5, .5); if ('encoding' in tx) tx.encoding = T.sRGBEncoding; return tx; };
+    const velo = (g, n, base) => { g.clearRect(0, 0, n, n); g.globalAlpha = .62; g.fillStyle = base; g.fillRect(0, 0, n, n); g.globalAlpha = 1; };
+    const hileras = (esp, ancho, cols, base) => (g, n) => { velo(g, n, base); g.globalAlpha = .85;
+      for (let y = esp / 2; y < n; y += esp) for (let x = 0; x < n; x += 3) { const c = cols[Math.floor(rnd() * cols.length)]; g.fillStyle = c; const w = ancho * (.7 + .5 * rnd()); g.beginPath(); g.ellipse(x, y + (rnd() - .5) * 2, 2.6, w / 2, 0, 0, 7); g.fill(); } g.globalAlpha = 1; };
+    return {
+      maiz: mk(hileras(30, 16, ['#2f7d32', '#3b8e3a', '#2a6e2c', '#4a9a3f'], '#6b4f35'), .45),
+      soja: mk(hileras(16, 10, ['#6dbb4c', '#7cc85a', '#5fae43', '#88cf62'], '#6e5238'), .45),
+      trigo: mk(hileras(9, 6, ['#d8b84e', '#c9a843', '#e3c565', '#b99a3a'], '#7a5c3c'), .45),
+      cebada: mk(hileras(9, 6, ['#cdbb6c', '#bfae60', '#d9c779', '#b2a256'], '#78593a'), .45),
+      sorgo: mk(hileras(28, 14, ['#7a7b2c', '#8b8a35', '#6b5a2e', '#94843a'], '#6b4f35'), .45),
+      girasol: mk(hileras(32, 18, ['#3e7e2f', '#d8b92c', '#4b8b35', '#c9a325'], '#6b4f35'), .45),
+      cobertura: mk((g, n) => { velo(g, n, '#3f8f57'); g.globalAlpha = .8; for (let i = 0; i < 9000; i++) { g.fillStyle = ['#4fa76a', '#357c49', '#5cb576', '#2f6f42'][Math.floor(rnd() * 4)]; g.beginPath(); g.arc(rnd() * n, rnd() * n, 1.5 + rnd() * 3, 0, 7); g.fill(); } g.globalAlpha = 1; }, .45),
+      barbecho: mk((g, n) => { g.clearRect(0, 0, n, n); for (let y = 0; y < n; y += 12) { g.fillStyle = 'rgba(70,45,25,.35)'; g.fillRect(0, y, n, 3); g.fillStyle = 'rgba(255,230,200,.12)'; g.fillRect(0, y + 4, n, 2); } }, .45),
+    };
+  }
+  // Ángulo del lado más largo del contorno: orienta las hileras como en el lote.
+  function anguloLote(shape) { const v = shape.getPoints(); let mx = 0, a = 0; for (let i = 0; i < v.length; i++) { const p = v[i], q = v[(i + 1) % v.length], l = Math.hypot(q.x - p.x, q.y - p.y); if (l > mx) { mx = l; a = Math.atan2(q.y - p.y, q.x - p.x); } } return a; }
+  function proyectar(c) { // lat/lon -> unidades de escena (1 = 100 m), centrado en el campo; conserva posiciones relativas
+    const pts = c.lotes.flatMap(l => poligono(c, l.geo) || []);
+    const la0 = pts.length ? pts.reduce((s, p) => s + p[0], 0) / pts.length : c.centro[0], lo0 = pts.length ? pts.reduce((s, p) => s + p[1], 0) / pts.length : c.centro[1];
+    const kx = 111320 * Math.cos(la0 * Math.PI / 180) / 100, ky = 110574 / 100;
+    const f = ([la, lo]) => [(lo - lo0) * kx, -(la - la0) * ky]; f.inv = (x, z) => [la0 - z / ky, lo0 + x / kx]; return f;
+  }
+  // Terreno: mosaico satelital real (misma fuente que el mapa, con su atribución) estirado sobre el área del campo.
+  // Web Mercator → lat/lon → coordenadas de escena; en unos km la diferencia con la proyección local es despreciable.
+  function cargarSatelite(latS, latN, lonO, lonE, maxT) {
+    maxT = maxT || 64;
+    const t2lon = (x, z) => x / Math.pow(2, z) * 360 - 180, t2lat = (y, z) => { const n = Math.PI - 2 * Math.PI * y / Math.pow(2, z); return 180 / Math.PI * Math.atan(Math.sinh(n)); };
+    const lon2t = (lo, z) => Math.floor((lo + 180) / 360 * Math.pow(2, z)), lat2t = (la, z) => { const r = la * Math.PI / 180; return Math.floor((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * Math.pow(2, z)); };
+    let z = 17, x0, x1, y0, y1;
+    for (; z > 10; z--) { x0 = lon2t(lonO, z); x1 = lon2t(lonE, z); y0 = lat2t(latN, z); y1 = lat2t(latS, z); if ((x1 - x0 + 1) * (y1 - y0 + 1) <= maxT && Math.max(x1 - x0, y1 - y0) < Math.sqrt(maxT)) break; /* ≤ 64 teselas (textura ≤ 2048 px) */ }
+    const nx = x1 - x0 + 1, ny = y1 - y0 + 1, cv = document.createElement('canvas'); cv.width = nx * 256; cv.height = ny * 256; const g = cv.getContext('2d');
+    const tiles = []; for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) tiles.push([x, y]);
+    return Promise.all(tiles.map(([x, y]) => new Promise((ok, mal) => { const im = new Image(); im.crossOrigin = 'anonymous';
+      im.onload = () => { g.drawImage(im, (x - x0) * 256, (y - y0) * 256); ok(); }; im.onerror = mal;
+      im.src = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/' + z + '/' + y + '/' + x; })))
+      .then(() => ({ canvas: cv, latN: t2lat(y0, z), latS: t2lat(y1 + 1, z), lonO: t2lon(x0, z), lonE: t2lon(x1 + 1, z) }));
+  }
+  function webglOk() { try { const c = document.createElement('canvas'); return !!(window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl'))); } catch (e) { return false; } }
+  function twinEscena(D) {
+    const T = window.THREE, host = $('tw-canvas'), c = D.c, P = proyectar(c);
+    const W = host.clientWidth || 1000, H = host.clientHeight || 600;
+    const renderer = new T.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75)); renderer.setSize(W, H);
+    if ('outputEncoding' in renderer) renderer.outputEncoding = T.sRGBEncoding;
+    if (T.ACESFilmicToneMapping) { renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05; }
+    host.innerHTML = ''; host.appendChild(renderer.domElement);
+    const scene = new T.Scene(); scene.fog = new T.FogExp2(0x2b4a63, .0085);
+    const camera = new T.PerspectiveCamera(42, W / H, .1, 1200);
+    const hemi = new T.HemisphereLight(0xe3efff, 0x16222c, .95); scene.add(hemi);
+    const sol = new T.DirectionalLight(0xffffff, .75); sol.position.set(-30, 60, 25); scene.add(sol);
+    const res = { geos: [], mats: [], tex: [] }, keep = (g, m) => { if (g) res.geos.push(g); if (m) res.mats.push(m); };
+    const TX = texturas(T); Object.values(TX).forEach(t => res.tex.push(t));
+    // Extensión del terreno: lotes + margen (mín. 1,2 km), mismo lugar real.
+    const ll = c.lotes.flatMap(l => poligono(c, l.geo) || []); const box = new T.Box3();
+    const lotes = [], grupoA = new T.Group(), grupoB = new T.Group(); scene.add(grupoA, grupoB); grupoB.visible = false;
+    c.lotes.forEach((l, i) => {
+      const pts = poligono(c, l.geo); let shape;
+      if (pts) shape = new T.Shape(pts.map(p => { const [x, y] = P(p); return new T.Vector2(x, -y); }));
+      else { const s = Math.sqrt(l.superficie) * .1, x0 = -12 + i * (s + 1.5); shape = new T.Shape([new T.Vector2(x0, -14), new T.Vector2(x0 + s, -14), new T.Vector2(x0 + s, -14 + s), new T.Vector2(x0, -14 + s)]); }
+      // Superficie del lote: polígono plano apenas sobre el terreno (sin espesor).
+      const g = new T.ShapeGeometry(shape); g.rotateX(-Math.PI / 2); keep(g);
+      // «Cerco» bajo en el contorno: solo se ilumina con hover o selección.
+      const cg = new T.ExtrudeGeometry(shape, { depth: .07, bevelEnabled: false }); cg.rotateX(-Math.PI / 2); keep(cg);
+      const borde = new T.BufferGeometry().setFromPoints(shape.getPoints().map(v => new T.Vector3(v.x, .035, -v.y))); keep(borde);
+      const ang = anguloLote(shape);
+      // Prisma de estrés: misma forma, altura unitaria escalada con el índice (1 − aptitud del ciclo).
+      const pg2 = new T.ExtrudeGeometry(shape, { depth: 1, bevelEnabled: false }); pg2.rotateX(-Math.PI / 2); keep(pg2); const pe = new T.EdgesGeometry(pg2, 20); keep(pe);
+      const lado = grupo => {
+        const tex = {}; for (const k of Object.keys(TX)) { const t = TX[k].clone(); t.needsUpdate = true; t.rotation = -ang; tex[k] = t; res.tex.push(t); }
+        const m = new T.MeshStandardMaterial({ color: 0xffffff, map: tex.barbecho, roughness: .95, metalness: 0, transparent: true, opacity: .4, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
+        const mesh = new T.Mesh(g, m); mesh.position.y = .03; mesh.renderOrder = 2; mesh.userData.lote = l.id; grupo.add(mesh); keep(null, m);
+        const cm = [new T.MeshBasicMaterial({ visible: false }), new T.MeshBasicMaterial({ color: 0x59c9e8, transparent: true, opacity: 0, depthWrite: false, side: T.DoubleSide })];
+        const cerco = new T.Mesh(cg, cm); cerco.renderOrder = 3; grupo.add(cerco); cm.forEach(x => keep(null, x));
+        const lm = new T.LineBasicMaterial({ color: 0xf4f7fb, transparent: true, opacity: .45 }); const linea = new T.LineLoop(borde, lm); linea.renderOrder = 4; grupo.add(linea); keep(null, lm);
+        const prm = new T.MeshLambertMaterial({ color: 0x64d7a4, emissive: 0x64d7a4, emissiveIntensity: .08, transparent: true, opacity: .66, depthWrite: false, side: T.DoubleSide, fog: false });
+        const prisma = new T.Mesh(pg2, prm); prisma.position.y = .05; prisma.scale.y = .001; prisma.renderOrder = 5; prisma.visible = false; grupo.add(prisma); keep(null, prm);
+        const pem = new T.LineBasicMaterial({ color: 0xf4f7fb, transparent: true, opacity: .85, fog: false }); prisma.add(new T.LineSegments(pe, pem)); keep(null, pem);
+        return { mesh, mat: m, tex, cerco: cm[1], linea: lm, prisma, prm, pem, h: 0, hObj: 0, retardo: 0, pcol: new T.Color(0x64d7a4), pobj: new T.Color(0x64d7a4),
+          color: new T.Color(0xffffff), objetivo: new T.Color(0xffffff), op: .4, opObj: .4 };
+      };
+      g.computeBoundingBox(); const bb = g.boundingBox.clone(); box.union(bb);
+      lotes.push({ id: l.id, A: lado(grupoA), B: lado(grupoB), bb, centro: bb.getCenter(new T.Vector3()).setY(.2), esquema: !pts });
+    });
+    const sz = box.getSize(new T.Vector3()), ctr = box.getCenter(new T.Vector3()), mx = Math.max(sz.x, sz.z, 6);
+    const half = mx * .5 + Math.max(8, mx * .7);
+    // Máscara radial: el terreno se desvanece hacia los bordes (sin plataforma).
+    const fade = (() => { const cv = document.createElement('canvas'); cv.width = cv.height = 256; const gg = cv.getContext('2d'), gr = gg.createRadialGradient(128, 128, 40, 128, 128, 128);
+      gr.addColorStop(0, '#fff'); gr.addColorStop(.62, '#fff'); gr.addColorStop(1, '#000'); gg.fillStyle = gr; gg.fillRect(0, 0, 256, 256); const t = new T.CanvasTexture(cv); res.tex.push(t); return t; })();
+    // Terreno estilizado de respaldo (si no hay imágenes): mate, con una trama cartográfica tenue.
+    const estil = (() => { const cv = document.createElement('canvas'); cv.width = cv.height = 512; const gg = cv.getContext('2d'); gg.fillStyle = '#1b2b2f'; gg.fillRect(0, 0, 512, 512);
+      gg.strokeStyle = 'rgba(255,255,255,.05)'; for (let k = 0; k < 512; k += 64) { gg.beginPath(); gg.moveTo(k, 0); gg.lineTo(k, 512); gg.moveTo(0, k); gg.lineTo(512, k); gg.stroke(); }
+      const t = new T.CanvasTexture(cv); t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(4, 4); res.tex.push(t); return t; })();
+    const tmat = new T.MeshStandardMaterial({ color: 0xffffff, map: estil, alphaMap: fade, transparent: true, roughness: 1, metalness: 0, depthWrite: true });
+    const tgeo = new T.PlaneGeometry(1, 1); tgeo.rotateX(-Math.PI / 2); const terreno = new T.Mesh(tgeo, tmat); keep(tgeo, tmat);
+    terreno.scale.set(2 * half, 1, 2 * half); terreno.position.set(ctr.x, 0, ctr.z); terreno.renderOrder = 0; scene.add(terreno);
+    const terrBase = { s: terreno.scale.clone(), p: terreno.position.clone() };
+    const X = { T, renderer, scene, camera, lotes, grupoA, grupoB, ctr, mx, res, hemi, sol, raf: 0, lluvia: 0, v: new T.Vector3(), TX, terreno, satelite: false, hmax: Math.max(2.2, mx * .3), estil: null, tmat: null };
+    X.estil = estil; X.tmat = tmat; X.terrBase = terrBase;
+    X.usarSat = on => { if (on && X.satTex) { tmat.map = X.satTex; tmat.color.setHex(0xd2dbe2); terreno.scale.copy(X.satS); terreno.position.copy(X.satP); }
+      else { tmat.map = estil; tmat.color.setHex(0xffffff); terreno.scale.copy(terrBase.s); terreno.position.copy(terrBase.p); } tmat.needsUpdate = true; X.satelite = !!(on && X.satTex);
+      if (X.exterior) X.exterior.visible = !!on; };
+    if (ll.length) {
+      const pS = P.inv(ctr.x, ctr.z + half), pN = P.inv(ctr.x, ctr.z - half), pO = P.inv(ctr.x - half, ctr.z), pE = P.inv(ctr.x + half, ctr.z);
+      cargarSatelite(pS[0], pN[0], pO[1], pE[1]).then(s => {
+        if (tw.three !== X) return;
+        const t = new T.CanvasTexture(s.canvas); if ('encoding' in t) t.encoding = T.sRGBEncoding; t.anisotropy = 8; res.tex.push(t);
+        const [xO, zN] = P([s.latN, s.lonO]), [xE, zS] = P([s.latS, s.lonE]);
+        X.satTex = t; X.satS = new T.Vector3(xE - xO, 1, zS - zN); X.satP = new T.Vector3((xO + xE) / 2, 0, (zN + zS) / 2);
+        X.usarSat(tw.satelite); $('tw-ley').innerHTML = twinLeyenda();
+      }).catch(() => { /* sin imágenes: queda el terreno estilizado */ });
+      // Paisaje de contexto: un área 4 veces mayor a menor resolución, debajo, que se pierde en la bruma del horizonte.
+      const hO = half * 4, qS = P.inv(ctr.x, ctr.z + hO), qN = P.inv(ctr.x, ctr.z - hO), qO = P.inv(ctr.x - hO, ctr.z), qE = P.inv(ctr.x + hO, ctr.z);
+      cargarSatelite(qS[0], qN[0], qO[1], qE[1], 36).then(s => {
+        if (tw.three !== X) return;
+        const t = new T.CanvasTexture(s.canvas); if ('encoding' in t) t.encoding = T.sRGBEncoding; t.anisotropy = 4; res.tex.push(t);
+        const [xO, zN] = P([s.latN, s.lonO]), [xE, zS] = P([s.latS, s.lonE]);
+        const om = new T.MeshStandardMaterial({ color: 0xc4cdd4, map: t, alphaMap: fade, transparent: true, roughness: 1, metalness: 0, depthWrite: false });
+        const og = new T.PlaneGeometry(1, 1); og.rotateX(-Math.PI / 2); keep(og, om);
+        const ext = new T.Mesh(og, om); ext.scale.set(xE - xO, 1, zS - zN); ext.position.set((xO + xE) / 2, -.03, (zN + zS) / 2); ext.renderOrder = -1; scene.add(ext); X.exterior = ext; ext.visible = tw.satelite;
+      }).catch(() => { /* sin contexto: queda el área del campo */ });
+    }
+    // Grilla geoespacial tenue cada 500 m.
+    const gl = []; const g0 = Math.floor((ctr.x - half) / 5) * 5, g1 = ctr.x + half;
+    for (let x = g0; x <= g1; x += 5) gl.push(new T.Vector3(x, .012, ctr.z - half), new T.Vector3(x, .012, ctr.z + half));
+    for (let zz = Math.floor((ctr.z - half) / 5) * 5; zz <= ctr.z + half; zz += 5) gl.push(new T.Vector3(ctr.x - half, .012, zz), new T.Vector3(ctr.x + half, .012, zz));
+    const gg = new T.BufferGeometry().setFromPoints(gl), gm = new T.LineBasicMaterial({ color: 0x59c9e8, transparent: true, opacity: .07, depthWrite: false }); scene.add(new T.LineSegments(gg, gm)); keep(gg, gm);
+    // Lluvia: trazos finos solo los días (o meses) con lluvia; cantidad según los mm. Tope 900.
+    const N = 1500, pos = new Float32Array(N * 6);
+    for (let i = 0; i < N; i++) { const x = ctr.x + (Math.random() - .5) * mx * 1.6, y = Math.random() * 14, z = ctr.z + (Math.random() - .5) * mx * 1.6; pos.set([x, y, z, x - .04, y - .45, z], i * 6); }
+    const pg = new T.BufferGeometry(); pg.setAttribute('position', new T.BufferAttribute(pos, 3)); pg.setDrawRange(0, 0);
+    const pm = new T.LineBasicMaterial({ color: 0xcfe9f7, transparent: true, opacity: .42, depthWrite: false }); scene.add(new T.LineSegments(pg, pm)); keep(pg, pm);
+    Object.assign(X, { pg, pos, N });
+    const controls = new T.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; controls.dampingFactor = .08; controls.maxPolarAngle = Math.PI / 2.12; controls.minDistance = 2; controls.maxDistance = 320; controls.target.copy(ctr);
+    controls.screenSpacePanning = true;
+    const anim = { desde: null, hasta: null, t0: 0, dur: 0 }; X.anim = anim; X.controls = controls;
+    controls.addEventListener('start', () => { anim.hasta = null; });
+    // Encuadre según el modo de cámara (sin posiciones fijas: bounding box, centro, extensión y aspecto del visor).
+    //   explorar: oblicua baja (~30°), lente 42°, los lotes ocupan ~60 % y se ve el paisaje hasta el horizonte.
+    //   analizar: oblicua alta (~58°), lente 30°, baja distorsión, los lotes ocupan ~80 %.   superior: ~88°.
+    const MODOS = { explorar: { elev: 34, fov: 38, k: .9, az: -.55 }, analizar: { elev: 58, fov: 30, k: .82, az: -.62 }, superior: { elev: 88, fov: 30, k: .84, az: -.62 }, expo: { elev: 40, fov: 36, k: .8, az: -.5 }, critico: { elev: 27, fov: 34, k: 1, az: -.2, lado: .55 } };
+    X.encuadre = (ids, modo) => {
+      const M2 = MODOS[modo || tw.camModo] || MODOS.explorar;
+      const b = new T.Box3(); lotes.filter(L => !ids || ids.includes(L.id)).forEach(L => b.union(L.bb)); if (b.isEmpty()) lotes.forEach(L => b.union(L.bb));
+      const cen = b.getCenter(new T.Vector3()).setY(0), s3 = b.getSize(new T.Vector3()), rad = Math.max(1.2, Math.hypot(s3.x, s3.z) / 2);
+      const vf = M2.fov * Math.PI / 180, hf = 2 * Math.atan(Math.tan(vf / 2) * camera.aspect), dist = rad / Math.sin(Math.min(vf, hf) / 2) / M2.k;
+      const e = M2.elev * Math.PI / 180;
+      const pos = new T.Vector3(cen.x + dist * Math.cos(e) * Math.sin(M2.az), dist * Math.sin(e), cen.z + dist * Math.cos(e) * Math.cos(M2.az));
+      // Con un cartel a la derecha (momento crítico), el encuadre se corre para que los lotes queden a la izquierda.
+      if (M2.lado) { const der = new T.Vector3(Math.cos(M2.az), 0, -Math.sin(M2.az)).multiplyScalar(rad * M2.lado); pos.add(der); cen.add(der); }
+      return { pos, tgt: cen, fov: M2.fov };
+    };
+    X.volar = (v, dur) => { if (!tw.anim || !dur) { camera.position.copy(v.pos); controls.target.copy(v.tgt); if (v.fov) { camera.fov = v.fov; camera.updateProjectionMatrix(); } anim.hasta = null; return; }
+      anim.desde = { pos: camera.position.clone(), tgt: controls.target.clone(), fov: camera.fov }; anim.hasta = v; anim.t0 = performance.now(); anim.dur = dur; };
+    // Entrada: desde lo alto y lejos, aproximación suave hasta el modo elegido; al final se resaltan los límites un instante.
+    const v0 = X.encuadre(null);
+    if (tw.anim) { const alto = X.encuadre(null, 'superior'); camera.position.copy(alto.pos.clone().sub(alto.tgt).multiplyScalar(2.4).add(alto.tgt)); camera.fov = 34; camera.updateProjectionMatrix();
+      controls.target.copy(alto.tgt); X.volar(v0, 2200); X.destello = performance.now() + 2200; }
+    else { X.volar(v0, 0); }
+    // Selección con clic y hover (raycast en el lado del divisor que corresponda).
+    const ray = new T.Raycaster(), ptr = new T.Vector2(); let down = null, ultHover = 0;
+    const lotePor = e => { const rc = renderer.domElement.getBoundingClientRect(); if (!rc.width) return null; ptr.set(((e.clientX - rc.left) / rc.width) * 2 - 1, -((e.clientY - rc.top) / rc.height) * 2 + 1);
+      const der = tw.cmp && (e.clientX - rc.left) / rc.width > tw.split; ray.setFromCamera(ptr, camera); const h = ray.intersectObjects(lotes.map(x => (der ? x.B : x.A).mesh), false)[0]; return h ? h.object.userData.lote : null; };
+    renderer.domElement.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
+    renderer.domElement.addEventListener('pointerup', e => { if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5) return; const id = lotePor(e); if (id) twinSeleccionar(id, true); });
+    renderer.domElement.addEventListener('pointermove', e => { const now = performance.now(); if (now - ultHover < 60) return; ultHover = now; const id = lotePor(e);
+      if (id !== tw.hover) { tw.hover = id; renderer.domElement.style.cursor = id ? 'pointer' : ''; twinEstilos(); } });
+    renderer.domElement.addEventListener('pointerleave', () => { if (tw.hover) { tw.hover = null; twinEstilos(); } });
+    const ro = new ResizeObserver(() => { const w = host.clientWidth, h = host.clientHeight; if (!w || !h) return; renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); });
+    ro.observe(host); X.ro = ro;
+    const pinta = (lado, now) => {
+      lado.color.lerp(lado.objetivo, .14); lado.mat.color.copy(lado.color); lado.op += (lado.opObj - lado.op) * .14; lado.mat.opacity = lado.op;
+      const pulso = .5 + .5 * Math.sin(now / 300);
+      lado.cerco.opacity = Math.max(X.flash * .8, lado.calor ? .45 + .35 * pulso : lado.crit ? .4 + .3 * pulso : lado.sel ? .85 : lado.hov ? .45 : 0);
+      lado.cerco.color.setHex(lado.calor ? 0xef7268 : lado.crit ? 0xf4b85d : 0x59c9e8);
+      lado.linea.opacity = lado.sel || lado.hov ? 1 : lado.dim ? .25 : .8; lado.linea.color.copy(lado.lcol || lado.color);
+      if (now >= lado.retardo) lado.h += (lado.hObj - lado.h) * .075; lado.prisma.scale.y = Math.max(.001, lado.h); lado.prisma.visible = lado.h > .01;
+      lado.pcol.lerp(lado.pobj, .12); lado.prm.color.copy(lado.pcol); lado.prm.emissive.copy(lado.pcol);
+    };
+    const loop = now => {
+      X.raf = requestAnimationFrame(loop);
+      if (anim.hasta) { const k = Math.min(1, (now - anim.t0) / anim.dur), e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+        camera.position.lerpVectors(anim.desde.pos, anim.hasta.pos, e); controls.target.lerpVectors(anim.desde.tgt, anim.hasta.tgt, e);
+        if (anim.hasta.fov) { camera.fov = anim.desde.fov + (anim.hasta.fov - anim.desde.fov) * e; camera.updateProjectionMatrix(); }
+        if (k >= 1) anim.hasta = null; }
+      X.flash = X.destello ? Math.max(0, 1 - Math.abs(now - X.destello) / 700) : 0;
+      controls.update();
+      for (const L of lotes) { pinta(L.A, now); pinta(L.B, now); }
+      const n = tw.efectos ? Math.round(X.lluvia * N) : 0; X.pg.setDrawRange(0, n * 2);
+      if (n) { for (let i = 0; i < n; i++) { let y = X.pos[i * 6 + 1] - .22; if (y < .3) y = 14; X.pos[i * 6 + 1] = y; X.pos[i * 6 + 4] = y - .45; } X.pg.attributes.position.needsUpdate = true; }
+      const w = renderer.domElement.clientWidth || W, h = renderer.domElement.clientHeight || H;
+      if (tw.cmp) { // comparador: misma cámara y terreno, dos pases con scissor (izquierda actual, derecha optimizado)
+        const sx = Math.round(w * tw.split); renderer.setScissorTest(true);
+        grupoA.visible = true; grupoB.visible = false; renderer.setScissor(0, 0, sx, h); renderer.setViewport(0, 0, w, h); renderer.render(scene, camera);
+        grupoA.visible = false; grupoB.visible = true; renderer.setScissor(sx, 0, w - sx, h); renderer.render(scene, camera);
+        renderer.setScissorTest(false); grupoA.visible = true;
+      } else { grupoA.visible = true; grupoB.visible = false; renderer.render(scene, camera); }
+      twinEtiquetas(X);
+      if (tw.play) twinAvanzar(now);
+    };
+    X.raf = requestAnimationFrame(loop);
+    return X;
+  }
+  // Ambientación del evento (ilustrativa): luz cálida y menos saturada en sequía, cálida e intensa en calor, fría en lluvias.
+  // El fondo no cambia de color: solo un tinte muy leve. Se puede desactivar.
+  function twinAmbiente() {
+    const X = tw.three, amb = tw.efectos ? TWIN_ESC[tw.esc].amb : '';
+    $('tw-stage').dataset.amb = amb;
+    if (!X) return;
+    const L = { '': [0xfff4e4, .85, 0xe3efff, .9, 0x2b4a63], seco: [0xffe2b8, .95, 0xf0e6d6, .8, 0x6b5a45], calor: [0xffcf9a, 1.1, 0xffe2c8, .78, 0x7a5a42],
+      'seco-calor': [0xffd6a6, 1.05, 0xf3e1cc, .78, 0x725842], lluvia: [0xd3e4ff, .55, 0xc5d8ee, .75, 0x3a4b58] }[amb];
+    X.sol.color.setHex(L[0]); X.sol.intensity = L[1]; X.hemi.color.setHex(L[2]); X.hemi.intensity = L[3]; X.scene.fog.color.setHex(L[4]);
+    X.base = { sol: new X.T.Color(L[0]), si: L[1], hi: L[3], niebla: new X.T.Color(L[4]) };
+    for (const l of X.lotes) for (const s of [l.A, l.B]) s.mat.roughness = amb === 'lluvia' ? .55 : .95;
+  }
+  // Clima del instante → ambientación (ilustrativa, sincronizada con la fecha):
+  //   sequía: calidez y desaturación según el déficit acumulado (ET0 − lluvia desde el 1/7);
+  //   calor: intensidad del sol y bruma según la máxima del día respecto del umbral de calor extremo;
+  //   lluvia: gotas, niebla y luz más fría según los mm del día. No representa daños ni inundaciones.
+  const c01 = x => Math.max(0, Math.min(1, x));
+  function twinClimaVisual(D) {
+    const s = D.serie, t = tw.t, amb = tw.efectos ? TWIN_ESC[tw.esc].amb : '', X = tw.three;
+    let kS = 0, kH = 0, kR = 0;
+    if (tw.efectos) {
+      if (s.tipo === 'dia') { if (amb.includes('seco')) { let d = 0; for (let i = 0; i <= t; i++) d += (s.et0[i] || 0) - (s.prec[i] || 0); kS = c01(d / 700); }
+        if (s.tmax[t] != null && D.umbral) kH = c01((s.tmax[t] - (D.umbral - 7)) / 8) * (amb.includes('calor') || amb.includes('seco') ? 1 : .5);
+        kR = c01((s.prec[t] || 0) / 30); }
+      else { kS = amb.includes('seco') ? .4 : 0; kH = amb.includes('calor') ? .4 : 0; kR = c01((s.prec[t] || 0) / 300); }
+    }
+    const cv = $('tw-canvas').querySelector('canvas');
+    if (cv) cv.style.filter = tw.efectos && (kS || kH) ? 'saturate(' + (1 - .18 * kS).toFixed(2) + ') brightness(' + (1 + .04 * kH).toFixed(2) + ')' : '';
+    $('tw-haze').style.opacity = kH > .35 ? ((kH - .35) * 1.25).toFixed(2) : 0;
+    // Velo atmosférico: polvo seco en el horizonte (déficit acumulado) y cielo encapotado (lluvia del día). Solo ilustra el dato.
+    const at = $('tw-atmo'); if (at) { at.style.setProperty('--seco', (.55 * kS).toFixed(2)); at.style.setProperty('--lluvia', (.6 * kR).toFixed(2)); }
+    if (!X || !X.base) return;
+    X.scene.fog.color.copy(X.base.niebla).lerp(new X.T.Color(0x9a7f5c), .45 * kS).lerp(new X.T.Color(0x55616b), .55 * kR);
+    X.sol.color.copy(X.base.sol).lerp(new X.T.Color(0xffc68a), Math.max(.7 * kS, .9 * kH));
+    X.sol.intensity = X.base.si + .5 * kH - .3 * kR; X.hemi.intensity = X.base.hi - .18 * kR;
+    X.scene.fog.density = .0085 + .02 * kR + .004 * kS;
+  }
+  function twinEtiquetas(X) {
+    const host = $('tw-labels'), w = host.clientWidth, h = host.clientHeight;
+    for (const L of X.lotes) {
+      const el = host.querySelector('[data-lab="' + L.id + '"]'); if (!el) continue;
+      X.v.copy(L.centro); X.v.y += L.A.h + .1; X.v.project(X.camera);
+      el._x = (X.v.x + 1) / 2 * w; el._y = (1 - X.v.y) / 2 * h; el.style.opacity = X.v.z < 1 ? 1 : 0;
+    }
+    // Lotes vecinos: si dos etiquetas se pisan, la de más abajo se corre lo justo para no taparse.
+    const els = [...host.querySelectorAll('[data-lab]')].filter(e => e._x != null).sort((a, b) => a._y - b._y), cajas = [];
+    for (const el of els) { const ew = el.offsetWidth, eh = el.offsetHeight; let y = el._y;
+      for (const c of cajas) if (Math.abs(c.x - el._x) < (c.w + ew) / 2 + 4 && y - c.y < (c.h + eh) / 2 + 4) y = c.y + (c.h + eh) / 2 + 4;
+      cajas.push({ x: el._x, y, w: ew, h: eh }); el.style.left = el._x + 'px'; el.style.top = y + 'px'; }
+  }
+  function twinCerrar() {
+    const X = tw.three; tw.play = false;
+    if (!X) return;
+    cancelAnimationFrame(X.raf); X.ro.disconnect(); X.controls.dispose();
+    X.res.geos.forEach(g => g.dispose()); X.res.mats.forEach(m => m.dispose()); X.res.tex.forEach(t => t.dispose()); X.renderer.dispose();
+    if (X.renderer.domElement.parentNode) X.renderer.domElement.parentNode.removeChild(X.renderer.domElement);
+    tw.three = null;
+  }
+
+  /* --- sincronización: un único estado temporal (tw.t) para escena, capas, panel y línea de tiempo --- */
+  function twinEstilos() { // selección / hover / momento crítico sin recalcular nada
+    const X = tw.three; if (!X || !tw.datos) return;
+    const critIds = new Set(tw.critico && tw.verCrit ? tw.critico.lotes : []);
+    X.lotes.forEach(x => { for (const lado of [x.A, x.B]) { lado.sel = x.id === tw.sel; lado.hov = x.id === tw.hover; lado.crit = critIds.has(x.id); lado.dim = (!!tw.sel && x.id !== tw.sel) || (critIds.size > 0 && !critIds.has(x.id));
+      lado.opObj = (lado.base ?? .8) * (lado.dim ? .62 : 1); } });
+  }
+  function twinPintar() {
+    const D = tw.datos; if (!D) return;
+    const est = twinEstado(D, tw.t), estB = tw.cmp && tw.datosB ? twinEstado(tw.datosB, tw.t) : null, X = tw.three;
+    const critIds = new Set(tw.critico && tw.verCrit ? tw.critico.lotes : []);
+    if (X) {
+      D.lotes.forEach((L, i) => { const x = X.lotes[i];
+        const set = (lado, LL, e) => { const p = e.paso, pat = patronDe(p); lado.calor = tw.efectos && e.calorHoy;
+          // Cultivos y estrés muestran el material del cultivo; resultados usa color plano por puntaje.
+          const tex = tw.modo === 'resultados' ? null : lado.tex[pat]; if (lado.mat.map !== tex) { lado.mat.map = tex; lado.mat.needsUpdate = true; }
+          lado.objetivo.set(tw.modo === 'resultados' ? twinColor(LL, e) : '#ffffff');
+          lado.lcol = (lado.lcol || new X.T.Color()).set(lado.sel ? '#f4f7fb' : tw.modo === 'cultivo' ? TW_CROP[pat] : tw.modo === 'riesgo' ? (p && p.viable ? expo(e.apt)[1] : TWIN_EXPO[3][1]) : '#f4f7fb').convertSRGBToLinear();
+          lado.base = tw.modo === 'resultados' ? .62 : !p ? .4 : tw.modo === 'riesgo' ? .3 : .85;
+          // Capa de estrés 3D: altura = estrés del ciclo (1 − aptitud del motor); sin cultivo, sin prisma.
+          const idx = p && p.tipo !== 'cobertura' ? (p.viable ? 1 - e.apt : 1) : 0;
+          lado.hObj = tw.modo === 'riesgo' && idx > 0 ? Math.max(.08, idx) * X.hmax : 0; lado.idx = idx;
+          lado.pobj.set(p && p.viable ? expo(e.apt)[1] : TWIN_EXPO[3][1]).convertSRGBToLinear(); };
+        set(x.A, L, est[i]); if (estB) set(x.B, tw.datosB.lotes[i], estB[i]); });
+      twinEstilos();
+      const pr = D.serie.tipo === 'dia' ? (D.serie.prec[tw.t] || 0) : (D.serie.prec[tw.t] || 0) / 30.4;
+      X.lluvia = Math.min(1, pr / 25);
+    }
+    twinClimaVisual(D);
+    // Etiquetas: nombre y una sola línea (cultivo, estrés o puntaje); al comparar, actual | optimizado.
+    const txt = (LL, e) => { const p = e.paso; if (tw.modo === 'resultados') return 'puntaje ' + Math.round(LL.score);
+      if (tw.modo === 'riesgo') { if (!p) return 'sin cultivo'; if (p.tipo === 'cobertura') return 'cobertura'; const f2 = v => v.toFixed(2).replace('.', ',');
+        if (!p.viable) return 'estrés 1,00 · muy elevado';
+        return e.acum ? 'estrés hoy ' + f2(1 - e.apt) + ' · cierre ' + f2(1 - p.aptitud) : 'estrés ' + f2(1 - p.aptitud) + ' · ' + expo(p.aptitud)[2]; }
+      return p ? M.CULTIVOS[p.cultivo].nombre + (p.tipo === 'cobertura' ? ' (cob.)' : '') : 'barbecho'; };
+    // Al comparar, una línea corta por lado (actual | optimizado) para no tapar la escena.
+    const corto = (LL, e) => { const p = e.paso; if (tw.modo === 'resultados') return String(Math.round(LL.score));
+      if (tw.modo === 'riesgo') return p ? (p.tipo === 'cobertura' ? 'cob.' : (p.viable ? 1 - e.apt : 1).toFixed(2).replace('.', ',')) : '—';
+      return p ? M.CULTIVOS[p.cultivo].nombre.split(' ')[0] : 'barb.'; };
+    $('tw-labels').innerHTML = D.lotes.map((L, i) => { const e = est[i];
+      return '<div class="tw-lab' + (L.l.id === tw.sel ? ' sel' : '') + (critIds.has(L.l.id) ? ' crit' : '') + '" data-lab="' + L.l.id + '"><b>' + esc(L.l.nombre.replace(/^Lote /, '')) + '</b>' +
+        '<small>' + (estB ? esc(corto(L, e)) + ' <span class="vs">| ' + esc(corto(tw.datosB.lotes[i], estB[i])) + '</span>' : esc(txt(L, e))) +
+        (e.calorHoy ? ' <span class="ev" title="Calor extremo hoy">▲</span>' : '') + '</small></div>'; }).join('');
+    if (X) twinEtiquetas(X); else twin2D(D, est);
+    // Capa superior izquierda: fecha, escenario y si es real o hipotético.
+    const e = TWIN_ESC[tw.esc];
+    $('tw-hud').innerHTML = '<b class="tw-date">' + fechaT(D, tw.t) + '</b><span>' + e.t + ' <span class="tw-tag ' + e.tipo + '">' + (e.tipo === 'hip' ? 'hipotético' : 'NASA POWER') + '</span></span>' +
+      (D.serie.tipo === 'dia' ? '<span class="tw-wx">' + coma1(D.serie.prec[tw.t]) + ' mm · ' + coma1(D.serie.tmax[tw.t]) + ' °C' + (D.serie.tmax[tw.t] >= D.umbral ? ' <span class="ev">▲ calor extremo</span>' : '') + '</span>' :
+        '<span class="tw-wx">' + Math.round(D.serie.prec[tw.t]) + ' mm en el mes · ' + coma1(D.serie.temp[tw.t]) + ' °C</span>') +
+      (D.serie.tipo === 'dia' ? (() => { let d = 0; for (let i = 0; i <= tw.t; i++) d += (D.serie.et0[i] || 0) - (D.serie.prec[i] || 0);
+        return '<span class="tw-def" title="Evapotranspiración de referencia (ET0 FAO-56) menos lluvia, acumuladas desde el 1/7. Dato climático, no daño.">' + (d >= 0 ? 'Déficit' : 'Excedente') + ' climático acumulado ' + Math.abs(Math.round(d)) + ' mm</span>'; })() : '');
+    const sl = $('tw-slider'); if (sl) { if (+sl.value !== tw.t) sl.value = tw.t; sl.style.setProperty('--pct', (100 * tw.t / Math.max(1, +sl.max)).toFixed(2) + '%'); }
+    if ($('tw-fecha')) $('tw-fecha').textContent = fechaT(D, tw.t);
+    if ($('tw-cur')) { const x = 4 + (tw.t + .5) / D.serie.n * 712; $('tw-cur').setAttribute('x1', x); $('tw-cur').setAttribute('x2', x); }
+    if ($('tw-play')) { $('tw-play').textContent = tw.play ? '❚❚' : '▶'; $('tw-play').setAttribute('aria-label', tw.play ? 'Pausar' : 'Reproducir'); }
+    twinInfo(D, est, estB);
+  }
+  // Sección «Información» del panel: clima del instante, campo y detalle del lote (desplegables).
+  function twinInfo(D, est, estB) {
+    const box = $('tw-info'); if (!box) return;
+    const s = D.serie, t = tw.t, A = twinAgg(D), B = tw.cmp && tw.datosB ? twinAgg(tw.datosB) : null;
+    const lluviaAc = s.prec.slice(0, t + 1).reduce((a, v) => a + (v || 0), 0), calorAc = s.tipo === 'dia' ? s.tmax.slice(0, t + 1).filter(v => v != null && v >= D.umbral).length : null;
+    const enCrit = D.lotes.filter((L, i) => est[i].enCritico), expuestos = D.lotes.filter((L, i) => est[i].calorHoy || (est[i].enCritico && est[i].seca >= M.UMBRALES.seca_dias));
+    const kv = (k, v, tip) => '<span' + (tip ? ' title="' + esc(tip) + '"' : '') + '>' + k + '</span><b>' + v + '</b>';
+    const dif = (a, b, f) => { const d = b - a; return Math.abs(d) < 1e-6 ? ' <i class="eq">igual</i>' : ' <i class="' + (d > 0 ? 'up' : 'dn') + '">' + (d > 0 ? '+' : '−') + f(Math.abs(d)) + '</i>'; };
+    const lotesBtn = arr => arr.length ? arr.map(L => '<button type="button" class="tw-lk" data-hlote="' + L.l.id + '">' + esc(L.l.nombre.replace(/^Lote /, '')) + '</button>').join(', ') : '—';
+    const resumen = '<div class="tw-kv">' +
+      '<span class="tw-ks">Escenario <em>' + (s.tipo === 'dia' ? 'acumulado desde el 1/7' : 'promedio mensual') + '</em></span>' + kv('Lluvia', Math.round(lluviaAc) + ' mm') + (calorAc != null ? kv('Días de calor extremo', calorAc, '≥ ' + coma1(D.umbral) + ' °C, percentil 90 del verano de la celda') : '') +
+      (s.tipo === 'dia' ? kv('Humedad radicular hoy', coma1(s.gwet[t]), 'GWETROOT de NASA POWER (0–1), modelado para toda la celda') : '') +
+      '<span class="tw-ks">Campo <em>' + (s.tipo === 'dia' ? 'hoy' : 'este mes') + '</em></span>' + kv('En período crítico', lotesBtn(enCrit)) + (s.tipo === 'dia' ? kv('Expuestos', lotesBtn(expuestos), 'Calor extremo hoy o racha seca ≥ ' + M.UMBRALES.seca_dias + ' días en período crítico') : '') +
+      '<span class="tw-ks">Plan ' + (B ? 'actual vs. optimizado' : planNombre(tw.est)) + ' <em>campaña completa</em></span>' +
+      kv('Margen', usd(A.margen) + (B ? dif(A.margen, B.margen, usd) : '')) + kv('Suelo cubierto', Math.round(A.cob) + ' %' + (B ? dif(A.cob, B.cob, v => Math.round(v) + ' %') : '')) +
+      kv('Aptitud media', Math.round(A.apt) + ' %' + (B ? dif(A.apt, B.apt, v => Math.round(v) + ' %') : ''), 'Aptitud de los cultivos según el motor, ponderada por hectárea') + '</div>';
+    // Detalle del lote (solo si hay uno seleccionado).
+    const i = D.lotes.findIndex(L => L.l.id === tw.sel); let lote = '';
+    if (i >= 0) {
+      const L = D.lotes[i], e = est[i], p = e.paso, pc = p || L.pasos.find(x => x.viable && x.tipo !== 'cobertura' && x.d0 >= 0);
+      const items = [];
+      if (pc) { const dd = pc.diario;
+        if (pc.fallo) items.push('El clima del ciclo queda fuera del rango del cultivo: ' + esc(pc.fallo) + ' (cosecha muy mala según el motor).');
+        if (dd) { if (dd.ratio < M.UMBRALES.deficit_ratio) items.push('Lluvia del ciclo: ' + Math.round(100 * dd.ratio) + ' % de lo que demanda el cultivo (Kc × ET0); debajo de ' + Math.round(100 * M.UMBRALES.deficit_ratio) + ' % el motor baja la aptitud hasta 20 %.');
+          if (dd.calor_critico) items.push(dd.calor_critico + ' días de calor extremo (≥ ' + coma1(dd.umbral_calor) + ' °C) en su período crítico: −4 % por día, hasta −40 %.');
+          if (dd.seca_critico > M.UMBRALES.seca_dias) items.push('Racha seca de ' + dd.seca_critico + ' días en su período crítico (más de ' + M.UMBRALES.seca_dias + ' penaliza).');
+          if (dd.heladas) items.push(dd.heladas + ' heladas durante el ciclo.'); }
+        if (pc.f_agua != null && pc.f_agua < .8 && !(dd && dd.ratio < M.UMBRALES.deficit_ratio)) items.push('Agua total del ciclo en el borde de su rango (factor agua ' + Math.round(100 * pc.f_agua) + ' %).');
+        if (pc.f_temp != null && pc.f_temp < .8) items.push('Temperatura media del ciclo en el borde de su rango (factor temperatura ' + Math.round(100 * pc.f_temp) + ' %).'); }
+      lote = '<div class="tw-lotebox"><div class="tw-loteh"><b>' + esc(L.l.nombre) + '</b><span>' + L.l.superficie + ' ha</span>' +
+        (pc ? '<span class="tw-chip" style="--c:' + (pc.viable ? expo(pc.aptitud)[1] : TWIN_EXPO[3][1]) + '">estrés ' + (pc.viable ? expo(pc.aptitud)[2] : 'muy elevado') + '</span>' : '') + '</div><div class="tw-kv">' +
+        kv('Ahora en el lote', p ? esc(M.CULTIVOS[p.cultivo].nombre) + (p.tipo === 'cobertura' ? ' (cob.)' : '') : 'barbecho') + kv('Rotación', esc(L.seq.map(x => M.CULTIVOS[x].nombre).join(' → '))) +
+        (p ? kv('Período crítico', e.enCritico ? 'ahora' : 'no') : '') +
+        (e.lluviaAc != null ? kv('Lluvia / demanda a la fecha', e.lluviaAc + ' / ' + e.demandaAc + ' mm') + kv('Racha seca actual', e.seca + ' días') : '') +
+        (pc ? kv('Aptitud del ciclo (motor)', Math.round(100 * pc.aptitud) + ' %') : '') +
+        (pc && pc === p && e.acum ? kv('Estrés acumulado a la fecha', (1 - e.apt).toFixed(2).replace('.', ',') + ' de ' + (1 - pc.aptitud).toFixed(2).replace('.', ',') + ' al cierre') : '') + kv('Margen de la campaña', usd(L.margen) + '/ha') + '</div>' +
+        (pc ? '<details class="tw-why"' + (tw.sec.why ? ' open' : '') + ' id="tw-whyd"><summary>¿Por qué este lote es vulnerable?</summary>' +
+          (items.length ? '<ul>' + items.map(x => '<li>' + x + '</li>').join('') + '</ul>' : '<p>El motor no marca factores climáticos limitantes para ' + esc(M.CULTIVOS[pc.cultivo].nombre) + ' en este escenario.</p>') +
+          '<p class="tw-note">Resultado del motor: aptitud ' + Math.round(100 * pc.aptitud) + ' %, margen del ciclo ' + usd(pc.margen || 0) + '/ha. Sin nivel de confianza: no hay una metodología validada. Fuentes: NASA POWER ' +
+          (s.tipo === 'dia' ? 'diario' : 'mensual') + (TWIN_ESC[tw.esc].tipo === 'hip' ? ' perturbado (hipotético)' : '') + '; umbrales y Kc supuestos (engine.js); precios y rindes MAGyP; suelo ilustrativo.</p></details>' : '') + '</div>';
+    } else lote = '<p class="tw-note">Tocá un lote en el visor para ver su detalle.</p>';
+    box.innerHTML = resumen + lote;
+    box.querySelectorAll('[data-hlote]').forEach(b => b.addEventListener('click', () => twinSeleccionar(b.dataset.hlote, true)));
+    if ($('tw-whyd')) $('tw-whyd').addEventListener('toggle', e2 => { tw.sec.why = e2.target.open; });
+  }
+  function twin2D(D, est) { // sin WebGL: vista cartográfica plana con los mismos colores y datos
+    const host = $('tw-canvas'), c = D.c, P = proyectar(c);
+    const polys = c.lotes.map(l => (poligono(c, l.geo) || []).map(P)).filter(p => p.length);
+    if (!polys.length) { host.innerHTML = '<div class="tw-loading">Sin contornos para dibujar.</div>'; return; }
+    const xs = polys.flat().map(p => p[0]), ys = polys.flat().map(p => p[1]), x0 = Math.min(...xs) - 3, y0 = Math.min(...ys) - 3, w = Math.max(...xs) - x0 + 3, h = Math.max(...ys) - y0 + 3;
+    host.innerHTML = '<svg viewBox="' + x0 + ' ' + y0 + ' ' + w + ' ' + h + '" preserveAspectRatio="xMidYMid meet">' + c.lotes.map((l, i) => { const pts = poligono(c, l.geo); if (!pts) return '';
+      return '<polygon data-l="' + l.id + '" points="' + pts.map(P).map(p => p.join(',')).join(' ') + '" style="fill:' + twinColor(D.lotes[i], est[i]) + ';fill-opacity:.85;stroke:' + (l.id === tw.sel ? '#59C9E8' : '#F4F7FB') + ';stroke-width:.12;cursor:pointer"/>'; }).join('') + '</svg>';
+    host.querySelectorAll('[data-l]').forEach(p => p.addEventListener('click', () => twinSeleccionar(p.dataset.l, false)));
+  }
+  function twinSeleccionar(id, centrar) {
+    tw.sel = tw.sel === id && !centrar ? null : id; const X = tw.three;
+    if (X && centrar && tw.sel) X.volar(X.encuadre([id]), 850);
+    twinPintar(); twinTimeline();
+  }
+  function seccion(k, titulo, cuerpo) {
+    return '<details class="tw-sec" data-sec="' + k + '"' + (tw.sec[k] ? ' open' : '') + '><summary>' + titulo + '</summary><div class="tw-secb">' + cuerpo + '</div></details>';
+  }
+  function twinPanel(c) {
+    const hayOpt = hayOptDe(c), D = tw.datos;
+    const escs = '<div class="tw-escsel" role="group" aria-label="Evento">' + Object.keys(TWIN_ESC).map(k => '<button type="button" data-tesc="' + k + '" aria-pressed="' + (tw.esc === k) + '">' + TWIN_ESC[k].t +
+      '<small>' + TWIN_ESC[k].c + '</small></button>').join('') + '</div>';
+    let ctx = '';
+    if (tw.esc === 'habitual') ctx = '<p class="tw-note">Promedio mensual ' + esc(M.FUENTE_CLIMA.periodo) + ' de NASA POWER: lluvia y temperatura. Resolución mensual.</p>';
+    else if (tw.esc === 'sequia') ctx = '<p class="tw-note">Campaña real julio 2022 a junio 2023, día por día: ' + Math.round(D.serie.prec.reduce((a, v) => a + (v || 0), 0)) + ' mm de lluvia contra ' +
+      Math.round((D.serie.et0 || []).reduce((a, v) => a + (v || 0), 0)) + ' mm de ET0.</p>';
+    else ctx = (tw.esc !== 'lluvias' ? '<div class="tw-sl"><label for="tw-dT">Temperatura <b>+' + coma1(tw.dT) + ' °C</b></label><input type="range" id="tw-dT" min="0" max="5" step="0.5" value="' + tw.dT + '"></div>' : '') +
+      (tw.esc !== 'calor' ? '<div class="tw-sl"><label for="tw-dp">Lluvia <b>' + (tw.dp > 0 ? '+' : '') + tw.dp + ' %</b></label><input type="range" id="tw-dp" min="-60" max="100" step="10" value="' + tw.dp + '"></div>' : '') +
+      '<p class="tw-warn">Simulación hipotética sobre la campaña real ' + tw.base + '/' + String(tw.base + 1).slice(2) + '. No es un pronóstico.' + (tw.esc !== 'calor' ? ' El motor no modela el anegamiento por lluvias intensas.' : '') + '</p>' +
+      '<details class="tw-mini"><summary>Más detalles</summary><p>Se toma la campaña con lluvia anual más cercana a la mediana y se le suman los cambios elegidos. La ET0 no se recalcula con la temperatura perturbada.</p></details>';
+    const fx = '<div class="tw-toggles"><label class="chk"><input type="checkbox" id="tw-fx"' + (tw.efectos ? ' checked' : '') + '> Efectos del evento</label><label class="chk"><input type="checkbox" id="tw-an"' + (tw.anim ? ' checked' : '') + '> Animar cámara</label>' +
+      '<label class="chk" title="Imágenes de Esri World Imagery, mostradas en vivo con su atribución (Esri Master License Agreement). Sin ellas, terreno ilustrativo."><input type="checkbox" id="tw-sat"' + (tw.satelite ? ' checked' : '') + '> Imagen satelital</label></div>';
+    const plan = '<div class="tw-plan" role="group" aria-label="Plan">' + [['actual', 'Actual'], ['optimizada', 'Optimizado'], ['cmp', 'Comparar']].map(([k, t]) =>
+      '<button type="button" data-test="' + k + '" aria-pressed="' + (k === 'cmp' ? tw.cmp : !tw.cmp && tw.est === k) + '"' + (k !== 'actual' && !hayOpt ? ' disabled' : '') + '>' + t + '</button>').join('') + '</div>' +
+      (!hayOpt ? '<button class="btn primary" type="button" id="tw-calc"' + (tw.calcOpt ? ' disabled' : '') + '>' + (tw.calcOpt ? 'Calculando…' : 'Calcular el plan optimizado') + '</button><p class="tw-note">Usa «Optimizar mi campo» con tus prioridades.</p>'
+        : '<p class="tw-note">Optimizado = «' + ESTR[opt.est].t + '». En «Comparar», arrastrá el divisor del visor.</p>') + twinComparar(c);
+    $('tw-side').innerHTML = seccion('sim', 'Simulación', escs + ctx + fx) + seccion('plan', 'Planificación', plan) + seccion('info', 'Información', '<div id="tw-info"></div>');
+    const side = $('tw-side');
+    side.querySelectorAll('.tw-sec').forEach(d => d.addEventListener('toggle', () => { tw.sec[d.dataset.sec] = d.open; }));
+    side.querySelectorAll('[data-tesc]').forEach(b => b.addEventListener('click', () => { tw.esc = b.dataset.tesc; if (TWIN_HIP[tw.esc]) Object.assign(tw, TWIN_HIP[tw.esc]); twinFundido(); twinRecalcular(c, true); }));
+    side.querySelectorAll('[data-test]').forEach(b => b.addEventListener('click', () => { if (b.disabled) return; const k = b.dataset.test;
+      if (k === 'cmp') { tw.cmp = !tw.cmp; if (tw.cmp && tw.three) tw.three.volar(tw.three.encuadre(null), 900); } else { tw.cmp = false; tw.est = k; }
+      twinRecalcular(c, false); }));
+    if ($('tw-dT')) $('tw-dT').addEventListener('change', e2 => { tw.dT = +e2.target.value; twinRecalcular(c, false); });
+    if ($('tw-dp')) $('tw-dp').addEventListener('change', e2 => { tw.dp = +e2.target.value; twinRecalcular(c, false); });
+    $('tw-fx').addEventListener('change', e2 => { tw.efectos = e2.target.checked; twinAmbiente(); twinPintar(); });
+    $('tw-an').addEventListener('change', e2 => { tw.anim = e2.target.checked; });
+    $('tw-sat').addEventListener('change', e2 => { tw.satelite = e2.target.checked; if (tw.three && tw.three.usarSat) tw.three.usarSat(tw.satelite); $('tw-ley').innerHTML = twinLeyenda(); });
+    if ($('tw-calc')) $('tw-calc').addEventListener('click', async () => { tw.calcOpt = true; twinPanel(c); await correrOptimizacion(); tw.calcOpt = false; tw.cmp = true; twinRecalcular(c, false); });
+  }
+  function twinFundido() { const st = $('tw-stage'); if (reduceMov) return; st.classList.remove('tw-fade'); void st.offsetWidth; st.classList.add('tw-fade'); }
+  function twinTimeline() {
+    const D = tw.datos, s = D.serie, n = s.n, W = 720, H = tw.graf ? 110 : 52, bw = 712 / n, X = i => (4 + i * bw).toFixed(1);
+    const maxP = Math.max(10, ...s.prec.map(v => v || 0));
+    let svg = '';
+    if (tw.graf) D.secas.forEach(([a, b]) => { svg += '<rect class="sq" x="' + X(a) + '" y="0" width="' + ((b - a + 1) * bw).toFixed(1) + '" height="' + H + '"/>'; });
+    const L = D.lotes.find(x => x.l.id === tw.sel);
+    if (L && s.tipo === 'dia') L.pasos.forEach(p => { const a = Math.max(0, p.c0), b = Math.min(n, p.c1); if (b > a) svg += '<rect class="cr" x="' + X(a) + '" y="0" width="' + ((b - a) * bw).toFixed(1) + '" height="' + H + '"/>'; });
+    s.prec.forEach((v, i) => { if (!v) return; const h = (H - (tw.graf ? 18 : 6)) * Math.min(1, v / maxP); svg += '<rect class="' + (s.tipo === 'dia' && v >= M.UMBRALES.lluvia_intensa_mm ? 'pi' : 'p') + '" x="' + X(i) + '" y="' + (H - h).toFixed(1) + '" width="' + Math.max(1, bw - (s.tipo === 'mes' ? 4 : 0)).toFixed(1) + '" height="' + h.toFixed(1) + '"/>'; });
+    if (s.tipo === 'dia') { const tm = s.tmax.map(v => v ?? 0), lo = Math.min(...tm), hi = Math.max(...tm);
+      if (tw.graf) svg += '<polyline class="t" points="' + tm.map((v, i) => (4 + (i + .5) * bw).toFixed(1) + ',' + (6 + (H - 24) * (1 - (v - lo) / (hi - lo || 1))).toFixed(1)).join(' ') + '"/>';
+      tm.forEach((v, i) => { if (v >= D.umbral) svg += '<rect class="h" x="' + X(i) + '" y="0" width="' + Math.max(1, bw).toFixed(1) + '" height="' + (tw.graf ? 4 : 3) + '"/>'; }); }
+    // Franja inferior: días con al menos un lote con cultivo comercial en el plan.
+    for (let i = 0; i < n; i++) { const dia = s.tipo === 'dia' ? i : i * 30.4 + 15; if (D.lotes.some(L => L.pasos.some(p => p.viable && p.tipo !== 'cobertura' && dia >= p.d0 && dia < p.d1))) svg += '<rect class="cu" x="' + X(i) + '" y="' + (H - 2) + '" width="' + Math.max(1, bw).toFixed(1) + '" height="2"/>'; }
+    if (tw.critico) { const cx = 4 + (tw.critico.t + .5) * bw; svg += '<polygon class="pk" points="' + (cx - 5).toFixed(1) + ',0 ' + (cx + 5).toFixed(1) + ',0 ' + cx.toFixed(1) + ',8"/>'; }
+    const x = 4 + (tw.t + .5) * bw;
+    const ley = tw.graf ? '<div class="tw-ley2"><span><i class="p-dia"></i>Lluvia ' + (s.tipo === 'dia' ? 'diaria' : 'del mes') + '</span>' +
+      (s.tipo === 'dia' ? '<span><i class="p-int"></i>≥ ' + M.UMBRALES.lluvia_intensa_mm + ' mm</span><span><i class="m-calor"></i>Máxima · calor extremo ≥ ' + coma1(D.umbral) + ' °C</span><span><i class="tw-i-sq"></i>Racha seca ≥ ' + M.UMBRALES.seca_dias + ' d</span>' : '') +
+      (L && s.tipo === 'dia' ? '<span><i class="tw-i-cr"></i>Período crítico · ' + esc(L.l.nombre) + '</span>' : '') + '<span><i style="background:#64D7A4"></i>Con cultivos en el plan</span><span class="tw-note">' + (s.tipo === 'dia' ? 'Resolución diaria' : 'Resolución mensual') + '</span></div>' : '';
+    $('tw-time').innerHTML = '<div class="tw-ctrl"><button class="tw-pbtn" type="button" id="tw-play" aria-label="' + (tw.play ? 'Pausar' : 'Reproducir') + '">' + (tw.play ? '❚❚' : '▶') + '</button>' +
+      '<button class="tw-ibtn" type="button" id="tw-prev" aria-label="Retroceder">‹</button><button class="tw-ibtn" type="button" id="tw-next" aria-label="Avanzar">›</button>' +
+      '<span class="tw-fecha" id="tw-fecha">' + fechaT(D, tw.t) + '</span>' +
+      '<input type="range" id="tw-slider" min="0" max="' + (n - 1) + '" step="1" value="' + tw.t + '" aria-label="' + (s.tipo === 'dia' ? 'Día' : 'Mes') + ' de la campaña">' +
+      '<button class="tw-cbtn" type="button" id="tw-crit">⚑ Momento crítico</button>' + (tw.tCult != null ? '<button class="tw-gbtn" type="button" id="tw-cult" title="Ir a la fecha con más lotes con cultivo en el plan">🌱 Con cultivos</button>' : '') +
+      '<select id="tw-vel" aria-label="Velocidad">' + [1, 2, 4].map(v => '<option value="' + v + '"' + (tw.vel === v ? ' selected' : '') + '>' + v + '×</option>').join('') + '</select>' +
+      '<button class="tw-ibtn" type="button" id="tw-graf" aria-expanded="' + tw.graf + '" title="' + (tw.graf ? 'Achicar gráfico' : 'Ver gráfico detallado') + '">' + (tw.graf ? '▾' : '▴') + '</button></div>' +
+      '<div class="tw-sparkw"><svg class="tw-spark" id="tw-spark" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" style="height:' + H + 'px" role="img" aria-label="Lluvia ' + (s.tipo === 'dia' ? 'diaria' : 'mensual') + ' de la campaña">' + svg +
+      '<line id="tw-cur" class="cur" x1="' + x + '" x2="' + x + '" y1="0" y2="' + H + '"/></svg><div class="tw-tip" id="tw-tip" hidden></div></div>' +
+      '<div class="tw-meses" aria-hidden="true">' + MESES_C.map(m => '<span>' + m + '</span>').join('') + '</div>' +
+      (tw.graf ? ley : '<div class="tw-ley1"><span><i class="p-dia"></i>lluvia</span>' + (s.tipo === 'dia' ? '<span><i class="m-calor"></i>calor extremo</span>' : '') +
+        '<span><i style="background:#64D7A4"></i>con cultivos</span><span><b class="tw-pk">▼</b>momento crítico</span><span class="tw-note">▴ más detalle</span></div>');
+    const t = $('tw-time');
+    t.querySelector('#tw-play').addEventListener('click', () => { if (tw.t >= n - 1) { tw.t = 0; tw.tReal = 0; } tw.play = !tw.play; tw.ultimo = 0; tw.tReal = tw.t; tw.verCrit = false; $('tw-callbox').innerHTML = ''; twinPintar(); if (!tw.three && tw.play) twinTick2D(); });
+    t.querySelector('#tw-prev').addEventListener('click', () => irA(tw.t - 1));
+    t.querySelector('#tw-next').addEventListener('click', () => irA(tw.t + 1));
+    t.querySelector('#tw-crit').addEventListener('click', () => twinMomentoCritico());
+    if (t.querySelector('#tw-cult')) t.querySelector('#tw-cult').addEventListener('click', () => { tw.verCrit = false; $('tw-callbox').innerHTML = ''; irA(tw.tCult); });
+    t.querySelector('#tw-slider').addEventListener('input', e => irA(+e.target.value));
+    t.querySelector('#tw-vel').addEventListener('change', e => { tw.vel = +e.target.value; });
+    t.querySelector('#tw-graf').addEventListener('click', () => { tw.graf = !tw.graf; twinTimeline(); });
+    const sp = t.querySelector('#tw-spark'), tip = t.querySelector('#tw-tip');
+    const idx = e => { const r = sp.getBoundingClientRect(); return r.width ? Math.max(0, Math.min(n - 1, Math.floor(((e.clientX - r.left) / r.width * 720 - 4) / bw))) : null; };
+    sp.addEventListener('click', e => { const i = idx(e); if (i != null) irA(i); });
+    sp.addEventListener('mousemove', e => { const i = idx(e); if (i == null) return; const r = sp.getBoundingClientRect();
+      tip.hidden = false; tip.style.left = Math.min(r.width - 150, Math.max(0, e.clientX - r.left - 70)) + 'px';
+      tip.innerHTML = '<b>' + fechaT(D, i) + '</b> · ' + coma1(s.prec[i]) + ' mm' + (s.tipo === 'dia' ? ' · ' + coma1(s.tmax[i]) + ' °C' : ' · ' + coma1(s.temp[i]) + ' °C'); });
+    sp.addEventListener('mouseleave', () => { tip.hidden = true; });
+  }
+  function twinLeyenda() {
+    const D = tw.datos; let h;
+    if (tw.modo === 'cultivo') { const usados = new Set(); [D, tw.cmp ? tw.datosB : null].filter(Boolean).forEach(DD => DD.lotes.forEach(L => L.pasos.forEach(p => usados.add(patronDe(p))))); usados.add('barbecho');
+      h = '<span class="tw-lt">Cultivo del plan</span>' + [...usados].map(u => '<span><i style="background:' + TW_CROP[u] + '"></i>' + TW_CROP_N[u] + '</span>').join(''); }
+    else if (tw.modo === 'riesgo') h = '<span class="tw-prism" aria-hidden="true">' + TWIN_EXPO.map(([u, col], i) => '<i style="background:' + col + ';height:' + (4 + 4 * i) + 'px"></i>').join('') + '</span>' +
+      TWIN_EXPO.map(([u, col, t]) => '<span><i style="background:' + col + '"></i>' + t + '</span>').join('') +
+      '<span class="tw-ln" title="Estrés = 1 − aptitud del motor (0 a 1). Con clima diario crece durante el ciclo: la parte estructural (época, suelo, clima del ciclo) por los eventos diarios acumulados hasta la fecha (calor y racha seca en el período crítico, heladas; la penalización por lluvia contra demanda se pondera por la fracción del ciclo transcurrida). A la cosecha llega al valor del ciclo. Índice relativo, uniforme en el lote: no es relieve, probabilidad de pérdida ni pronóstico.">Altura = estrés acumulado del ciclo hasta la fecha (0–1) · no es relieve ni probabilidad ⓘ</span>';
+    else h = '<span><i style="background:' + TWIN_EXPO[0][1] + '"></i>≥ 70</span><span><i style="background:' + TWIN_EXPO[1][1] + '"></i>56–70</span><span><i style="background:' + TWIN_EXPO[2][1] + '"></i>42–56</span><span><i style="background:' + TWIN_EXPO[3][1] + '"></i>&lt; 42</span><span class="tw-ln">puntaje de la rotación</span>';
+    return h + (tw.three && tw.three.satelite ? '<span class="tw-ln">' + ATRIB_SAT + '</span>' : '');
+  }
+  function twinControlesVisor(c) {
+    $('tw-tr').innerHTML = '<div class="tw-seg" role="group" aria-label="Capa">' + [['cultivo', 'Cultivos'], ['riesgo', 'Estrés'], ['resultados', 'Resultados']].map(([k, t]) =>
+      '<button type="button" data-tmodo="' + k + '" aria-pressed="' + (tw.modo === k) + '">' + t + '</button>').join('') + '</div>';
+    $('tw-cam').innerHTML = '<div class="tw-seg tw-camseg" role="group" aria-label="Modo de cámara">' + [['explorar', 'Explorar'], ['analizar', 'Analizar']].map(([k, t]) =>
+      '<button type="button" data-cmodo="' + k + '" aria-pressed="' + (tw.camModo === k) + '">' + t + '</button>').join('') + '</div>' +
+      [['fit', '⌖', 'Centrar el campo'], ['top', '⬒', 'Vista superior'], ['lote', '◎', 'Enfocar el lote seleccionado']].map(([k, i, t]) =>
+      '<button type="button" class="tw-cb" data-cam="' + k + '" title="' + t + '" aria-label="' + t + '">' + i + '</button>').join('');
+    $('tw-cam').querySelectorAll('[data-cmodo]').forEach(b => b.addEventListener('click', () => { tw.camModo = b.dataset.cmodo; twinControlesVisor(c); const X = tw.three; if (X) X.volar(X.encuadre(null), 1100); }));
+    $('tw-tr').querySelectorAll('[data-tmodo]').forEach(b => b.addEventListener('click', () => { const antes = tw.modo; tw.modo = b.dataset.tmodo; twinControlesVisor(c); $('tw-ley').innerHTML = twinLeyenda();
+      const X = tw.three;
+      if (X && tw.modo === 'riesgo' && antes !== 'riesgo') { const t0 = performance.now(); X.lotes.forEach((x, i) => { x.A.retardo = x.B.retardo = t0 + (tw.anim ? 250 + i * 140 : 0); });
+        if (tw.camModo === 'explorar') X.volar(X.encuadre(tw.sel ? [tw.sel] : null, 'expo'), 1000); }
+      twinPintar(); }));
+    $('tw-cam').querySelectorAll('[data-cam]').forEach(b => b.addEventListener('click', () => { const X = tw.three; if (!X) return; const k = b.dataset.cam;
+      X.volar(X.encuadre(k === 'lote' && tw.sel ? [tw.sel] : null, k === 'top' ? 'superior' : null), 900); }));
+  }
+  function twinDivisor() {
+    const box = $('tw-splitbox');
+    if (!tw.cmp) { box.innerHTML = ''; return; }
+    box.innerHTML = '<div class="tw-split" id="tw-split" style="left:' + (100 * tw.split) + '%" role="slider" tabindex="0" aria-label="Divisor actual | optimizado" aria-valuemin="10" aria-valuemax="90" aria-valuenow="' + Math.round(100 * tw.split) + '"><div class="tw-split-hit"></div><span class="tw-sidetag izq">◂ Actual</span><span class="tw-sidetag der">Optimizado ▸</span></div>';
+    const el = $('tw-split'), st = $('tw-stage');
+    const mover = x => { const r = st.getBoundingClientRect(); tw.split = Math.max(.1, Math.min(.9, (x - r.left) / r.width)); el.style.left = (100 * tw.split) + '%'; el.setAttribute('aria-valuenow', Math.round(100 * tw.split)); };
+    el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); try { el.setPointerCapture(e.pointerId); } catch (x) { /* nada */ }
+      const mv = ev => mover(ev.clientX), up = () => { el.removeEventListener('pointermove', mv); el.removeEventListener('pointerup', up); };
+      el.addEventListener('pointermove', mv); el.addEventListener('pointerup', up); });
+    el.addEventListener('keydown', e => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); tw.split = Math.max(.1, Math.min(.9, tw.split + (e.key === 'ArrowLeft' ? -.05 : .05))); el.style.left = (100 * tw.split) + '%'; } });
+  }
+  function twinRecalcular(c, reiniciarT) {
+    if (tw.cmp && !hayOptDe(c)) tw.cmp = false;
+    tw.datos = twinEvaluar(c, tw.cmp ? 'actual' : tw.est);
+    tw.datosB = tw.cmp ? twinEvaluar(c, 'optimizada') : null;
+    tw.critico = twinCritico(tw.datos);
+    tw.tCult = (() => { const D = tw.datos, n = D.serie.n; let best = 0, bt = 0;
+      for (let t = 0; t < n; t++) { const dia = D.serie.tipo === 'dia' ? t : t * 30.4 + 15, k = D.lotes.filter(L => L.pasos.some(p => p.viable && p.tipo !== 'cobertura' && dia >= p.d0 && dia < p.d1)).length; if (k > best) { best = k; bt = t; } }
+      return best ? bt : null; })();
+    if (reiniciarT) { tw.t = tw.tCult ?? 0; tw.tReal = tw.t; tw.play = false; tw.verCrit = false; $('tw-callbox').innerHTML = ''; }
+    tw.t = Math.min(tw.t, tw.datos.serie.n - 1);
+    if ($('tw-ctx-s')) $('tw-ctx-s').textContent = twinSubtitulo(c);
+    $('view-twin').classList.toggle('sin-panel', !tw.panel);
+    twinControlesVisor(c); twinDivisor(); twinAmbiente();
+    $('tw-ley').innerHTML = twinLeyenda();
+    twinPanel(c); twinTimeline(); twinPintar();
+  }
+  async function twinAbrir() {
+    const c = campoDe(state.campo);
+    let nuevo = false;
+    if (tw.campo !== c.id) { twinCerrar(); tw.campo = c.id; tw.sel = null; tw.hover = null; tw.base = null; tw.t = 0; tw.tReal = 0; tw.cmp = false; tw.verCrit = false;
+      tw.est = hayOptDe(c) ? tw.est : 'actual'; $('tw-callbox').innerHTML = ''; nuevo = true; }
+    if (!c.lotes.length) { $('tw-side').innerHTML = '<div class="card empty">Este campo no tiene lotes.</div>'; return; }
+    twinRecalcular(c, nuevo); // al abrir un campo, arranca en una fecha con cultivos del plan
+    if (tw.three) return;
+    $('tw-canvas').innerHTML = '<div class="tw-loading" id="tw-loading">Cargando el gemelo 3D…</div>';
+    const ok = webglOk() && await cargarThree();
+    if (state.vista !== 'twin' || tw.campo !== c.id || tw.three) return;
+    if (!ok) { $('tw-canvas').innerHTML = ''; twinPintar(); $('tw-ley').insertAdjacentHTML('beforeend', '<span class="tw-ln">Vista 2D: sin WebGL o sin conexión para cargar Three.js.</span>'); return; }
+    try { tw.three = twinEscena(tw.datos); }
+    catch (e) { tw.three = null; $('tw-canvas').innerHTML = ''; twinPintar(); return; }
+    twinAmbiente(); twinPintar();
+  }
+
   /* ---------- render general ---------- */
   function renderResults() {
     if (state.vista === 'rotaciones') renderRotaciones(); else renderCultivo();
@@ -3020,6 +3991,16 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     updateMapa();
   }
   function render() {
+    const tw = state.vista === 'twin';
+    $('view-twin').hidden = !tw;
+    document.querySelector('.shell').classList.toggle('ancho', tw); document.body.classList.toggle('twin-on', tw);
+    if (!tw) twinCerrar();
+    if (tw) {
+      $('map-holder').appendChild($('mapcard'));
+      $('view-dash').hidden = true; $('view-lote').hidden = true; $('view-recorrido').hidden = true; $('view-opt').hidden = true;
+      renderMenu(); renderCtx(); twinAbrir();
+      return;
+    }
     const opt = state.vista === 'optimizar';
     $('view-opt').hidden = !opt;
     if (opt) {

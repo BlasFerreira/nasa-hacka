@@ -339,6 +339,9 @@
   const UMBRAL_CALOR = {};
   function umbralCalor(zid) {
     if (UMBRAL_CALOR[zid] != null) return UMBRAL_CALOR[zid];
+    // Una zona hipotética (clima perturbado) conserva el umbral de su celda original: si no, al subir la
+    // temperatura también subiría el percentil 90 y la ola de calor no contaría días de más.
+    if (diarioDe(zid) && diarioDe(zid).umbral_calor) return (UMBRAL_CALOR[zid] = diarioDe(zid).umbral_calor);
     const z = diarioDe(zid), b = z ? baseDiario(z) : 0, v = [];
     if (z) z.tmax.forEach((t, i) => { const m = new Date(b + i * DIA).getUTCMonth(); if (t != null && (m === 11 || m <= 1)) v.push(t); });
     return (UMBRAL_CALOR[zid] = Math.max(UMBRALES.calor_min_c, v.length ? Math.round(10 * cuantil(v, UMBRALES.calor_pct)) / 10 : UMBRALES.calor_min_c));
@@ -352,13 +355,16 @@
   }
   // Eventos y balance hídrico de un cultivo sembrado en `siembra` con el clima diario de la campaña histórica que
   // le toca según el escenario del lote. null si no hay serie diaria o el escenario es el clima promedio.
-  function climaDiarioCiclo(cid, lote, siembra) {
+  // `hasta` (opcional): cuenta solo los primeros `hasta` días del ciclo (mismas reglas), para ver el estrés
+  // acumulado a una fecha. Sin `hasta` se recorre el ciclo completo, que es lo que usa la aptitud.
+  function climaDiarioCiclo(cid, lote, siembra, hasta) {
     const zid = ZONAS[lote.zona] ? lote.zona : null, z = zid && diarioDe(zid), c = CULTIVOS[cid];
     if (!z || !lote.escenario || lote.escenario === 'promedio') return null;
     const n = c.ciclo_dias, c0 = Math.floor(UMBRALES.critico[0] * n), c1 = Math.ceil(UMBRALES.critico[1] * n);
     const frio = INVIERNO.has(cid) ? UMBRALES.helada_invierno_c : UMBRALES.helada_c, caliente = umbralCalor(zid);
     let P = 0, ET = 0, calor = 0, heladas = 0, intensas = 0, seca = 0, secaMax = 0, secaCrit = 0, gMin = 1, gBajo = 0;
-    for (let i = 0; i < n; i++) {
+    const nDias = hasta == null ? n : Math.max(0, Math.min(n, Math.floor(hasta)));
+    for (let i = 0; i < nDias; i++) {
       const d = addDias(siembra, i), ch = campHist(lote, d);
       if (ch === null) return null;
       const k = idxHist(z, ch + (d.getUTCMonth() < 6 ? 1 : 0), d);
