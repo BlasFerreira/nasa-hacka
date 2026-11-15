@@ -3701,7 +3701,7 @@ float fsVeg = 0.0; vec2 fsOa = vec2(0.0), fsOb = vec2(0.0); float fsB = 0.0;
     controls.enableDamping = true; controls.dampingFactor = .08; controls.maxPolarAngle = Math.PI / 2.12; controls.minDistance = .06; controls.maxDistance = 320; controls.target.copy(ctr);
     controls.screenSpacePanning = true;
     const anim = { desde: null, hasta: null, t0: 0, dur: 0 }; X.anim = anim; X.controls = controls;
-    controls.addEventListener('start', () => { anim.hasta = null; });
+    controls.addEventListener('start', () => { anim.hasta = null; const t = performance.now(); lotes.forEach((x, i) => { if (x.A.retardo > t + 400) x.A.retardo = x.B.retardo = t + i * 120; }); });
     // Encuadre según el modo de cámara (sin posiciones fijas: bounding box, centro, extensión y aspecto del visor).
     //   explorar: oblicua baja (~30°), lente 42°, los lotes ocupan ~60 % y se ve el paisaje hasta el horizonte.
     //   analizar: oblicua alta (~58°), lente 30°, baja distorsión, los lotes ocupan ~80 %.   superior: ~88°.
@@ -3722,7 +3722,9 @@ float fsVeg = 0.0; vec2 fsOa = vec2(0.0), fsOb = vec2(0.0); float fsB = 0.0;
     // Entrada: desde lo alto y lejos, aproximación suave hasta el modo elegido; al final se resaltan los límites un instante.
     const v0 = X.encuadre(null);
     if (tw.anim) { const alto = X.encuadre(null, 'superior'); camera.position.copy(alto.pos.clone().sub(alto.tgt).multiplyScalar(2.4).add(alto.tgt)); camera.fov = 34; camera.updateProjectionMatrix();
-      controls.target.copy(alto.tgt); X.volar(v0, 2200); X.destello = performance.now() + 2200; }
+      controls.target.copy(alto.tgt); X.volar(v0, 2200); X.destello = performance.now() + 2200;
+      // Los volúmenes de estrés esperan a que la cámara se detenga y suben uno tras otro, para que se vea cómo se posicionan.
+      lotes.forEach((x, i) => { x.A.retardo = x.B.retardo = X.destello + 150 + i * 220; }); }
     else { X.volar(v0, 0); }
     // Selección con clic y hover (raycast en el lado del divisor que corresponda).
     const ray = new T.Raycaster(), ptr = new T.Vector2(); let down = null, ultHover = 0;
@@ -4054,7 +4056,8 @@ float fsVeg = 0.0; vec2 fsOa = vec2(0.0), fsOb = vec2(0.0); float fsB = 0.0;
     $('tw-cam').querySelectorAll('[data-cmodo]').forEach(b => b.addEventListener('click', () => { tw.camModo = b.dataset.cmodo; twinControlesVisor(c); const X = tw.three; if (X) X.volar(X.encuadre(null), 1100); }));
     $('tw-tr').querySelectorAll('[data-tmodo]').forEach(b => b.addEventListener('click', () => { const antes = tw.modo; tw.modo = b.dataset.tmodo; twinControlesVisor(c); $('tw-ley').innerHTML = twinLeyenda();
       const X = tw.three;
-      if (X && tw.modo === 'riesgo' && antes !== 'riesgo') { const t0 = performance.now(); X.lotes.forEach((x, i) => { x.A.retardo = x.B.retardo = t0 + (tw.anim ? 250 + i * 140 : 0); });
+      if (X && tw.modo === 'riesgo' && antes !== 'riesgo') { const t0 = performance.now(), vuela = tw.anim && tw.camModo === 'explorar';
+        X.lotes.forEach((x, i) => { x.A.retardo = x.B.retardo = t0 + (tw.anim ? (vuela ? 1050 : 250) + i * 220 : 0); });
         if (tw.camModo === 'explorar') X.volar(X.encuadre(tw.sel ? [tw.sel] : null, 'expo'), 1000); }
       twinPintar(); }));
     $('tw-cam').querySelectorAll('[data-cam]').forEach(b => b.addEventListener('click', () => { const X = tw.three; if (!X) return; const k = b.dataset.cam;
