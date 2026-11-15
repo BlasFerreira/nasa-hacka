@@ -5229,10 +5229,10 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
   const TWIN_EXPO = [[.75, '#64D7A4', 'bajo'], [.6, '#F4D35D', 'intermedio'], [.45, '#F4A25D', 'elevado'], [-1, '#EF7268', 'muy elevado']];
   const expo = a => TWIN_EXPO.find(([u]) => a >= u);
   // Colores del terreno por cultivo (esquemáticos: no representan el estado fenológico).
-  const TW_CROP = { maiz: '#3f9d4b', soja: '#7cc35a', trigo: '#d6b24c', cebada: '#cdb86a', sorgo: '#8c8a3c', girasol: '#d9c13b', cobertura: '#4fae7b', barbecho: '#8a6a4b' };
+  const TW_CROP = { maiz: '#3c7a2b', soja: '#5f9338', trigo: '#958f42', cebada: '#a19a4b', sorgo: '#5f6229', girasol: '#557d2c', cobertura: '#4c8a3a', barbecho: '#8a6a4b' };
   const TW_CROP_N = { maiz: 'Maíz', soja: 'Soja', trigo: 'Trigo', cebada: 'Cebada', sorgo: 'Sorgo', girasol: 'Girasol', cobertura: 'Cobertura', barbecho: 'Barbecho' };
   const reduceMov = (() => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } })();
-  const tw = { campo: null, esc: 'sequia', est: 'actual', modo: 'cultivo', dT: 3, dp: 0, base: null, t: 0, tReal: 0, play: false, vel: 1, sel: null, hover: null,
+  const tw = { campo: null, esc: 'sequia', est: 'actual', modo: 'riesgo', dT: 3, dp: 0, base: null, t: 0, tReal: 0, play: false, vel: 1, sel: null, hover: null,
     datos: null, datosB: null, cmp: false, split: .5, efectos: !reduceMov, anim: !reduceMov, critico: null, verCrit: false, three: null, cargando: null, ultimo: 0, calcOpt: false,
     panel: true, graf: false, sec: { sim: true, plan: true, info: true }, satelite: true, camModo: 'explorar' };
   const MESES_C = ['Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
@@ -5469,6 +5469,121 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
       barbecho: mk((g, n) => { g.clearRect(0, 0, n, n); for (let y = 0; y < n; y += 12) { g.fillStyle = 'rgba(70,45,25,.35)'; g.fillRect(0, y, n, 3); g.fillStyle = 'rgba(255,230,200,.12)'; g.fillRect(0, y + 4, n, 2); } }, .45),
     };
   }
+
+  /* ---------- Materiales agrícolas: suelos PBR CC0 locales + hileras procedurales (shader) ----------
+     Suelos: assets/textures (licencias en texture-licenses.md), con su tamaño real de tesela en metros. Se cargan
+     bajo demanda, solo los que usan los cultivos visibles. Las hileras son ILUSTRATIVAS: espaciado típico del
+     cultivo, sin estado fenológico ni dirección real de siembra (se orientan con el lado más largo del lote). */
+  const TW_SUELOS = { 'farm-furrows': 2.1, dirt: 2, ground103: 2, grass001: 1.4, 'sparse-grass': 2 };
+  // fila: distancia entre hileras (m) · ancho: fracción de la entre-hilera ocupada por el canopeo · c: tonos · huella: huellas de pulverizadora cada N m.
+  // Trigo y cebada usan un tono verde-dorado fijo: no se modela el estado del cultivo en la fecha simulada.
+  const TW_MAT = {
+    barbecho: { suelo: 'dirt' },
+    maiz: { suelo: 'ground103', fila: .52, ancho: .5, c: ['#2b5a23', '#4d8632'], huella: 28, planta: .2, hoja: 1 },
+    soja: { suelo: 'ground103', fila: .42, ancho: .78, c: ['#3f6f29', '#6f9c40'], huella: 28, planta: .07, hoja: .7 },
+    trigo: { suelo: 'farm-furrows', fila: .175, ancho: .93, c: ['#6f8536', '#a39b47'], huella: 21, planta: .03, hoja: .25 },
+    cebada: { suelo: 'farm-furrows', fila: .175, ancho: .92, c: ['#7d8c3c', '#b0a453'], huella: 21, planta: .03, hoja: .25 },
+    sorgo: { suelo: 'ground103', fila: .52, ancho: .55, c: ['#465626', '#6f6a2b'], huella: 28, planta: .1, hoja: .8 },
+    girasol: { suelo: 'ground103', fila: .7, ancho: .55, c: ['#3a6c29', '#6d8b2c'], huella: 28, planta: .28, hoja: 1 },
+    cob_densa: { suelo: 'grass001' },     // coberturas gramíneas (avena, centeno, mijo): convención ilustrativa
+    cob_parcial: { suelo: 'sparse-grass' }, // coberturas leguminosas (vicia, crotalaria): convención ilustrativa
+    otro: { suelo: 'ground103', fila: .52, ancho: .5, c: ['#4a7731', '#6e9440'], huella: 28, planta: .15, hoja: .7 },
+  };
+  const matDe = p => { if (!p) return 'barbecho';
+    if (p.tipo === 'cobertura') return M.CULTIVOS[p.cultivo] && M.CULTIVOS[p.cultivo].leguminosa ? 'cob_parcial' : 'cob_densa';
+    const k = patronDe(p); return TW_MAT[k] ? k : 'otro'; };
+  const AGRO_GLSL = `
+uniform float uPlanta; uniform float uHoja; uniform float uOn; uniform float uFilas; uniform float uAncho; uniform float uCov; uniform float uHuella; uniform float uTile; uniform float uSeed; uniform float uAnti;
+uniform vec3 uC1; uniform vec3 uC2;
+float fsH(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float fsN(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(fsH(i), fsH(i + vec2(1.0, 0.0)), f.x), mix(fsH(i + vec2(0.0, 1.0)), fsH(i + vec2(1.0, 1.0)), f.x), f.y); }`;
+  const AGRO_MAP = `
+float fsVeg = 0.0; vec2 fsOa = vec2(0.0), fsOb = vec2(0.0); float fsB = 0.0;
+#ifdef USE_MAP
+  vec2 fsW = vUv * uTile;
+  // Anti-repetición (técnica "no-tile"): dos muestras con desplazamientos elegidos por un ruido de baja frecuencia.
+  vec4 fsT;
+  if (uOn > 0.5 && uAnti > 0.5) {
+    float fk = fsN(vUv * 1.15 + uSeed) * 8.0, fi = floor(fk), ff = fract(fk);
+    vec2 oa = sin(vec2(3.0, 7.0) * fi), ob = sin(vec2(3.0, 7.0) * (fi + 1.0));
+    #if __VERSION__ >= 300
+      vec2 gx = dFdx(vUv), gy = dFdy(vUv);
+      vec4 ca = textureGrad(map, vUv + oa, gx, gy), cb = textureGrad(map, vUv + ob, gx, gy);
+    #else
+      vec4 ca = texture2D(map, vUv + oa), cb = texture2D(map, vUv + ob);
+    #endif
+    fsB = smoothstep(0.2, 0.8, ff - 0.1 * dot(ca.rgb - cb.rgb, vec3(1.0))); fsOa = oa; fsOb = ob;
+    fsT = mix(ca, cb, fsB);
+  } else fsT = texture2D(map, vUv);
+  diffuseColor *= fsT;
+  if (uOn > 0.5) {
+    if (uCov > 0.0) {
+      float r = vUv.y * uFilas, fw = max(fwidth(r), 1e-4), lejos = smoothstep(0.25, 0.9, fw);
+      // Plantas a lo largo de la hilera: borde irregular (hojas) y ancho que varía suavemente.
+      float a = fsW.x / uPlanta, fila = floor(r);
+      float hoja = 0.5 + 0.5 * sin(a * 6.2831 + 6.0 * fsN(vec2(fila * 1.31, floor(a) * 0.71) + uSeed));
+      float var = 1.0 - 0.85 * uAncho;
+      float w = 0.5 * uAncho * (1.0 - 0.32 * var * (1.0 - fsN(vec2(fsW.x * 1.5, fila * 3.7) + uSeed)) + 0.22 * uHoja * (hoja - 0.5));
+      float d = abs(fract(r) - 0.5), borde = fw + 0.06 * (1.0 - lejos);
+      float m = 1.0 - smoothstep(w - borde, w + fw, d);
+      float centro = clamp(1.0 - d / max(w, 1e-3), 0.0, 1.0);
+      m = mix(m, uAncho, lejos);
+      // Huellas de pulverizadora: dos hileras sin cultivo cada uHuella hileras; se promedian solo cuando son más chicas que un píxel.
+      if (uHuella > 1.0) { float rh = r / uHuella, fh = fw / uHuella, b = 2.0 / uHuella;
+        float h = smoothstep(b - fh, b + fh, fract(rh)); m *= mix(h, 1.0 - b, smoothstep(0.5 * b, 1.5 * b, fh)); }
+      fsVeg = m * uCov;
+      // Sombra del canopeo sobre el suelo cercano a la hilera (solo de cerca).
+      diffuseColor.rgb *= mix(mix(0.72 + 0.2 * uAncho, 1.0, smoothstep(w, w + 0.14, d)), 1.0, lejos);
+      float hojas = mix(0.8 + 0.4 * fsN(fsW * vec2(9.0, 22.0) + uSeed), 1.0, lejos);
+      vec3 pc = mix(uC1, uC2, 0.25 + 0.5 * fsN(fsW / 16.0 + uSeed * 1.7)) * mix(0.72 + 0.4 * centro, 0.95, lejos) * hojas;
+      diffuseColor.rgb = mix(diffuseColor.rgb, pc, fsVeg);
+    }
+    diffuseColor.rgb *= 0.94 + 0.12 * (fsN(fsW / 60.0 + uSeed) * 0.7 + fsN(fsW / 17.0 - uSeed) * 0.3);
+  }
+#endif`;
+  // Biblioteca: texturas compartidas (una carga por suelo), un material por lote y lado del comparador.
+  function twinMateriales(T, res, renderer) {
+    const cache = {}, listos = {}, loader = new T.TextureLoader(), aniso = Math.min(8, renderer.capabilities && renderer.capabilities.getMaxAnisotropy ? renderer.capabilities.getMaxAnisotropy() : 4);
+    const una = (s, k) => new Promise((ok, mal) => loader.load('assets/textures/' + s + '-' + k + '.jpg', t => {
+      t.wrapS = t.wrapT = T.RepeatWrapping; t.anisotropy = aniso; if (k === 'color' && 'encoding' in t) t.encoding = T.sRGBEncoding; res.tex.push(t); ok(t); }, undefined, mal));
+    const cargar = s => cache[s] || (cache[s] = Promise.all(['color', 'normal', 'rough'].map(k => una(s, k)))
+      .then(([color, normal, rough]) => (listos[s] = { color, normal, rough })).catch(() => (listos[s] = null)));
+    // Un material por lote: clona las texturas del suelo (comparten la imagen en la GPU) para orientar y escalar por lote.
+    const preparar = (m, ang, seed) => {
+      const u = { uPlanta: { value: .2 }, uHoja: { value: 1 }, uOn: { value: 0 }, uFilas: { value: 1 }, uAncho: { value: .5 }, uCov: { value: 0 }, uHuella: { value: 0 }, uTile: { value: 2 }, uSeed: { value: seed }, uAnti: { value: 1 },
+        uC1: { value: new T.Color() }, uC2: { value: new T.Color() } };
+      m.userData.agro = { u, ang, suelos: {}, clave: null };
+      m.onBeforeCompile = sh => { Object.assign(sh.uniforms, u);
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + AGRO_GLSL)
+          .replace('#include <map_fragment>', AGRO_MAP)
+          .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor, 0.8, fsVeg);')
+          .replace('#include <normal_fragment_maps>', T.ShaderChunk.normal_fragment_maps
+            .replace('vec3 mapN = texture2D( normalMap, vUv ).xyz * 2.0 - 1.0;', 'vec3 mapN = mix(texture2D( normalMap, vUv + fsOa ), texture2D( normalMap, vUv + fsOb ), fsB).xyz * 2.0 - 1.0;')
+            .replace('mapN.xy *= normalScale;', 'mapN.xy *= normalScale * (1.0 - 0.75 * fsVeg);')); };
+      m.customProgramCacheKey = () => 'agro5';
+    };
+    // Aplica el material de un cultivo; false si el suelo todavía no está cargado (se pide y se repinta al llegar).
+    const aplicar = (m, clave, alListo) => {
+      const A = m.userData.agro, cfg = TW_MAT[clave] || TW_MAT.otro, s = cfg.suelo;
+      if (!(s in listos)) { cargar(s).then(alListo); return false; }
+      const base = listos[s]; if (!base) return false;
+      if (A.clave === clave) return true;
+      let set = A.suelos[s];
+      if (!set) { set = A.suelos[s] = {}; for (const k of ['color', 'normal', 'rough']) { const t = base[k].clone(); t.needsUpdate = true; t.center.set(0, 0); t.rotation = -A.ang;
+        t.repeat.set(100 / TW_SUELOS[s], 100 / TW_SUELOS[s]); set[k] = t; res.tex.push(t); } }
+      const cambia = m.map !== set.color; m.map = set.color; m.normalMap = set.normal; m.roughnessMap = set.rough; m.roughness = 1; m.normalScale.set(.7, .7);
+      const u = A.u; u.uOn.value = 1; u.uTile.value = TW_SUELOS[s]; u.uAnti.value = s === 'farm-furrows' ? 0 : 1;
+      u.uCov.value = cfg.fila ? 1 : 0; u.uFilas.value = cfg.fila ? TW_SUELOS[s] / cfg.fila : 1; u.uAncho.value = cfg.ancho || .5;
+      u.uHuella.value = cfg.huella ? Math.round(cfg.huella / cfg.fila) : 0; u.uPlanta.value = cfg.planta || .2; u.uHoja.value = cfg.hoja ?? .7;
+      if (cfg.c) { u.uC1.value.set(cfg.c[0]).convertSRGBToLinear(); u.uC2.value.set(cfg.c[1]).convertSRGBToLinear(); }
+      if (cambia) m.needsUpdate = true; A.clave = clave; return true;
+    };
+    // Sin material agrícola (capa Resultados o mientras carga): textura esquemática anterior, sin mapas PBR.
+    const quitar = (m, tex) => { const A = m.userData.agro; A.u.uOn.value = 0; A.clave = null;
+      if (m.map !== tex || m.normalMap) { m.map = tex; m.normalMap = null; m.roughnessMap = null; m.roughness = .95; m.needsUpdate = true; } };
+    return { cargar, preparar, aplicar, quitar, listos };
+  }
   // Ángulo del lado más largo del contorno: orienta las hileras como en el lote.
   function anguloLote(shape) { const v = shape.getPoints(); let mx = 0, a = 0; for (let i = 0; i < v.length; i++) { const p = v[i], q = v[(i + 1) % v.length], l = Math.hypot(q.x - p.x, q.y - p.y); if (l > mx) { mx = l; a = Math.atan2(q.y - p.y, q.x - p.x); } } return a; }
   function proyectar(c) { // lat/lon -> unidades de escena (1 = 100 m), centrado en el campo; conserva posiciones relativas
@@ -5504,9 +5619,10 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
     const scene = new T.Scene(); scene.fog = new T.FogExp2(0x2b4a63, .0085);
     const camera = new T.PerspectiveCamera(42, W / H, .1, 1200);
     const hemi = new T.HemisphereLight(0xe3efff, 0x16222c, .95); scene.add(hemi);
-    const sol = new T.DirectionalLight(0xffffff, .75); sol.position.set(-30, 60, 25); scene.add(sol);
+    const sol = new T.DirectionalLight(0xffffff, .75); sol.position.set(-45, 42, 30); scene.add(sol);
     const res = { geos: [], mats: [], tex: [] }, keep = (g, m) => { if (g) res.geos.push(g); if (m) res.mats.push(m); };
     const TX = texturas(T); Object.values(TX).forEach(t => res.tex.push(t));
+    const AG = twinMateriales(T, res, renderer);
     // Extensión del terreno: lotes + margen (mín. 1,2 km), mismo lugar real.
     const ll = c.lotes.flatMap(l => poligono(c, l.geo) || []); const box = new T.Box3();
     const lotes = [], grupoA = new T.Group(), grupoB = new T.Group(); scene.add(grupoA, grupoB); grupoB.visible = false;
@@ -5518,14 +5634,15 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
       const g = new T.ShapeGeometry(shape); g.rotateX(-Math.PI / 2); keep(g);
       // «Cerco» bajo en el contorno: solo se ilumina con hover o selección.
       const cg = new T.ExtrudeGeometry(shape, { depth: .07, bevelEnabled: false }); cg.rotateX(-Math.PI / 2); keep(cg);
-      const borde = new T.BufferGeometry().setFromPoints(shape.getPoints().map(v => new T.Vector3(v.x, .035, -v.y))); keep(borde);
+      const borde = new T.BufferGeometry().setFromPoints(shape.getPoints().map(v => new T.Vector3(v.x, .008, -v.y))); keep(borde);
       const ang = anguloLote(shape);
       // Prisma de estrés: misma forma, altura unitaria escalada con el índice (1 − aptitud del ciclo).
       const pg2 = new T.ExtrudeGeometry(shape, { depth: 1, bevelEnabled: false }); pg2.rotateX(-Math.PI / 2); keep(pg2); const pe = new T.EdgesGeometry(pg2, 20); keep(pe);
       const lado = grupo => {
         const tex = {}; for (const k of Object.keys(TX)) { const t = TX[k].clone(); t.needsUpdate = true; t.rotation = -ang; tex[k] = t; res.tex.push(t); }
         const m = new T.MeshStandardMaterial({ color: 0xffffff, map: tex.barbecho, roughness: .95, metalness: 0, transparent: true, opacity: .4, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
-        const mesh = new T.Mesh(g, m); mesh.position.y = .03; mesh.renderOrder = 2; mesh.userData.lote = l.id; grupo.add(mesh); keep(null, m);
+        AG.preparar(m, ang, 7.3 * (i + 1));
+        const mesh = new T.Mesh(g, m); mesh.position.y = .004; mesh.renderOrder = 2; mesh.userData.lote = l.id; grupo.add(mesh); keep(null, m);
         const cm = [new T.MeshBasicMaterial({ visible: false }), new T.MeshBasicMaterial({ color: 0x59c9e8, transparent: true, opacity: 0, depthWrite: false, side: T.DoubleSide })];
         const cerco = new T.Mesh(cg, cm); cerco.renderOrder = 3; grupo.add(cerco); cm.forEach(x => keep(null, x));
         const lm = new T.LineBasicMaterial({ color: 0xf4f7fb, transparent: true, opacity: .45 }); const linea = new T.LineLoop(borde, lm); linea.renderOrder = 4; grupo.add(linea); keep(null, lm);
@@ -5551,7 +5668,7 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
     const tgeo = new T.PlaneGeometry(1, 1); tgeo.rotateX(-Math.PI / 2); const terreno = new T.Mesh(tgeo, tmat); keep(tgeo, tmat);
     terreno.scale.set(2 * half, 1, 2 * half); terreno.position.set(ctr.x, 0, ctr.z); terreno.renderOrder = 0; scene.add(terreno);
     const terrBase = { s: terreno.scale.clone(), p: terreno.position.clone() };
-    const X = { T, renderer, scene, camera, lotes, grupoA, grupoB, ctr, mx, res, hemi, sol, raf: 0, lluvia: 0, v: new T.Vector3(), TX, terreno, satelite: false, hmax: Math.max(2.2, mx * .3), estil: null, tmat: null };
+    const X = { T, AG, renderer, scene, camera, lotes, grupoA, grupoB, ctr, mx, res, hemi, sol, raf: 0, lluvia: 0, v: new T.Vector3(), TX, terreno, satelite: false, hmax: Math.max(1.1, mx * .15), estil: null, tmat: null };
     X.estil = estil; X.tmat = tmat; X.terrBase = terrBase;
     X.usarSat = on => { if (on && X.satTex) { tmat.map = X.satTex; tmat.color.setHex(0xd2dbe2); terreno.scale.copy(X.satS); terreno.position.copy(X.satP); }
       else { tmat.map = estil; tmat.color.setHex(0xffffff); terreno.scale.copy(terrBase.s); terreno.position.copy(terrBase.p); } tmat.needsUpdate = true; X.satelite = !!(on && X.satTex);
@@ -5588,14 +5705,14 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
     const pm = new T.LineBasicMaterial({ color: 0xcfe9f7, transparent: true, opacity: .42, depthWrite: false }); scene.add(new T.LineSegments(pg, pm)); keep(pg, pm);
     Object.assign(X, { pg, pos, N });
     const controls = new T.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true; controls.dampingFactor = .08; controls.maxPolarAngle = Math.PI / 2.12; controls.minDistance = 2; controls.maxDistance = 320; controls.target.copy(ctr);
+    controls.enableDamping = true; controls.dampingFactor = .08; controls.maxPolarAngle = Math.PI / 2.12; controls.minDistance = .06; controls.maxDistance = 320; controls.target.copy(ctr);
     controls.screenSpacePanning = true;
     const anim = { desde: null, hasta: null, t0: 0, dur: 0 }; X.anim = anim; X.controls = controls;
     controls.addEventListener('start', () => { anim.hasta = null; });
     // Encuadre según el modo de cámara (sin posiciones fijas: bounding box, centro, extensión y aspecto del visor).
     //   explorar: oblicua baja (~30°), lente 42°, los lotes ocupan ~60 % y se ve el paisaje hasta el horizonte.
     //   analizar: oblicua alta (~58°), lente 30°, baja distorsión, los lotes ocupan ~80 %.   superior: ~88°.
-    const MODOS = { explorar: { elev: 34, fov: 38, k: .9, az: -.55 }, analizar: { elev: 58, fov: 30, k: .82, az: -.62 }, superior: { elev: 88, fov: 30, k: .84, az: -.62 }, expo: { elev: 40, fov: 36, k: .8, az: -.5 }, critico: { elev: 27, fov: 34, k: 1, az: -.2, lado: .55 } };
+    const MODOS = { explorar: { elev: 15, fov: 38, k: 1.9, az: .35 }, analizar: { elev: 58, fov: 30, k: .82, az: -.62 }, superior: { elev: 88, fov: 30, k: .84, az: -.62 }, expo: { elev: 40, fov: 36, k: .8, az: -.5 }, critico: { elev: 27, fov: 34, k: 1, az: -.2, lado: .55 } };
     X.encuadre = (ids, modo) => {
       const M2 = MODOS[modo || tw.camModo] || MODOS.explorar;
       const b = new T.Box3(); lotes.filter(L => !ids || ids.includes(L.id)).forEach(L => b.union(L.bb)); if (b.isEmpty()) lotes.forEach(L => b.union(L.bb));
@@ -5628,7 +5745,7 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
     const pinta = (lado, now) => {
       lado.color.lerp(lado.objetivo, .14); lado.mat.color.copy(lado.color); lado.op += (lado.opObj - lado.op) * .14; lado.mat.opacity = lado.op;
       const pulso = .5 + .5 * Math.sin(now / 300);
-      lado.cerco.opacity = Math.max(X.flash * .8, lado.calor ? .45 + .35 * pulso : lado.crit ? .4 + .3 * pulso : lado.sel ? .85 : lado.hov ? .45 : 0);
+      lado.cerco.opacity = Math.max(X.flash * .8, lado.calor ? .45 + .35 * pulso : lado.crit ? .4 + .3 * pulso : lado.sel ? .85 : lado.hov ? .45 : tw.modo === 'satelite' ? .4 : 0);
       lado.cerco.color.setHex(lado.calor ? 0xef7268 : lado.crit ? 0xf4b85d : 0x59c9e8);
       lado.linea.opacity = lado.sel || lado.hov ? 1 : lado.dim ? .25 : .8; lado.linea.color.copy(lado.lcol || lado.color);
       if (now >= lado.retardo) lado.h += (lado.hObj - lado.h) * .075; lado.prisma.scale.y = Math.max(.001, lado.h); lado.prisma.visible = lado.h > .01;
@@ -5636,6 +5753,7 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
     };
     const loop = now => {
       X.raf = requestAnimationFrame(loop);
+      { const dn = Math.max(.002, Math.min(.1, camera.position.distanceTo(controls.target) * .02)); if (Math.abs(dn - camera.near) / camera.near > .2) { camera.near = dn; camera.updateProjectionMatrix(); } }
       if (anim.hasta) { const k = Math.min(1, (now - anim.t0) / anim.dur), e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
         camera.position.lerpVectors(anim.desde.pos, anim.hasta.pos, e); controls.target.lerpVectors(anim.desde.tgt, anim.hasta.tgt, e);
         if (anim.hasta.fov) { camera.fov = anim.desde.fov + (anim.hasta.fov - anim.desde.fov) * e; camera.updateProjectionMatrix(); }
@@ -5731,11 +5849,17 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
     if (X) {
       D.lotes.forEach((L, i) => { const x = X.lotes[i];
         const set = (lado, LL, e) => { const p = e.paso, pat = patronDe(p); lado.calor = tw.efectos && e.calorHoy;
-          // Cultivos y estrés muestran el material del cultivo; resultados usa color plano por puntaje.
-          const tex = tw.modo === 'resultados' ? null : lado.tex[pat]; if (lado.mat.map !== tex) { lado.mat.map = tex; lado.mat.needsUpdate = true; }
-          lado.objetivo.set(tw.modo === 'resultados' ? twinColor(LL, e) : '#ffffff');
+          // Cultivos y Estrés: material agrícola (suelo PBR + hileras); esquemático mientras carga o si falla. Resultados: color plano.
+          // Satélite: el lote no se pinta (solo límite y etiqueta), para no confundir el plan con vegetación observada.
+          const clave = matDe(p);
+          if (tw.modo === 'resultados' || tw.modo === 'satelite') X.AG.quitar(lado.mat, null);
+          else if (!X.AG.aplicar(lado.mat, clave, () => { if (tw.three === X) twinPintar(); })) X.AG.quitar(lado.mat, lado.tex[pat]);
+          if (lado.clave !== undefined && lado.clave !== clave) lado.op = Math.min(lado.op, .25); // transición: fundido al cambiar de cultivo
+          lado.clave = clave;
+          lado.objetivo.set(tw.modo === 'resultados' ? twinColor(LL, e) : tw.modo === 'satelite' ? '#59c9e8' : '#ffffff');
+          if (tw.modo === 'satelite') lado.objetivo.convertSRGBToLinear();
           lado.lcol = (lado.lcol || new X.T.Color()).set(lado.sel ? '#f4f7fb' : tw.modo === 'cultivo' ? TW_CROP[pat] : tw.modo === 'riesgo' ? (p && p.viable ? expo(e.apt)[1] : TWIN_EXPO[3][1]) : '#f4f7fb').convertSRGBToLinear();
-          lado.base = tw.modo === 'resultados' ? .62 : !p ? .4 : tw.modo === 'riesgo' ? .3 : .85;
+          lado.base = tw.modo === 'satelite' ? .34 : tw.modo === 'resultados' ? .62 : tw.modo === 'riesgo' ? .45 : 1;
           // Capa de estrés 3D: altura = estrés del ciclo (1 − aptitud del motor); sin cultivo, sin prisma.
           const idx = p && p.tipo !== 'cobertura' ? (p.viable ? 1 - e.apt : 1) : 0;
           lado.hObj = tw.modo === 'riesgo' && idx > 0 ? Math.max(.08, idx) * X.hmax : 0; lado.idx = idx;
@@ -5751,7 +5875,7 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
       if (tw.modo === 'riesgo') { if (!p) return 'sin cultivo'; if (p.tipo === 'cobertura') return 'cobertura'; const f2 = v => v.toFixed(2).replace('.', ',');
         if (!p.viable) return 'estrés 1,00 · muy elevado';
         return e.acum ? 'estrés hoy ' + f2(1 - e.apt) + ' · cierre ' + f2(1 - p.aptitud) : 'estrés ' + f2(1 - p.aptitud) + ' · ' + expo(p.aptitud)[2]; }
-      return p ? M.CULTIVOS[p.cultivo].nombre + (p.tipo === 'cobertura' ? ' (cob.)' : '') : 'barbecho'; };
+      return (tw.modo === 'satelite' ? 'plan: ' : '') + (p ? M.CULTIVOS[p.cultivo].nombre + (p.tipo === 'cobertura' ? ' (cob.)' : '') : 'barbecho'); };
     // Al comparar, una línea corta por lado (actual | optimizado) para no tapar la escena.
     const corto = (LL, e) => { const p = e.paso; if (tw.modo === 'resultados') return String(Math.round(LL.score));
       if (tw.modo === 'riesgo') return p ? (p.tipo === 'cobertura' ? 'cob.' : (p.viable ? 1 - e.apt : 1).toFixed(2).replace('.', ',')) : '—';
@@ -5918,8 +6042,9 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
   }
   function twinLeyenda() {
     const D = tw.datos; let h;
-    if (tw.modo === 'cultivo') { const usados = new Set(); [D, tw.cmp ? tw.datosB : null].filter(Boolean).forEach(DD => DD.lotes.forEach(L => L.pasos.forEach(p => usados.add(patronDe(p))))); usados.add('barbecho');
-      h = '<span class="tw-lt">Cultivo del plan</span>' + [...usados].map(u => '<span><i style="background:' + TW_CROP[u] + '"></i>' + TW_CROP_N[u] + '</span>').join(''); }
+    if (tw.modo === 'satelite') h = '<span class="tw-lt">Imagen satelital real</span><span class="tw-ln">Los lotes muestran solo su límite; el cultivo del plan figura en la etiqueta (no es vegetación observada).</span>';
+    else if (tw.modo === 'cultivo') { const usados = new Set(); [D, tw.cmp ? tw.datosB : null].filter(Boolean).forEach(DD => DD.lotes.forEach(L => L.pasos.forEach(p => usados.add(patronDe(p))))); usados.add('barbecho');
+      h = '<span class="tw-lt">Cultivo del plan</span>' + [...usados].map(u => '<span><i style="background:' + TW_CROP[u] + '"></i>' + TW_CROP_N[u] + '</span>').join('') + '<span class="tw-ln">Materiales ilustrativos: hileras con el espaciado típico del cultivo, sin estado fenológico.</span>'; }
     else if (tw.modo === 'riesgo') h = '<span class="tw-prism" aria-hidden="true">' + TWIN_EXPO.map(([u, col], i) => '<i style="background:' + col + ';height:' + (4 + 4 * i) + 'px"></i>').join('') + '</span>' +
       TWIN_EXPO.map(([u, col, t]) => '<span><i style="background:' + col + '"></i>' + t + '</span>').join('') +
       '<span class="tw-ln" title="Estrés = 1 − aptitud del motor (0 a 1). Con clima diario crece durante el ciclo: la parte estructural (época, suelo, clima del ciclo) por los eventos diarios acumulados hasta la fecha (calor y racha seca en el período crítico, heladas; la penalización por lluvia contra demanda se pondera por la fracción del ciclo transcurrida). A la cosecha llega al valor del ciclo. Índice relativo, uniforme en el lote: no es relieve, probabilidad de pérdida ni pronóstico.">Altura = estrés acumulado del ciclo hasta la fecha (0–1) · no es relieve ni probabilidad ⓘ</span>';
@@ -5927,7 +6052,7 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
     return h + (tw.three && tw.three.satelite ? '<span class="tw-ln">' + ATRIB_SAT + '</span>' : '');
   }
   function twinControlesVisor(c) {
-    $('tw-tr').innerHTML = '<div class="tw-seg" role="group" aria-label="Capa">' + [['cultivo', 'Cultivos'], ['riesgo', 'Estrés'], ['resultados', 'Resultados']].map(([k, t]) =>
+    $('tw-tr').innerHTML = '<div class="tw-seg" role="group" aria-label="Capa">' + [['riesgo', 'Estrés'], ['satelite', 'Satélite'], ['cultivo', 'Cultivos'], ['resultados', 'Resultados']].map(([k, t]) =>
       '<button type="button" data-tmodo="' + k + '" aria-pressed="' + (tw.modo === k) + '">' + t + '</button>').join('') + '</div>';
     $('tw-cam').innerHTML = '<div class="tw-seg tw-camseg" role="group" aria-label="Modo de cámara">' + [['explorar', 'Explorar'], ['analizar', 'Analizar']].map(([k, t]) =>
       '<button type="button" data-cmodo="' + k + '" aria-pressed="' + (tw.camModo === k) + '">' + t + '</button>').join('') + '</div>' +
