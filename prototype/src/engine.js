@@ -104,7 +104,7 @@
   // promedio = climatología 2001–2025 (referencia), seco = campaña con menos lluvia, húmedo = con más lluvia.
   // No hay escenario "año normal": ninguna campaña real se parece al promedio mes a mes.
   const ESCENARIOS_ORDEN = ['promedio', 'seco', 'humedo'];
-  const ESCENARIOS = {}, CAMPANIAS = {};
+  const ESCENARIOS = {}, CAMPANIAS = {}, SECUENCIAS = {};
   const PISO_CLIMA = 0.15; // aptitud climática mínima de un cultivo ya sembrado (cosecha fallida)
   function prepararZona(zid) {
     const z = ZONAS[zid];
@@ -120,11 +120,24 @@
     const esc = { promedio: { id: 'promedio', nombre: 'Clima promedio', campania: POWER.periodo, temp: z.temp, precip: z.precip, total: totalProm } };
     for (const c of camp) esc['c' + c.campania.slice(0, 4)] = Object.assign({ id: 'c' + c.campania.slice(0, 4), nombre: 'Campaña ' + c.campania }, c);
     CAMPANIAS[zid] = camp.map(c => 'c' + c.campania.slice(0, 4));
+    // Secuencias: 3 campañas reales consecutivas (la que arranca y las dos siguientes), en lugar de repetir un año.
+    const anioDe = c => +c.campania.slice(0, 4), hay = new Set(camp.map(anioDe));
+    const seqs = camp.map(anioDe).filter(y => [1, 2].every(k => hay.has(y + k)));
+    for (const y of seqs) esc['s' + y] = { id: 's' + y, nombre: 'Campañas ' + y + '/' + String(y + 1).slice(2) + ' a ' + (y + 2) + '/' + String(y + 3).slice(2),
+      secuencia: y, campania: y + '/' + String(y + 1).slice(2), temp: esc['c' + y].temp, precip: esc['c' + y].precip, total: esc['c' + y].total };
+    SECUENCIAS[zid] = seqs.map(y => 's' + y);
     if (camp.length) {
       const ord = camp.slice().sort((a, b) => a.total - b.total);
       const elegir = (id, nombre, c) => (esc[id] = Object.assign({ id, nombre }, c));
       elegir('seco', 'Año seco', ord[0]);
       elegir('humedo', 'Año húmedo', ord[ord.length - 1]);
+      // El año seco y el húmedo arrancan una secuencia real (si hay 2 campañas después; si no, la terminan).
+      const ys = new Set(seqs), ultima = seqs[seqs.length - 1];
+      for (const k of ['seco', 'humedo']) {
+        const y = anioDe(esc[k]);
+        esc[k].secuencia = ys.has(y) ? y : (ys.has(y - 2) ? y - 2 : (ys.has(y - 1) ? y - 1 : null));
+        if (esc[k].secuencia === null && ultima != null) esc[k].secuencia = ultima;
+      }
     }
     for (const e of Object.values(esc)) e.anomalia_pct = Math.round(100 * (e.total - totalProm) / totalProm);
     ESCENARIOS[zid] = esc;
@@ -191,11 +204,22 @@
   }
 
   /* Año de la campaña real que se está simulando (null = clima promedio). */
-  function anioEscenario(lote) {
+  // Campaña agrícola (julio a junio) de una fecha: la que empieza en julio de ese año o del anterior.
+  const campDe = d => d.getUTCFullYear() - (d.getUTCMonth() < 6 ? 1 : 0);
+  // Campaña HISTÓRICA que corresponde a una fecha simulada, según el escenario del lote:
+  //   'cAAAA' (o seco/húmedo sin secuencia) = siempre esa campaña; 'sAAAA' = campañas consecutivas desde el inicio del plan.
+  //   null = clima promedio.
+  function campHist(lote, d) {
     const zz = ZONAS[lote.zona] ? lote.zona : 'pampa_humeda', e = lote.escenario && ESCENARIOS[zz] && ESCENARIOS[zz][lote.escenario];
     if (!e || lote.escenario === 'promedio' || !e.campania) return null;
+    if (e.secuencia != null && lote.escC0 != null) return e.secuencia + (campDe(d) - lote.escC0);
     const y = parseInt(String(e.campania).slice(0, 4), 10);
     return isFinite(y) ? y : null;
+  }
+  function anioEscenario(lote, siembra) {
+    if (!siembra) { const zz = ZONAS[lote.zona] ? lote.zona : 'pampa_humeda', e = lote.escenario && ESCENARIOS[zz] && ESCENARIOS[zz][lote.escenario];
+      return e && lote.escenario !== 'promedio' && e.campania ? parseInt(e.campania, 10) : null; }
+    return campHist(lote, siembra);
   }
 
   const FACTORES_ORDEN = ['epoca', 'cosecha', 'temperatura', 'agua', 'ph', 'textura', 'drenaje', 'pendiente'];
@@ -240,8 +264,19 @@
     return [delta, addDias(d, delta)];
   }
 
-  function cicloClima(zona, inicio, dias, escenario) {
+  function cicloClima(zona, inicio, dias, escenario, lote) {
     const zz = ZONAS[zona] ? zona : 'pampa_humeda';
+    // Campaña real (repetida o en secuencia): cada día toma el mes de su año histórico en la serie mensual.
+    if (lote && escenario && escenario !== 'promedio' && ZONAS[zz].serie) {
+      let t = 0, p = 0, ok = true;
+      for (let i = 0; i < dias && ok; i++) {
+        const d = addDias(inicio, i), m = d.getUTCMonth(), ch = campHist(lote, d);
+        const s = ch === null ? null : ZONAS[zz].serie[ch + (m < 6 ? 1 : 0)];
+        if (!s || s.temp[m] == null || s.precip[m] == null) { ok = false; break; }
+        t += s.temp[m]; p += s.precip[m] / new Date(Date.UTC(d.getUTCFullYear(), m + 1, 0)).getUTCDate();
+      }
+      if (ok) return [t / dias, p];
+    }
     const z = (escenario && ESCENARIOS[zz][escenario]) || ZONAS[zz];
     let t = 0, p = 0;
     for (let i = 0; i < dias; i++) {
@@ -283,10 +318,89 @@
     return p;
   }
 
+  /* ---------- clima diario de NASA POWER (2001–2025) ----------
+     power_diario.json: precipitación, T máx/mín/media, GWETROOT (humedad radicular modelada, regional) y ET0 FAO-56
+     calculada con RH2M, WS2M y radiación. Solo para las celdas precargadas; el resto usa la serie mensual.
+     UMBRALES y KC son SUPUESTOS documentados: marcan eventos, no pérdidas de rendimiento confirmadas. */
+  const DIARIO = (() => {
+    if (typeof module !== 'undefined' && module.exports) { try { return require('./power_diario.json'); } catch (e) { return null; } }
+    return root.POWER_DIARIO || null;
+  })();
+  // Calor: días por encima del percentil 90 de las máximas de verano (dic–feb) de la propia celda, y nunca menos de
+  // 35 °C. Así "extremo" es raro para ese lugar y no depende del sesgo absoluto del reanálisis.
+  const UMBRALES = { lluvia_util_mm: 1, calor_min_c: 35, calor_pct: 0.9, helada_c: 0, helada_invierno_c: -4, lluvia_intensa_mm: 50,
+    seca_dias: 20, gwet_bajo: 0.4, deficit_ratio: 0.6, critico: [0.45, 0.70] };
+  // Coeficiente de cultivo medio del ciclo (aprox. FAO-56, tabla 12). ETc = Kc × ET0.
+  const KC = { soja: .85, maiz_temprano: .95, maiz_tardio: .95, girasol: .85, sorgo: .8, trigo: .8, cebada: .8,
+    vicia: .7, avena: .7, centeno: .7, crotalaria: .7, mijo: .7 };
+  const INVIERNO = new Set(['trigo', 'cebada', 'vicia', 'avena', 'centeno']); // toleran heladas leves
+  const DIA = 86400000;
+  const diarioDe = zid => (DIARIO && DIARIO.zonas && DIARIO.zonas[zid]) || null;
+  const UMBRAL_CALOR = {};
+  function umbralCalor(zid) {
+    if (UMBRAL_CALOR[zid] != null) return UMBRAL_CALOR[zid];
+    const z = diarioDe(zid), b = z ? baseDiario(z) : 0, v = [];
+    if (z) z.tmax.forEach((t, i) => { const m = new Date(b + i * DIA).getUTCMonth(); if (t != null && (m === 11 || m <= 1)) v.push(t); });
+    return (UMBRAL_CALOR[zid] = Math.max(UMBRALES.calor_min_c, v.length ? Math.round(10 * cuantil(v, UMBRALES.calor_pct)) / 10 : UMBRALES.calor_min_c));
+  }
+  const baseDiario = z => Date.UTC(+z.inicio.slice(0, 4), +z.inicio.slice(4, 6) - 1, +z.inicio.slice(6, 8));
+  // Índice del día histórico (mismo día y mes, en el año histórico dado); 29/2 → 28/2.
+  function idxHist(z, anio, d) {
+    const m = d.getUTCMonth(), dd = (m === 1 && d.getUTCDate() === 29) ? 28 : d.getUTCDate();
+    const i = Math.round((Date.UTC(anio, m, dd) - baseDiario(z)) / DIA);
+    return i >= 0 && i < z.n ? i : -1;
+  }
+  // Eventos y balance hídrico de un cultivo sembrado en `siembra` con el clima diario de la campaña histórica que
+  // le toca según el escenario del lote. null si no hay serie diaria o el escenario es el clima promedio.
+  function climaDiarioCiclo(cid, lote, siembra) {
+    const zid = ZONAS[lote.zona] ? lote.zona : null, z = zid && diarioDe(zid), c = CULTIVOS[cid];
+    if (!z || !lote.escenario || lote.escenario === 'promedio') return null;
+    const n = c.ciclo_dias, c0 = Math.floor(UMBRALES.critico[0] * n), c1 = Math.ceil(UMBRALES.critico[1] * n);
+    const frio = INVIERNO.has(cid) ? UMBRALES.helada_invierno_c : UMBRALES.helada_c, caliente = umbralCalor(zid);
+    let P = 0, ET = 0, calor = 0, heladas = 0, intensas = 0, seca = 0, secaMax = 0, secaCrit = 0, gMin = 1, gBajo = 0;
+    for (let i = 0; i < n; i++) {
+      const d = addDias(siembra, i), ch = campHist(lote, d);
+      if (ch === null) return null;
+      const k = idxHist(z, ch + (d.getUTCMonth() < 6 ? 1 : 0), d);
+      if (k < 0) return null;
+      const p = z.prec[k] ?? 0, crit = i >= c0 && i <= c1;
+      P += p; ET += z.et0[k] ?? 0;
+      if (z.tmax[k] != null && z.tmax[k] >= caliente && crit) calor++;
+      if (z.tmin[k] != null && z.tmin[k] <= frio) heladas++;
+      if (p >= UMBRALES.lluvia_intensa_mm) intensas++;
+      seca = p < UMBRALES.lluvia_util_mm ? seca + 1 : 0;
+      secaMax = Math.max(secaMax, seca); if (crit) secaCrit = Math.max(secaCrit, seca);
+      if (crit && z.gwet[k] != null) { gMin = Math.min(gMin, z.gwet[k]); if (z.gwet[k] < UMBRALES.gwet_bajo) gBajo++; }
+    }
+    const etc = (KC[cid] || .8) * ET, ratio = etc > 0 ? P / etc : 1;
+    // Multiplicadores de aptitud (SUPUESTOS): cada día de calor extremo en el período crítico −4 % (mín. 60 %); cada helada
+    // −12 % (mín. 50 %); racha seca en el período crítico más allá de 20 días −2 %/día (mín. 60 %);
+    // lluvia por debajo del 60 % de la demanda del cultivo (Kc × ET0) hasta −20 %.
+    const f = {
+      calor: clamp(1 - .04 * calor, .6, 1),
+      helada: clamp(1 - .12 * heladas, .5, 1),
+      seca: secaCrit <= UMBRALES.seca_dias ? 1 : clamp(1 - .02 * (secaCrit - UMBRALES.seca_dias), .6, 1),
+      deficit: ratio >= UMBRALES.deficit_ratio ? 1 : clamp(.8 + .2 * ratio / UMBRALES.deficit_ratio, .8, 1),
+    };
+    return { campania: campHist(lote, siembra), umbral_calor: caliente, lluvia: Math.round(P), et0: Math.round(ET), etc: Math.round(etc),
+      ratio: Math.round(ratio * 100) / 100, calor_critico: calor, heladas, lluvias_intensas: intensas,
+      seca_max: secaMax, seca_critico: secaCrit, gwet_min: Math.round(gMin * 100) / 100, gwet_bajo_dias: gBajo,
+      factores: f, estres: f.calor * f.helada * f.seca * f.deficit };
+  }
+  // Serie diaria de una campaña (julio a junio) para la línea de tiempo.
+  function serieDiariaCampania(zid, campania) {
+    const z = diarioDe(zid);
+    if (!z) return null;
+    const i0 = Math.round((Date.UTC(campania, 6, 1) - baseDiario(z)) / DIA), i1 = Math.round((Date.UTC(campania + 1, 6, 1) - baseDiario(z)) / DIA);
+    if (i0 < 0 || i1 > z.n) return null;
+    const sl = a => a.slice(i0, i1);
+    return { campania, inicio: fmtISO(new Date(Date.UTC(campania, 6, 1))), prec: sl(z.prec), tmax: sl(z.tmax), tmin: sl(z.tmin), gwet: sl(z.gwet), et0: sl(z.et0) };
+  }
+
   /* ---------- aptitud ---------- */
   function aptitud(cid, lote, siembra, cosechaLimite) {
     const c = CULTIVOS[cid], ciclo = c.ciclo_dias;
-    const [tMedia, precip] = cicloClima(lote.zona, siembra, ciclo, lote.escenario);
+    const [tMedia, precip] = cicloClima(lote.zona, siembra, ciclo, lote.escenario, lote);
     const precipEff = lote.riego ? Math.max(precip, c.agua_opt[0]) : precip;
     const f = {};
     f.epoca = clamp(1 - diasFueraVentana(siembra, c.siembra_opt) / c.margen_siembra_dias);
@@ -309,7 +423,10 @@
     for (const k of FACTORES_ORDEN) if (f[k] <= 0) razones.push(razon(k, siembra, tMedia, precipEff, lote));
     let indice = 0;
     if (!razones.length) indice = Math.exp(FACTORES_ORDEN.reduce((s, k) => s + Math.log(f[k]), 0) / FACTORES_ORDEN.length);
-    return { indice, factores: f, descartado: razones.length > 0, razones, fallo, tMedia, precip: precipEff };
+    // Campaña real con serie diaria: eventos extremos y déficit hídrico del ciclo multiplican la aptitud.
+    const diario = lote.pisoClima || lote.escC0 != null ? climaDiarioCiclo(cid, lote, siembra) : null;
+    if (diario && indice > 0) indice *= diario.estres;
+    return { indice, factores: f, descartado: razones.length > 0, razones, fallo, diario, tMedia, precip: precipEff };
   }
   function razon(k, siembra, t, p, lote) {
     const fmt = d => String(d.getUTCDate()).padStart(2, '0') + '/' + String(d.getUTCMonth() + 1).padStart(2, '0');
@@ -440,7 +557,7 @@
     if (apt.descartado) { base.descartado = true; return base; }
     // Rendimiento base oficial (MAGyP) si existe. En una campaña real, si el cultivo tiene el modelo clima->rendimiento
     // validado, la anomalía del año sale del modelo y no del índice de aptitud.
-    const rb = rendBase(cid, lote.zona), anioEsc = anioEscenario(lote);
+    const rb = rendBase(cid, lote.zona), anioEsc = anioEscenario(lote, siembra);
     let rend = rb.t_ha * apt.indice, rendModelo = false;
     if (anioEsc !== null && rb.modelo && rb.modelo.anomalia_prevista[anioEsc] !== undefined) {
       const aptN = aptitud(cid, Object.assign({}, lote, { escenario: null, pisoClima: null }), siembra, cosechaLimite);
@@ -611,13 +728,14 @@
           continue;
         }
       }
-      const ev = evaluarCultivo(cid, Object.assign({}, lote, { historial: hist, pisoClima: PISO_CLIMA }), siembra, null);
+      const ev = evaluarCultivo(cid, Object.assign({}, lote, { historial: hist, pisoClima: PISO_CLIMA, escC0: campDe(inicio) }), siembra, null);
       const dur = diffDias(finCiclo, siembra);
       const dias = Math.max(0, diffDias(finCiclo > fin ? fin : finCiclo, siembra));
       const frac = dur > 0 ? dias / dur : 0;
       const p = { cultivo: cid, nombre: c.nombre, tipo: c.tipo, siembra: fmtISO(siembra), fin: fmtISO(finCiclo),
         desde: diffDias(siembra, inicio), dias, cortada, viable: !ev.descartado,
-        aptitud: ev.descartado ? 0 : ev.apt.indice, epoca: ev.apt.factores.epoca, razones: ev.apt.razones, fallo: ev.apt.fallo || null };
+        aptitud: ev.descartado ? 0 : ev.apt.indice, epoca: ev.apt.factores.epoca, razones: ev.apt.razones, fallo: ev.apt.fallo || null,
+        diario: ev.apt.diario || null, f_agua: ev.apt.factores.agua, f_temp: ev.apt.factores.temperatura };
       if (p.viable) Object.assign(p, { margen: ev.margen_usd_ha * frac, n_rep: ev.balance.n_a_reponer * frac,
         salud: ev.comp.salud_suelo, rapidez: ev.comp.rapidez, resil: ev.comp.resiliencia, cumpl: ev.comp.cumplimiento, motivos: ev.motivos });
       pasos.push(p);
@@ -659,8 +777,29 @@
         coberturas: ok.filter(p => p.tipo === 'cobertura').length,
         fallidos: pasos.filter(p => p.fallo).length,
       },
+      clima_diario: resumenDiario(pasos.filter(p => p.viable)),
       alertas: alertas.concat(motivos),
     };
+  }
+
+  // Eventos del clima diario sumados en los cultivos de una rotación, y la causa principal de cada caída de aptitud.
+  const CAUSAS = { agua: 'lluvia del ciclo', temperatura: 'temperatura media', calor: 'golpes de calor', helada: 'heladas',
+    seca: 'rachas secas en el período crítico', deficit: 'déficit hídrico (lluvia < demanda)' };
+  function causaPaso(p) {
+    const f = { agua: p.f_agua, temperatura: p.f_temp };
+    if (p.diario) Object.assign(f, p.diario.factores);
+    const k = Object.keys(f).reduce((a, x) => f[x] < f[a] ? x : a, 'agua');
+    return f[k] < .85 ? k : null;
+  }
+  function resumenDiario(pasos) {
+    const con = pasos.filter(p => p.diario);
+    if (!con.length) return null;
+    const sum = k => con.reduce((s, p) => s + p.diario[k], 0);
+    const causas = {};
+    for (const p of pasos) { const c = causaPaso(p); if (c) causas[c] = (causas[c] || 0) + 1; }
+    return { ciclos: con.length, calor_critico: sum('calor_critico'), heladas: sum('heladas'), lluvias_intensas: sum('lluvias_intensas'),
+      seca_critico_max: Math.max(...con.map(p => p.diario.seca_critico)), ciclos_deficit: con.filter(p => p.diario.ratio < UMBRALES.deficit_ratio).length,
+      gwet_bajo_dias: sum('gwet_bajo_dias'), causas };
   }
 
   // Diferencias legibles de una rotación frente a la actual: [signo, texto].
@@ -698,30 +837,53 @@
   function compararEscenarios(lote, rotaciones, inicio, pesos) {
     const zid = ZONAS[lote.zona] ? lote.zona : 'pampa_humeda';
     const escs = ESCENARIOS_ORDEN.filter(k => ESCENARIOS[zid][k]).map(k => ESCENARIOS[zid][k]);
-    const filas = rotaciones.map(r => ({ id: r.id, nombre: r.nombre, scores: {}, reales: [], fallos: 0 }));
+    const filas = rotaciones.map(r => ({ id: r.id, nombre: r.nombre, scores: {}, reales: [], fallos: 0,
+      ev: { calor: 0, heladas: 0, intensas: 0, deficit: 0, seca: [] }, causas: {}, causasMalas: {} }));
     const correr = esc => compararRotaciones(Object.assign({}, lote, { escenario: esc }), rotaciones, inicio, pesos).rotaciones;
     for (const e of escs) correr(e.id).forEach((rr, i) => { filas[i].scores[e.id] = rr.pasos ? rr.score : null; });
-    const camps = CAMPANIAS[zid] || [];
-    for (const cid of camps) correr(cid).forEach((rr, i) => {
+    // Prueba de estrés: cada ventana de 3 campañas reales consecutivas (no se repite un mismo año).
+    const ventanas = (SECUENCIAS[zid] && SECUENCIAS[zid].length ? SECUENCIAS[zid] : CAMPANIAS[zid]) || [];
+    const porVentana = rotaciones.map(() => []);
+    for (const vid of ventanas) correr(vid).forEach((rr, i) => {
       if (!rr.pasos) return;
-      filas[i].reales.push(rr.score);
-      if (rr.indicadores.fallidos) filas[i].fallos++;
+      const f = filas[i];
+      f.reales.push(rr.score); porVentana[i].push(rr);
+      if (rr.indicadores.fallidos) f.fallos++;
+      const cd = rr.clima_diario;
+      if (cd) {
+        f.ev.calor += cd.calor_critico; f.ev.heladas += cd.heladas; f.ev.intensas += cd.lluvias_intensas; f.ev.deficit += cd.ciclos_deficit;
+        f.ev.seca.push(cd.seca_critico_max);
+      }
+      for (const p of rr.pasos.filter(x => x.viable)) { const c = causaPaso(p); if (c) f.causas[c] = (f.causas[c] || 0) + 1; }
     });
-    for (const f of filas) {
+    let conDiario = false;
+    filas.forEach((f, i) => {
       const n = f.reales.length;
       f.n = n;
       f.mediana = n ? Math.round(10 * cuantil(f.reales, .5)) / 10 : null;
       f.malo = n ? Math.round(10 * cuantil(f.reales, .1)) / 10 : null; // año malo: 1 de cada 10
       f.peor = n ? Math.min(...f.reales) : null;
-      delete f.reales;
-    }
+      // Causas en las ventanas malas (el 20 % de peor puntaje): qué explica la caída.
+      const corte = n ? cuantil(f.reales, .2) : null;
+      for (const rr of porVentana[i].filter(r => r.score <= corte))
+        for (const p of rr.pasos.filter(x => x.viable)) { const c = causaPaso(p); if (c) f.causasMalas[c] = (f.causasMalas[c] || 0) + 1; }
+      const nd = f.ev.seca.length;
+      if (nd) conDiario = true;
+      f.eventos = nd ? { ventanas: nd, calor: Math.round(10 * f.ev.calor / nd) / 10, heladas: Math.round(10 * f.ev.heladas / nd) / 10,
+        intensas: Math.round(10 * f.ev.intensas / nd) / 10, deficit: Math.round(10 * f.ev.deficit / nd) / 10,
+        seca_mediana: Math.round(cuantil(f.ev.seca, .5)), seca_max: Math.max(...f.ev.seca) } : null;
+      delete f.reales; delete f.ev;
+    });
     const conDatos = filas.filter(f => f.malo != null);
     const estable = conDatos.length ? conDatos.reduce((a, f) => f.malo > a.malo ? f : a) : null;
-    return { escenarios: escs.map(e => ({ id: e.id, nombre: e.nombre, campania: e.campania, total: e.total, anomalia_pct: e.anomalia_pct })),
-      filas, n_campanias: camps.length, estable: estable ? estable.id : null, periodo: POWER.periodo };
+    const e0 = ventanas.length ? ESCENARIOS[zid][ventanas[0]] : null, e1 = ventanas.length ? ESCENARIOS[zid][ventanas[ventanas.length - 1]] : null;
+    return { escenarios: escs.map(e => ({ id: e.id, nombre: e.nombre, campania: e.campania, total: e.total, anomalia_pct: e.anomalia_pct, secuencia: e.secuencia ?? null })),
+      filas, n_campanias: (CAMPANIAS[zid] || []).length, n_ventanas: ventanas.length, consecutivas: !!(SECUENCIAS[zid] && SECUENCIAS[zid].length),
+      rango: e0 && e1 ? [e0.secuencia ?? parseInt(e0.campania, 10), (e1.secuencia ?? parseInt(e1.campania, 10)) + 2] : null,
+      diario: conDiario, estable: estable ? estable.id : null, periodo: POWER.periodo };
   }
 
-  const API = { ESCENARIOS, ESCENARIOS_ORDEN, PISO_CLIMA, PEOR_FRAC, climaDesdePower, registrarZona, POWER_PERIODO: POWER.periodo, compararEscenarios, riesgoZona, resilienciaClima, CULTIVOS, ZONAS, FUENTE_CLIMA, TEXTURAS, DRENAJES, PESOS_DEFECTO, PESO_MAX, COMPONENTES_NOMBRE, COMPONENTES_DESC, FACTORES_NOMBRE,
+  const API = { UMBRALES, KC, umbralCalor, CAUSAS, diarioDe, serieDiariaCampania, climaDiarioCiclo, ESCENARIOS, ESCENARIOS_ORDEN, PISO_CLIMA, PEOR_FRAC, climaDesdePower, registrarZona, POWER_PERIODO: POWER.periodo, compararEscenarios, riesgoZona, resilienciaClima, CULTIVOS, ZONAS, FUENTE_CLIMA, TEXTURAS, DRENAJES, PESOS_DEFECTO, PESO_MAX, COMPONENTES_NOMBRE, COMPONENTES_DESC, FACTORES_NOMBRE,
     HORIZONTE_ANIOS, REF_MARGEN_ANUAL, recomendar, evaluarRotacion, compararRotaciones, normalizarPesos, parseFecha, fmtISO, addDias, margenUsd, rendBase, econDe };
   if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.Motor = API;
 })(typeof window !== 'undefined' ? window : globalThis);

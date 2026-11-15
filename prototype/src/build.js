@@ -10,7 +10,9 @@ const team = JSON.stringify(JSON.parse(fs.readFileSync(path.join(dir, 'team.json
 // así el build da el mismo resultado en cualquier sistema.
 const logo = Buffer.from(fs.readFileSync(path.join(dir, 'assets', 'nasa-logo.svg'), 'utf8').replace(/\r\n/g, '\n'), 'utf8');
 if (engine.includes('</script>')) throw new Error('engine.js contiene </script>');
-const datos = 'window.POWER_CLIMATOLOGY = ' + power + ';\nwindow.REND_MAGYP = ' + rend + ';\nwindow.TEAM = ' + team + ';\n';
+// Serie diaria de NASA POWER (fetch_power_diario.js): se inlinea para que la demo funcione sin conexión.
+const diario = fs.existsSync(path.join(dir, 'power_diario.json')) ? JSON.stringify(JSON.parse(fs.readFileSync(path.join(dir, 'power_diario.json'), 'utf8'))) : 'null';
+const datos = 'window.POWER_CLIMATOLOGY = ' + power + ';\nwindow.POWER_DIARIO = ' + diario + ';\nwindow.REND_MAGYP = ' + rend + ';\nwindow.TEAM = ' + team + ';\n';
 const logoUri = 'data:image/svg+xml;base64,' + logo.toString('base64');
 const out = tpl.replace('/*ENGINE*/', () => datos + engine).replace('/*NASA_LOGO_URI*/', () => logoUri);
 const dest = process.argv[2] || path.join(dir, '..', 'mvp-rotacion.html');

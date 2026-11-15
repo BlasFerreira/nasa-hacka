@@ -490,6 +490,29 @@ details.lote-det > .form { padding-top: 0; }
 .tl-row .sc { font-size: 18px; font-weight: 600; text-align: right; }
 @media (max-width: 640px) { .tl-row { grid-template-columns: 1fr 44px; } .tl-row .tlw { grid-column: 1 / -1; } }
 
+/* Análisis climático avanzado */
+.esc-tab.adv { min-width: 0; font-size: 13px; }
+.esc-tab.adv th, .esc-tab.adv td { white-space: normal; vertical-align: top; }
+@media (max-width: 640px) { .esc-tab.adv th small { display: none; } }
+.esc-tab.adv small { display: block; font-weight: 400; color: var(--muted); }
+.esc-tab td.izq, .esc-tab th.izq { text-align: left; }
+.camp-sel { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; }
+.camp-sel select { width: auto; }
+.tl-wrap { overflow-x: auto; }
+.tl-dia { width: 100%; min-width: 560px; height: auto; display: block; }
+.tl-dia .grid { stroke: var(--border); stroke-width: 1; }
+.tl-dia .ax, .tl-dia .tl-tag { font: 10px var(--font); fill: var(--muted); }
+.tl-dia .tl-lab { font: 600 9px var(--font); fill: #fff; pointer-events: none; }
+.tl-dia .tl-lab.cob { fill: var(--text); }
+.p-dia { fill: var(--c-lluvia, #0284c7); background: var(--c-lluvia, #0284c7); }
+.p-int { fill: var(--bad); background: var(--bad); }
+.m-calor { fill: #ea580c; background: #ea580c; }
+.m-helada { fill: #38bdf8; background: #38bdf8; }
+.g-bajo { fill: color-mix(in srgb, var(--warn) 14%, transparent); background: color-mix(in srgb, var(--warn) 25%, transparent); }
+.g-line { fill: none; stroke: var(--c-suelo); stroke-width: 1.6; }
+.g-line-l { background: var(--c-suelo); height: 3px !important; }
+.adv-notas { margin: 10px 0 0; padding-left: 18px; font-size: 14px; display: grid; gap: 4px; }
+
 /* Pestañas */
 .tabs { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); align-self: flex-start; max-width: 100%; }
 .tabs button { border: 0; background: transparent; border-radius: 7px; padding: 6px 14px; font-weight: 500; color: var(--muted); cursor: pointer; min-height: 32px; }
@@ -1340,6 +1363,10 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
   function evidenciaHTML() {
     const filas = [
       ['Clima de cada campaña', 'NASA POWER', 'Temperatura y lluvia mensual ' + M.FUENTE_CLIMA.periodo + ' en la celda de NASA POWER del lote (unos 55 × 60 km): el promedio o una campaña real (seca o húmeda). No es un pronóstico. GPM IMERG y SMAP están planificados.'],
+      ['Clima diario', 'NASA POWER', 'Lluvia, temperatura máxima, mínima y media, humedad, viento y radiación diarios ' + M.FUENTE_CLIMA.periodo + ' (API diaria, MERRA-2), precargados para las celdas de los campos de ejemplo.'],
+      ['Demanda de agua (ET0)', 'derivado', 'Evapotranspiración de referencia FAO-56 Penman-Monteith calculada con las variables diarias de NASA POWER; la demanda del cultivo es Kc × ET0, con Kc medio del ciclo supuesto (FAO-56).'],
+      ['Humedad radicular (GWETROOT)', 'modelado · NASA POWER', 'Índice 0–1 de MERRA-2 para toda la celda. Sirve para ver períodos secos; no es una medición de la humedad del lote.'],
+      ['Eventos extremos', 'derivado · umbrales supuestos', 'Calor extremo (percentil 90 del verano de la celda), heladas, rachas secas y lluvias intensas. Su efecto en la aptitud es un supuesto documentado: marcan riesgo, no pérdidas confirmadas.'],
       ['Resiliencia climática', 'derivado', 'De cada cultivo, en su fecha de siembra: aptitud promedio en el ' + Math.round(100 * M.PEOR_FRAC) + ' % de años más malos de la serie anual de NASA POWER ' + M.FUENTE_CLIMA.periodo + '. Clima observado; rangos de cada cultivo del catálogo (supuesto).'],
       ['Requisitos y ventanas de siembra', 'supuesto', 'Catálogo ilustrativo, a validar con EcoCrop (FAO) e INTA.'],
       ['Rendimientos', 'observado · MAGyP', 'Media de las últimas 10 campañas por zona (MAGyP Estimaciones Agrícolas). En campañas reales, maíz y soja (ambas zonas) y sorgo (Pampa) usan un modelo clima-rendimiento validado dejando un año afuera: explica del 23 % al 54 % de lo que el rendimiento se aparta de su tendencia (docs/model_card.md); el resto, el índice de aptitud. El modelo acierta qué años son malos pero subestima cuánto caen.'],
@@ -1357,7 +1384,8 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
   function escSelHTML(ce) {
     return '<div class="esc-sel" role="group" aria-label="Escenario climático">' + ce.escenarios.map(e =>
       '<button type="button" class="btn" data-esc="' + e.id + '" aria-pressed="' + (state.escenario === e.id) + '">' + e.nombre +
-      '<small>' + esc(e.campania) + ' · ' + e.total + ' mm' + (e.id === 'promedio' ? '' : ' (' + signo(e.anomalia_pct) + ' %)') + '</small></button>').join('') + '</div>';
+      '<small>' + esc(e.campania) + ' · ' + e.total + ' mm' + (e.id === 'promedio' ? '' : ' (' + signo(e.anomalia_pct) + ' %)') +
+      (e.secuencia != null ? ' · y las 2 campañas ' + (e.secuencia === parseInt(e.campania, 10) ? 'siguientes' : 'de alrededor') : '') + '</small></button>').join('') + '</div>';
   }
   function escTablaHTML(ce) {
     const seco = ce.escenarios.find(e => e.id === 'seco');
@@ -1366,24 +1394,135 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     let lead = 'No hay serie anual suficiente para probar las rotaciones.';
     if (top.length) {
       const empatadas = top.filter(f => top[0].malo - f.malo < 2);
-      lead = 'Probadas contra <b>' + ce.n_campanias + ' campañas reales</b> (' + esc(ce.periodo) + '): ' +
+      lead = 'Probadas contra <b>' + (ce.consecutivas ? ce.n_ventanas + ' secuencias de 3 campañas reales seguidas' : ce.n_campanias + ' campañas reales') + '</b> (' +
+        (ce.rango ? ce.rango[0] + '/' + String(ce.rango[0] + 1).slice(2) + ' a ' + ce.rango[1] + '/' + String(ce.rango[1] + 1).slice(2) : esc(ce.periodo)) + '): ' +
         (empatadas.length > 1 ? empatadas.map(nom).join(' y ') + ' son igual de estables' : 'la más estable es ' + nom(top[0])) +
         '. En un año malo (1 de cada 10) mantiene' + (empatadas.length > 1 ? 'n' : '') + ' unos <b>' + Math.round(top[0].malo) + '</b> pts' +
         (top[0].id === 'actual' ? '.' : '; tu rotación actual, ' + Math.round(filas[0].malo) + '.');
     }
     const best = k => Math.max(...filas.map(f => f[k] ?? -1));
     const cel = (v, k, extra) => '<td class="num' + (v != null && v === best(k) ? ' top' : '') + (extra || '') + '">' + (v == null ? '—' : Math.round(v)) + '</td>';
-    const head = '<tr><th>Rotación</th><th>Año típico<small>mediana</small></th><th>Año malo<small>1 de cada 10</small></th>' +
+    const head = '<tr><th>Rotación</th><th>Período típico<small>mediana</small></th><th>Período malo<small>1 de cada 10</small></th>' +
       (seco ? '<th>Sequía<small>' + esc(seco.campania) + '</small></th>' : '') + '<th>Campañas con<small>cosecha fallida</small></th></tr>';
     const rows = filas.map((f, i) => '<tr><td><span class="rcell"><span class="rtag sm" style="--rc:' + ROT_COL[i] + '">' + ROT_TAG[i] + '</span>' + esc(f.nombre) + '</span></td>' +
       cel(f.mediana, 'mediana') + cel(f.malo, 'malo') + (seco ? cel(f.scores.seco, null) : '') +
       '<td class="num">' + f.fallos + ' de ' + f.n + '</td></tr>').join('');
+    const metodo = ce.consecutivas
+      ? 'Cada rotación se simula en cada tramo de 3 campañas reales consecutivas (julio a junio) de NASA POWER, con el clima de cada año en su orden real' +
+        (ce.diario ? ', y día por día: calor extremo, heladas, rachas secas y déficit hídrico de cada ciclo' : '') + '. '
+      : 'Cada rotación se simula en cada campaña real (julio a junio) de NASA POWER, repitiendo ese clima las 3 campañas. ';
     return '<section class="card card-pad"><div class="rank-head"><h2>Prueba de clima</h2><span class="hint">¿Cómo le va a cada rotación según cómo venga el año?</span></div>' +
       '<p class="lead" style="margin-top:8px">' + lead + '</p>' +
       '<div class="esc-tab-wrap"><table class="esc-tab"><thead>' + head + '</thead><tbody>' + rows + '</tbody></table></div>' +
-      '<p class="hint" style="margin-top:8px">Cada rotación se simula en cada campaña real (julio a junio) de NASA POWER, repitiendo ese clima las 3 campañas. ' +
+      '<p class="hint" style="margin-top:8px">' + metodo +
       'Es una prueba de estrés, no un pronóstico. Si el clima de un año no alcanza para un cultivo ya sembrado, se cuenta como cosecha muy mala (' + Math.round(M.PISO_CLIMA * 100) + ' % de aptitud), no como cero.</p>' +
       '<p class="hint" style="margin:12px 0 6px">Ver las rotaciones de abajo con el clima de:</p>' + escSelHTML(ce) + '</section>';
+  }
+
+  /* ---------- análisis climático avanzado (serie diaria de NASA POWER) ---------- */
+  const coma = v => String(v).replace('.', ',');
+  const fmtDM = d => String(d.getUTCDate()).padStart(2, '0') + '/' + String(d.getUTCMonth() + 1).padStart(2, '0');
+  function climaAvanzadoHTML(ce, campo, lote, rots, zid) {
+    const U = M.UMBRALES;
+    if (!ce.diario) return '<section class="card card-pad"><div class="rank-head"><h2>Análisis climático avanzado</h2></div>' +
+      '<p class="hint" style="margin-top:8px">El análisis día por día usa la serie diaria de NASA POWER, que está precargada solo para las celdas de los campos de ejemplo. ' +
+      'Para la celda de este lote se usa la serie mensual.</p></section>';
+    const caliente = M.umbralCalor(zid);
+    const causas = f => {
+      const tot = Object.values(f.causasMalas).reduce((a, b) => a + b, 0);
+      if (!tot) return '<span class="sub">sin caídas marcadas</span>';
+      return Object.entries(f.causasMalas).sort((a, b) => b[1] - a[1]).slice(0, 2)
+        .map(([k, v]) => esc(M.CAUSAS[k]) + ' <b class="mono">' + Math.round(100 * v / tot) + ' %</b>').join('<br>');
+    };
+    const filas = ce.filas.map((f, i) => {
+      const e = f.eventos;
+      return '<tr><td><span class="rcell"><span class="rtag sm" style="--rc:' + ROT_COL[i] + '">' + ROT_TAG[i] + '</span>' + esc(f.nombre) + '</span></td>' +
+        (e ? '<td class="num">' + coma(e.calor) + '</td><td class="num">' + coma(e.heladas) + '</td><td class="num">' + e.seca_mediana + ' d<small> (máx. ' + e.seca_max + ')</small></td>' +
+          '<td class="num">' + coma(e.intensas) + '</td><td class="num">' + coma(e.deficit) + '</td>' : '<td colspan="5">—</td>') +
+        '<td class="izq">' + causas(f) + '</td></tr>';
+    }).join('');
+    const tabla = '<div class="esc-tab-wrap"><table class="esc-tab adv"><thead><tr><th>Rotación</th>' +
+      '<th>Calor extremo<small>días ≥ ' + String(caliente).replace('.', ',') + ' °C en período crítico</small></th>' +
+      '<th>Heladas<small>días en el ciclo</small></th><th>Racha seca<small>período crítico, mediana</small></th>' +
+      '<th>Lluvias intensas<small>días ≥ ' + U.lluvia_intensa_mm + ' mm</small></th><th>Ciclos con déficit<small>lluvia &lt; ' + Math.round(100 * U.deficit_ratio) + ' % de la demanda</small></th>' +
+      '<th class="izq">Qué explica las caídas<small>en los períodos malos</small></th></tr></thead><tbody>' + filas + '</tbody></table></div>';
+    const zd = M.diarioDe(zid), anios = [];
+    for (let y = +zd.inicio.slice(0, 4); y + 1 <= +zd.inicio.slice(0, 4) + Math.floor(zd.n / 365.25) - 1; y++) anios.push(y);
+    if (state.campVista == null || !anios.includes(state.campVista)) state.campVista = anios.includes(2022) ? 2022 : anios[anios.length - 1];
+    const sel = '<label class="camp-sel">Campaña <select id="camp-vista">' + anios.map(y => '<option value="' + y + '"' + (y === state.campVista ? ' selected' : '') + '>' +
+      y + '/' + String(y + 1).slice(2) + '</option>').join('') + '</select></label>';
+    return '<section class="card card-pad clima-adv"><div class="rank-head"><h2>Análisis climático avanzado</h2>' +
+      '<span class="hint">Clima diario NASA POWER ' + esc(M.FUENTE_CLIMA.periodo) + ' · promedio por tramo de 3 campañas</span></div>' + tabla +
+      '<div class="rank-head" style="margin-top:18px"><h3 class="sec">Línea de tiempo de una campaña</h3>' + sel + '</div>' +
+      lineaTiempoHTML(zid, state.campVista, lote, rots, caliente) +
+      '<p class="hint" style="margin-top:8px">Umbrales: calor extremo = máxima por encima del percentil 90 del verano de esta celda (' + String(caliente).replace('.', ',') +
+      ' °C); helada = mínima ≤ ' + U.helada_c + ' °C (≤ ' + U.helada_invierno_c + ' °C en cultivos de invierno); día seco = menos de ' + U.lluvia_util_mm + ' mm; ' +
+      'período crítico = ' + Math.round(100 * U.critico[0]) + ' a ' + Math.round(100 * U.critico[1]) + ' % del ciclo; demanda = Kc × ET0 (FAO-56). ' +
+      'La humedad radicular (GWETROOT) es un valor modelado para toda la celda, no una medición del lote. Los eventos marcan riesgo, no pérdidas confirmadas.</p></section>';
+  }
+  function lineaTiempoHTML(zid, anio, lote, rots, caliente) {
+    const sd = M.serieDiariaCampania(zid, anio);
+    if (!sd) return '<p class="hint">Sin datos diarios para esa campaña.</p>';
+    const n = sd.prec.length, W = 720, X0 = 34, PW = W - X0 - 8, xd = i => X0 + PW * i / n;
+    // Cultivos de cada rotación sembrados en la primera campaña del plan, con el clima de esa campaña real.
+    const ini = M.parseFecha(state.siembra), c0 = ini.getUTCFullYear() - (ini.getUTCMonth() < 6 ? 1 : 0), jul = Date.UTC(c0, 6, 1);
+    let bandas = '';
+    const notas = new Map(); // texto -> { cultivo, tags[] }
+    rots.forEach((r, ri) => {
+      const ev = M.evaluarRotacion(Object.assign({}, inputEsc(actual().campo, lote), { escenario: 'c' + anio }), r.seq, ini, state.pesos);
+      if (!ev) return;
+      const y = 4 + ri * 13;
+      bandas += '<text x="' + (X0 - 4) + '" y="' + (y + 9) + '" class="tl-tag" text-anchor="end">' + ROT_TAG[ri] + '</text>';
+      for (const p of ev.pasos) {
+        const d0 = (M.parseFecha(p.siembra) - jul) / 864e5, d1 = (M.parseFecha(p.fin) - jul) / 864e5;
+        if (d1 <= 0 || d0 >= n) continue;
+        const a = Math.max(0, d0), b = Math.min(n, d1);
+        bandas += '<rect x="' + xd(a).toFixed(1) + '" y="' + y + '" width="' + (xd(b) - xd(a)).toFixed(1) + '" height="11" rx="2" style="fill:' +
+          (p.tipo === 'cobertura' ? 'color-mix(in srgb, var(--c-suelo) 45%, var(--surface))' : ROT_COL[ri]) + '"><title>' + esc(p.nombre) + '</title></rect>';
+        if (b - a > 40) bandas += '<text x="' + (xd(a) + 4).toFixed(1) + '" y="' + (y + 9) + '" class="tl-lab' + (p.tipo === 'cobertura' ? ' cob' : '') + '">' + esc(p.nombre) + '</text>';
+        const dd = p.diario;
+        if (dd) {
+          const partes = [];
+          if (dd.seca_critico > M.UMBRALES.seca_dias) partes.push(dd.seca_critico + ' días seguidos sin lluvia útil en su período crítico');
+          if (dd.calor_critico) partes.push(dd.calor_critico + (dd.calor_critico === 1 ? ' día' : ' días') + ' de calor extremo en el período crítico');
+          if (dd.heladas) partes.push(dd.heladas + (dd.heladas === 1 ? ' helada' : ' heladas'));
+          if (dd.ratio < M.UMBRALES.deficit_ratio) partes.push('lluvia del ' + Math.round(100 * dd.ratio) + ' % de lo que demanda el cultivo');
+          const clave = p.nombre + '|' + partes.join(', ');
+          if (partes.length && d0 >= 0 && d0 < n) { if (!notas.has(clave)) notas.set(clave, { cultivo: p.nombre, texto: partes.join(', '), tags: [] });
+            const nt = notas.get(clave); if (!nt.tags.includes(ROT_TAG[ri])) nt.tags.push(ROT_TAG[ri]); }
+        }
+      }
+    });
+    const yb = 4 + rots.length * 13 + 6;
+    // Lluvia diaria (barras) y lluvias intensas.
+    const RH = 70, maxP = Math.max(40, ...sd.prec.map(v => v || 0));
+    let lluvia = '';
+    sd.prec.forEach((v, i) => { if (v >= 1) { const h = RH * Math.min(1, v / maxP); lluvia += '<rect x="' + xd(i).toFixed(1) + '" y="' + (yb + RH - h).toFixed(1) + '" width="' + Math.max(1, PW / n).toFixed(2) + '" height="' + h.toFixed(1) + '" class="' + (v >= M.UMBRALES.lluvia_intensa_mm ? 'p-int' : 'p-dia') + '"/>'; } });
+    // Calor extremo y heladas (marcas).
+    const ym = yb + RH + 6;
+    let marcas = '';
+    sd.tmax.forEach((t, i) => { if (t != null && t >= caliente) marcas += '<rect x="' + xd(i).toFixed(1) + '" y="' + ym + '" width="2" height="8" class="m-calor"><title>' + t + ' °C</title></rect>'; });
+    sd.tmin.forEach((t, i) => { if (t != null && t <= M.UMBRALES.helada_c) marcas += '<rect x="' + xd(i).toFixed(1) + '" y="' + (ym + 10) + '" width="2" height="8" class="m-helada"><title>' + t + ' °C</title></rect>'; });
+    // Humedad radicular (GWETROOT) con la franja "baja".
+    const yg = ym + 26, GH = 50, yv = v => yg + GH - GH * v;
+    const pts = sd.gwet.map((v, i) => v == null ? null : xd(i).toFixed(1) + ',' + yv(v).toFixed(1)).filter(Boolean).join(' ');
+    const bajo = '<rect x="' + X0 + '" y="' + yv(M.UMBRALES.gwet_bajo).toFixed(1) + '" width="' + PW + '" height="' + (yv(0) - yv(M.UMBRALES.gwet_bajo)).toFixed(1) + '" class="g-bajo"/>';
+    const meses = ['Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
+    let ejes = '';
+    for (let k = 0; k < 12; k++) { const i = (Date.UTC(anio + (k >= 6 ? 1 : 0), (6 + k) % 12, 1) - Date.UTC(anio, 6, 1)) / 864e5;
+      ejes += '<line x1="' + xd(i).toFixed(1) + '" x2="' + xd(i).toFixed(1) + '" y1="' + yb + '" y2="' + (yg + GH) + '" class="grid"/><text x="' + (xd(i) + 3).toFixed(1) + '" y="' + (yg + GH + 12) + '" class="ax">' + meses[k] + '</text>'; }
+    const H = yg + GH + 16;
+    const tot = sd.prec.reduce((a, v) => a + (v || 0), 0), et = sd.et0.reduce((a, v) => a + (v || 0), 0);
+    const svg = '<div class="tl-wrap"><svg class="tl-dia" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Clima diario de la campaña ' + anio + '/' + String(anio + 1).slice(2) + '">' +
+      ejes + bandas + lluvia + marcas + bajo + '<polyline points="' + pts + '" class="g-line"/>' +
+      '<text x="' + (X0 - 4) + '" y="' + (yb + 10) + '" class="ax" text-anchor="end">mm</text>' +
+      '<text x="' + (X0 - 4) + '" y="' + (ym + 8) + '" class="ax" text-anchor="end">calor</text><text x="' + (X0 - 4) + '" y="' + (ym + 18) + '" class="ax" text-anchor="end">helada</text>' +
+      '<text x="' + (X0 - 4) + '" y="' + (yg + 8) + '" class="ax" text-anchor="end">hum.</text></svg></div>';
+    const ley = '<div class="tl-legend"><span><i class="p-dia"></i>Lluvia diaria</span><span><i class="p-int"></i>Lluvia ≥ ' + M.UMBRALES.lluvia_intensa_mm + ' mm</span>' +
+      '<span><i class="m-calor"></i>Calor extremo</span><span><i class="m-helada"></i>Helada</span><span><i class="g-line-l"></i>Humedad radicular (GWETROOT)</span><span><i class="g-bajo"></i>Humedad baja (&lt; ' + M.UMBRALES.gwet_bajo + ')</span></div>';
+    return '<p class="lead" style="margin:6px 0">Campaña ' + anio + '/' + String(anio + 1).slice(2) + ': ' + Math.round(tot) + ' mm de lluvia contra ' + Math.round(et) + ' mm de ET0.</p>' +
+      svg + ley + (notas.size ? '<ul class="adv-notas">' + [...notas.values()].slice(0, 5).map(t => '<li><b>' + esc(t.cultivo) + '</b> (' +
+        t.tags.join(t.tags.length === 2 ? ' y ' : ', ') + '): ' + esc(t.texto) + '.</li>').join('') + '</ul>' : '');
   }
 
   function renderRotaciones() {
@@ -1409,15 +1548,17 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       : '<b>+' + Math.round(m.score - base.score) + '</b> frente a tu rotación actual (' + Math.round(base.score) + ')');
     const why = pros.concat(contra).map(([sg, t]) => '<li class="' + (sg === '+' ? 'pos' : 'neg') + '"><b>' + (sg === '+' ? '+' : '−') + '</b><span>' + esc(t) + '</span></li>').join('');
     const head = '<section class="card verdict rot"><div class="v-ey">Plan para las campañas ' + camp(c0) + ' a ' + camp(c0 + M.HORIZONTE_ANIOS - 1) +
-      (escAct.id === 'promedio' ? '' : ' · con el clima de ' + esc(escAct.campania)) + '</div>' +
+      (escAct.id === 'promedio' ? '' : ' · con el clima real de ' + (escAct.secuencia != null ? escAct.secuencia + '/' + String(escAct.secuencia + 1).slice(2) + ' a ' + (escAct.secuencia + 2) + '/' + String(escAct.secuencia + 3).slice(2) : esc(escAct.campania))) + '</div>' +
       '<h2>' + titulo + '</h2><p class="v-score">' + puntaje + '</p>' + (why ? '<ul class="v-why">' + why + '</ul>' : '') +
       '<div class="v-actions"><span class="hint">Puntaje de 0 a 100. Cambiá las prioridades en «Ajustes» y mirá cómo cambia.</span>' +
       '<button class="btn" type="button" id="rot-reset">Restablecer ejemplos</button></div></section>';
     const tlCmp = '<section class="card tl-cmp" aria-label="Las 3 rotaciones en el tiempo"><div class="rank-head"><h2>Las 3 rotaciones en el tiempo</h2></div>' +
       r.rotaciones.map((e, i) => e.pasos ? '<div class="tl-row"><span class="rn"><span class="rtag sm" style="--rc:' + ROT_COL[i] + '">' + ROT_TAG[i] + '</span><span>' + esc(e.nombre) + '</span></span>' +
         '<div class="tlw">' + timelineHTML(e, ROT_COL[i]) + '</div><span class="sc num">' + Math.round(e.score) + '</span></div>' : '').join('') + leyenda + '</section>';
-    $('results').innerHTML = head + tlCmp + escTablaHTML(ce) + '<div class="rank-head"><h2>Detalle de cada rotación</h2></div>' + r.rotaciones.map((e, i) => rotCardHTML(e, i, m.id, ce)).join('') + ejesHTML(r) + evidenciaHTML();
+    const zidL = climaLote(campo, lote).zid;
+    $('results').innerHTML = head + tlCmp + escTablaHTML(ce) + climaAvanzadoHTML(ce, campo, lote, rotacionesDe(lote), zidL) + '<div class="rank-head"><h2>Detalle de cada rotación</h2></div>' + r.rotaciones.map((e, i) => rotCardHTML(e, i, m.id, ce)).join('') + ejesHTML(r) + evidenciaHTML();
     $('results').querySelectorAll('[data-esc]').forEach(b => b.addEventListener('click', () => { state.escenario = b.dataset.esc; render(); }));
+    if ($('camp-vista')) $('camp-vista').addEventListener('change', e => { state.campVista = +e.target.value; render(); const s = $('camp-vista'); if (s) s.focus(); });
     $('rot-reset').addEventListener('click', () => { lote.rotacion_habitual = lote._rotOrig.slice(); delete state.alts[lote.id]; render(); });
     $('results').querySelectorAll('.x').forEach(b => b.addEventListener('click', () => {
       const i = Number(b.dataset.rot), seq = rotacionesDe(lote)[i].seq.slice();
