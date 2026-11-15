@@ -676,7 +676,7 @@
     const idon = mejor && mejor.score > 0 ? Math.round(1000 * ev.score / mejor.score) / 10 : 0;
     const nota = pos === 1 ? 'Tu rotación habitual coincide con la mejor opción.'
       : idon >= 90 ? 'Tu rotación habitual está muy cerca de la mejor opción.'
-      : 'Hay ' + (pos - 1) + ' alternativa(s) con mejor score para este lote y fecha.';
+      : 'Hay ' + (pos - 1) + ' alternativa(s) con mejor puntaje para este lote y fecha.';
     return Object.assign(out, { viable: true, score: ev.score, idoneidad: idon, posicion: pos, nota });
   }
 

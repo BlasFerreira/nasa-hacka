@@ -545,6 +545,43 @@ details.lote-det > .form { padding-top: 0; }
 .opt-borr { display: grid; gap: 6px; font-size: 13px; }
 .opt-borr li { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
+/* UX: índice de página, secciones plegables, aclaraciones agrupadas, acciones del campo, tablas en celular */
+.indice { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; padding: 2px 2px 0; }
+.indice .hint { margin-right: 4px; }
+.indice button { border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 999px; padding: 5px 12px; font: 500 13px var(--font); cursor: pointer; }
+.indice button:hover { border-color: var(--primary); color: var(--primary); }
+details.pleg { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius, 14px); scroll-margin-top: 80px; }
+details.pleg > summary { list-style: none; cursor: pointer; padding: 14px 16px; display: grid; gap: 2px; }
+details.pleg > summary::-webkit-details-marker { display: none; }
+details.pleg > summary .pleg-t { font-weight: 600; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+details.pleg > summary .pleg-t::before { content: '▸'; color: var(--primary); transition: transform .15s; }
+details.pleg[open] > summary .pleg-t::before { transform: rotate(90deg); }
+details.pleg > summary:hover .pleg-t { color: var(--primary); }
+details.pleg[open] > summary { border-bottom: 1px solid var(--border); }
+.pleg-c { display: grid; gap: 14px; padding: 14px; }
+.pleg-c > .card { border: 0; box-shadow: none; padding-top: 0; }
+.pleg-c > .card > .rank-head:first-child > h2 { display: none; }
+#sec-tl, #sec-clima { scroll-margin-top: 80px; }
+details.sobre > summary { cursor: pointer; color: var(--muted); font-size: 13px; list-style: none; }
+details.sobre > summary::-webkit-details-marker { display: none; }
+details.sobre > summary:hover { color: var(--primary); }
+details.sobre[open] > summary { margin-bottom: 6px; }
+details.card.foot.sobre > summary b { font-weight: 600; }
+.ctx-r:has(.ctx-acc) { flex-direction: column; align-items: flex-end; gap: 10px; }
+.ctx-acc { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.ctx-pri { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.dash-tbl .sub.m-ha { display: none; }
+@media (max-width: 640px) {
+  .ctx-r:has(.ctx-acc) { align-items: stretch; } .ctx-acc, .ctx-pri { justify-content: flex-start; }
+  .dash-tbl thead { display: none; }
+  .dash-tbl, .dash-tbl tbody { display: block; width: 100%; }
+  .dash-tbl tr { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .dash-tbl td { display: block; padding: 0 !important; border: 0 !important; text-align: left !important; }
+  .dash-tbl td.lt { grid-column: 1 / -1; }
+  .dash-tbl td.d-ha { display: none; }
+  .dash-tbl .sub.m-ha { display: inline; margin-left: 6px; }
+  .dash-tbl td[data-l]::before { content: attr(data-l); display: block; font: 500 11px var(--font); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px; }
+}
 /* Climate Twin 3.1 */
 .tw-haze { position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0; transition: opacity .6s ease;
   background: linear-gradient(180deg, transparent 0%, rgb(255 170 90 / .10) 45%, rgb(255 140 70 / .16) 70%, transparent 100%); background-size: 100% 220%; }
@@ -876,7 +913,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
         <div class="mej-legend"><span>Mejora posible frente a la rotación actual:</span>
           <span><i style="background:#22c55e"></i>hasta 5 pts</span><span><i style="background:#f59e0b"></i>5 a 15 pts</span><span><i style="background:#ef4444"></i>más de 15 pts</span>
           <span><i class="celda"></i>zona del dato de clima (NASA POWER)</span></div>
-        <p class="hint">Campos de ejemplo: los límites siguen caminos y potreros reales de OpenStreetMap, pero los lotes y sus datos son ficticios. El clima sale de la celda de NASA POWER (0,5° × 0,625°, unos 55 × 60 km): es el mismo para todos los lotes dentro de ella.</p>
+        <details class="sobre"><summary>ⓘ Sobre los datos del mapa</summary><p class="hint">Campos de ejemplo: los límites siguen caminos y potreros reales de OpenStreetMap, pero los lotes y sus datos son ficticios. El clima sale de la celda de NASA POWER (0,5° × 0,625°, unos 55 × 60 km): es el mismo para todos los lotes dentro de ella.</p></details>
       </div>
     </section>
     </div>
@@ -884,7 +921,6 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     <div class="stack" id="view-dash" hidden></div>
 
     <div class="stack" id="view-lote" hidden>
-    <div id="slot-map-lote"></div>
     <div class="cols">
       <div class="stack">
         <section class="card" aria-labelledby="t-plan">
@@ -963,6 +999,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
         <div class="stack" id="results" aria-live="polite"></div>
       </div>
     </div>
+    <div id="slot-map-lote"></div>
     </div>
 
     <!-- Optimizar el campo completo. Los mapas son fijos (no se regeneran) para no destruir Leaflet en cada render. -->
@@ -1076,7 +1113,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
   reindexar();
 
   // vista: 'inicio' (resumen general) | 'campo' (resumen de un campo) | 'rotaciones' | 'cultivo' (análisis de un lote)
-  const state = { sel: 'l1', campo: 'c1', siembra: '2026-11-14', cosecha: '', pesos: Object.assign({}, M.PESOS_DEFECTO), wPreset: 'equilibrado', abierto: null, vista: 'inicio', alts: {}, expand: {}, escenario: 'promedio' };
+  const state = { pleg: {}, sel: 'l1', campo: 'c1', siembra: '2026-11-14', cosecha: '', pesos: Object.assign({}, M.PESOS_DEFECTO), wPreset: 'equilibrado', abierto: null, vista: 'inicio', alts: {}, expand: {}, escenario: 'promedio' };
   if (guardado && guardado.alts) state.alts = guardado.alts;
   if (!lotesPlano.some(x => x.lote.id === state.sel)) state.sel = lotesPlano[0].lote.id;
   const actual = () => lotesPlano.find(x => x.lote.id === state.sel);
@@ -1336,7 +1373,8 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       k = c ? migas([['Resumen general', '#/inicio'], ['Resumen del campo']]) : '<span>Resumen general</span>';
       h1 = c ? c.nombre : 'Todos tus campos';
       sub = (c ? c.provincia : CAMPOS.length + ' campos') + ' · ' + nLotes(lotes.length) + ' · ' + haDe(lotes) + ' ha · campaña desde el ' + fmtF(state.siembra);
-      der = '<span class="hint">Prioridades</span><div class="w-presets" role="group" aria-label="Prioridades">' + presetsHTML() + '</div>';
+      der = (c && c.lotes.length ? '<div class="ctx-acc"><a class="btn primary" href="#/optimizar/' + c.id + '">Optimizar mi campo</a><a class="btn" href="#/climate-twin/' + c.id + '">Climate Twin 3D</a></div>' : '') +
+        '<div class="ctx-pri"><span class="hint">Prioridades</span><div class="w-presets" role="group" aria-label="Prioridades">' + presetsHTML() + '</div></div>';
     }
     $('ctx').innerHTML = '<div class="ctx-l"><div class="ctx-k">' + k + '</div><h1 id="page-h1" tabindex="-1">' + esc(h1) + '</h1><p class="ctx-s">' + esc(sub) + '</p></div><div class="ctx-r">' + der + '</div>';
   }
@@ -1470,14 +1508,15 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     if (!ra.disponible) return '<section class="card rot"><span class="section-label">Rotación actual</span><p class="note">Este lote no tiene rotación habitual cargada.</p></section>';
     const seq = ra.secuencia.map(c => '<span class="chip' + (c === ra.proximo ? ' next' : '') + '">' + esc(M.CULTIVOS[c].nombre) + '</span>').join('<span class="arrow">→</span>');
     const cuerpo = ra.viable
-      ? '<div class="rot-grid"><div class="big num">' + Math.round(ra.idoneidad) + '<small> %</small></div><div style="display:grid;gap:6px">' +
-        '<div class="meter" role="img" aria-label="Idoneidad ' + Math.round(ra.idoneidad) + ' por ciento"><i style="width:' + Math.min(100, ra.idoneidad) + '%"></i></div>' +
-        '<span class="sub">Idoneidad frente a la mejor opción · puesto <b class="mono">' + ra.posicion + '</b> de <b class="mono">' + ra.total + '</b> · score <b class="mono">' + Math.round(ra.score) + '</b></span></div></div>'
+      ? '<div class="rot-grid"><div class="big num">' + Math.round(ra.score) + '<small> pts</small></div><div style="display:grid;gap:6px">' +
+        '<div class="meter" role="img" aria-label="' + Math.round(ra.score) + ' puntos de 100"><i style="width:' + Math.min(100, ra.score) + '%"></i></div>' +
+        '<span class="sub">Puesto <b class="mono">' + ra.posicion + '</b> de <b class="mono">' + ra.total + '</b> entre los cultivos posibles para esta fecha' +
+        (ra.mejor ? ' · la mejor opción tiene <b class="mono">' + Math.round(ra.mejor.score) + '</b> pts' : '') + '</span></div></div>'
       : '<div class="alert">' + esc(ra.razones[0] || ra.nota) + '</div>';
     return '<section class="card rot"><span class="section-label">Rotación actual</span>' +
       '<div class="seq">' + seq + '</div>' +
       '<p>El próximo cultivo de tu rotación habitual es <b>' + esc(ra.nombre) + '</b>.</p>' + cuerpo +
-      '<p class="note">' + esc(ra.nota) + (ra.mejor ? ' Mejor opción: <b>' + esc(ra.mejor.nombre) + '</b> (' + Math.round(ra.mejor.score) + ').' : '') + '</p></section>';
+      '<p class="note">' + esc(ra.nota) + (ra.mejor ? ' Mejor opción: <b>' + esc(ra.mejor.nombre) + '</b> (' + Math.round(ra.mejor.score) + ' pts).' : '') + '</p></section>';
   }
   function itemHTML(e, abierto) {
     const barra = Object.keys(COL).map(k => '<i style="width:' + Math.max(0, e.aporte[k]) + '%;background:' + COL[k] + '" title="' + M.COMPONENTES_NOMBRE[k] + ': ' + e.aporte[k].toFixed(1) + ' pts"></i>').join('');
@@ -1499,7 +1538,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     return '<article class="card item"><button class="top" type="button" aria-expanded="' + abierto + '" data-c="' + e.cultivo + '">' +
       '<div class="item-line"><span class="rk">' + e.posicion + '</span>' +
       '<div><div class="nm-line">' + esc(e.nombre) + '<span class="kind' + (cob ? ' cob' : '') + '">' + (cob ? 'Cobertura' : 'Comercial') + '</span></div>' +
-      '<div class="sub">Sembrar ' + fmtF(e.siembra) + ' · cosecha est. ' + fmtF(e.cosecha_estimada) + ' (' + e.ciclo_dias + ' d) · aptitud ' + Math.round(e.aptitud_pct) + ' %</div></div>' +
+      '<div class="sub">Sembrar ' + fmtF(e.siembra) + ' · cosecha est. ' + fmtF(e.cosecha_estimada) + ' (' + e.ciclo_dias + ' d) · aptitud agronómica ' + Math.round(e.aptitud_pct) + ' %</div></div>' +
       '<div class="score num">' + Math.round(e.score) + '<small>/100</small></div></div>' +
       '<div class="stackbar" role="img" aria-label="Aporte de cada componente al score">' + barra + '</div></button>' +
       '<div class="detail"' + (abierto ? '' : ' hidden') + '>' +
@@ -1537,7 +1576,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       const sig = r.top[1];
       hero = '<section class="card verdict cul"><div class="v-ey">Para sembrar el ' + fmtF(t0.siembra) + '</div>' +
         '<h2>Sembrá <b>' + esc(t0.nombre) + '</b></h2>' +
-        '<p class="v-score"><b>' + Math.round(t0.score) + ' pts</b> · aptitud ' + Math.round(t0.aptitud_pct) + ' % · cosecha estimada ' + fmtF(t0.cosecha_estimada) +
+        '<p class="v-score"><b>' + Math.round(t0.score) + ' pts</b> de 100 · aptitud agronómica ' + Math.round(t0.aptitud_pct) + ' % · cosecha estimada ' + fmtF(t0.cosecha_estimada) +
         (sig ? ' · le sigue ' + esc(sig.nombre) + ' (' + Math.round(sig.score) + ')' : '') + '</p>' +
         '<ul class="v-why">' + pros.map(t => '<li class="pos"><b>+</b><span>' + esc(t) + '</span></li>').join('') +
         (riesgo ? '<li class="neg"><b>−</b><span>' + esc(riesgo) + '</span></li>' : '') + '</ul>' +
@@ -1546,13 +1585,13 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     $('results').innerHTML = hero + rotacionHTML(r.rotacion_actual) +
       '<div class="rank-head"><h2>Las ' + r.top.length + ' mejores opciones para el ' + fmtF(r.fecha_siembra) + '</h2></div><div class="legend">' + leyenda + '</div>' +
       lista + desc +
-      '<section class="card foot"><b>Qué hay detrás de estos números</b><ul>' +
+      '<details class="card foot sobre"><summary><b>ⓘ Qué hay detrás de estos números</b></summary><ul>' +
       '<li>Clima: promedio mensual ' + M.FUENTE_CLIMA.periodo + ' de NASA POWER (temperatura a 2 m y precipitación) en la celda de NASA POWER de cada lote (unos 55 × 60 km). Es climatología, no el pronóstico de esta campaña. SMAP y MODIS/Landsat están planificados.</li>' +
       '<li>Rendimientos: media de las últimas 10 campañas de los departamentos de la zona (MAGyP Estimaciones Agrícolas). Donde no hay serie oficial (centeno, avena, vicia, mijo, crotalaria) el valor es ilustrativo.</li>' +
       '<li>Precios y costos: informe de Resultados Agrícolas de MAGyP, campaña 2026/27 (septiembre 2026). Margen bruto de campo propio, sin arrendamiento. Son precios de un momento: cambian.</li>' +
       '<li>Requisitos de cultivo y suelo del lote siguen siendo ilustrativos, a validar con EcoCrop (FAO) e INTA.</li>' +
       '<li>Reglas de cumplimiento ilustrativas, sin revisión humana.</li>' +
-      '<li>El score apoya la decisión del productor. No la reemplaza.</li></ul></section>';
+      '<li>El puntaje apoya la decisión del productor. No la reemplaza.</li></ul></details>';
     $('results').querySelectorAll('button.top').forEach(b => b.addEventListener('click', () => {
       state.abierto = state.abierto === b.dataset.c ? '' : b.dataset.c; renderResults();
     }));
@@ -1847,7 +1886,20 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       r.rotaciones.map((e, i) => e.pasos ? '<div class="tl-row"><span class="rn"><span class="rtag sm" style="--rc:' + ROT_COL[i] + '">' + ROT_TAG[i] + '</span><span>' + esc(e.nombre) + '</span></span>' +
         '<div class="tlw">' + timelineHTML(e, ROT_COL[i]) + '</div><span class="sc num">' + Math.round(e.score) + '</span></div>' : '').join('') + leyenda + '</section>';
     const zidL = climaLote(campo, lote).zid;
-    $('results').innerHTML = head + tlCmp + escTablaHTML(ce) + climaAvanzadoHTML(ce, campo, lote, rotacionesDe(lote), zidL) + '<div class="rank-head"><h2>Detalle de cada rotación</h2></div>' + r.rotaciones.map((e, i) => rotCardHTML(e, i, m.id, ce)).join('') + ejesHTML(r) + evidenciaHTML();
+    // Lo esencial queda abierto (veredicto, rotaciones en el tiempo, prueba de clima); lo avanzado, plegado con su resumen.
+    const plegable = (id, titulo, resumen, html) => '<details class="pleg" id="sec-' + id + '" data-pleg="' + id + '"' + (state.pleg[id] ? ' open' : '') + '>' +
+      '<summary><span class="pleg-t">' + titulo + '</span><span class="hint">' + resumen + '</span></summary><div class="pleg-c">' + html + '</div></details>';
+    const indice = '<nav class="indice" aria-label="En esta página"><span class="hint">En esta página</span>' +
+      [['tl', 'Rotaciones en el tiempo'], ['clima', 'Prueba de clima'], ['adv', 'Análisis climático avanzado'], ['det', 'Detalle de cada rotación'], ['ejes', 'Comparación por eje'], ['evid', 'Evidencia']]
+        .map(([id, t]) => '<button type="button" data-ir="' + id + '">' + t + '</button>').join('') + '</nav>';
+    $('results').innerHTML = head + indice + '<div id="sec-tl">' + tlCmp + '</div><div id="sec-clima">' + escTablaHTML(ce) + '</div>' +
+      plegable('adv', 'Análisis climático avanzado', 'calor extremo, heladas, rachas secas y lluvias de cada rotación, y la línea de tiempo de una campaña', climaAvanzadoHTML(ce, campo, lote, rotacionesDe(lote), zidL)) +
+      plegable('det', 'Detalle de cada rotación', 'editá las secuencias y mirá los indicadores y por qué de cada una', r.rotaciones.map((e, i) => rotCardHTML(e, i, m.id, ce)).join('')) +
+      plegable('ejes', 'Comparación por eje', 'puntaje de cada rotación en cada una de tus prioridades', ejesHTML(r)) +
+      plegable('evid', 'Evidencia e incertidumbre', 'de dónde sale cada dato y qué es un supuesto', evidenciaHTML());
+    $('results').querySelectorAll('details[data-pleg]').forEach(d => d.addEventListener('toggle', () => { state.pleg[d.dataset.pleg] = d.open; }));
+    $('results').querySelectorAll('[data-ir]').forEach(b => b.addEventListener('click', () => { const el = $('sec-' + b.dataset.ir); if (!el) return;
+      if (el.tagName === 'DETAILS') el.open = true; el.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); }));
     $('results').querySelectorAll('[data-esc]').forEach(b => b.addEventListener('click', () => { state.escenario = b.dataset.esc; render(); }));
     if ($('camp-vista')) $('camp-vista').addEventListener('change', e => { state.campVista = +e.target.value; render(); const s = $('camp-vista'); if (s) s.focus(); });
     $('rot-reset').addEventListener('click', () => { lote.rotacion_habitual = lote._rotOrig.slice(); delete state.alts[lote.id]; render(); });
@@ -2309,18 +2361,17 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
 
     const filasT = filas.slice().sort((a, b) => b.r.delta - a.r.delta).map(x => {
       const d = Math.round(x.r.delta), misma = x.r.mejor.id === 'actual', al = x.r.actual.alertas;
-      return '<tr><td class="izq lt"><a href="' + hrefLote(x.lote.id, 'rotaciones') + '">' + esc(x.lote.nombre) + '</a>' +
+      return '<tr><td class="izq lt"><a href="' + hrefLote(x.lote.id, 'rotaciones') + '">' + esc(x.lote.nombre) + '</a>' + '<span class="sub m-ha">' + x.lote.superficie + ' ha</span>' +
         (c ? '' : '<span class="sub">' + esc(x.campo.nombre) + '</span>') +
         (al.length ? '<span class="sub warn-t">! ' + esc(al[0]) + '</span>' : '') + '</td>' +
-        '<td class="mono">' + x.lote.superficie + '</td>' +
-        '<td class="izq">' + esc(x.r.actual.secuencia.map(corto).join(' → ')) + '</td><td class="mono">' + Math.round(x.r.actual.score) + '</td>' +
-        '<td class="izq">' + (misma ? '<span class="sub">La actual</span>' : esc(x.r.mejor.nombre)) + '</td><td class="mono">' + Math.round(x.r.mejor.score) + '</td>' +
-        '<td><span class="mej"><i class="dot" style="background:' + MEJ_COL[nivelMejora(x.r.delta)] + '"></i>' + (d > 0 ? '+' + d : '0') + '</span></td>' +
-        '<td class="mono">' + ind(x, 'cobertura_pct', 'actual') + ' → ' + ind(x, 'cobertura_pct', 'mejor') + ' %</td></tr>';
+        '<td class="mono d-ha">' + x.lote.superficie + '</td>' +
+        '<td class="izq" data-l="Rotación actual">' + esc(x.r.actual.secuencia.map(corto).join(' → ')) + '</td><td class="mono" data-l="Pts actual">' + Math.round(x.r.actual.score) + '</td>' +
+        '<td class="izq" data-l="Mejor alternativa">' + (misma ? '<span class="sub">La actual</span>' : esc(x.r.mejor.nombre)) + '</td><td class="mono" data-l="Pts alternativa">' + Math.round(x.r.mejor.score) + '</td>' +
+        '<td data-l="Mejora"><span class="mej"><i class="dot" style="background:' + MEJ_COL[nivelMejora(x.r.delta)] + '"></i>' + (d > 0 ? '+' + d : '0') + '</span></td>' +
+        '<td class="mono" data-l="Suelo cubierto">' + ind(x, 'cobertura_pct', 'actual') + ' → ' + ind(x, 'cobertura_pct', 'mejor') + ' %</td></tr>';
     }).join('');
     const tabla = '<section class="card"><div class="card-pad rank-head"><h2>' + (c ? 'Lotes del campo' : 'Tus lotes') + '</h2>' +
       '<span class="hint">Ordenados por mejora posible · tocá un lote para ver la comparación</span>' +
-      (c && c.lotes.length ? '<a class="btn primary" href="#/optimizar/' + c.id + '">Optimizar mi campo</a><a class="btn" href="#/climate-twin/' + c.id + '">Climate Twin 3D</a>' : '') +
       (c && !state.nuevo ? '<button class="btn" type="button" data-nuevo-btn="' + c.id + '">+ Nuevo lote</button>' : '') + '</div>' +
       '<div class="tbl-wrap"><table class="dash-tbl"><thead><tr><th class="izq">Lote</th><th>ha</th><th class="izq">Rotación actual</th><th>Pts</th>' +
       '<th class="izq">Mejor alternativa</th><th>Pts</th><th>Mejora</th><th>Suelo cubierto</th></tr></thead><tbody>' + filasT + '</tbody></table></div></section>';
@@ -2331,11 +2382,11 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       '<div class="clima-grid' + (zonas.length === 1 ? ' uno' : '') + '">' + zonas.map(climaZonaHTML).join('') + '</div></section>';
 
     const pr = state.wPreset ? WEIGHT_PRESETS[state.wPreset].t : 'personalizadas';
-    const pie = '<section class="card foot"><b>Cómo leer este resumen</b><ul>' +
+    const pie = '<details class="card foot sobre"><summary><b>ⓘ Cómo leer este resumen</b></summary><ul>' +
       '<li>Los puntajes usan las mismas reglas que «Comparar rotaciones», con tus prioridades (' + esc(pr) + ') y una campaña que arranca el ' + fmtF(state.siembra) + '.</li>' +
       '<li>Las alternativas de cada lote son ejemplos armados por el equipo. Se editan en la comparación de cada lote.</li>' +
       '<li>El clima sale de NASA POWER y es el mismo para todos los lotes de una celda de unos 55 × 60 km.</li>' +
-      '<li>Catálogo de cultivos, precios y lotes ilustrativos. El resumen apoya la decisión del productor, no la reemplaza.</li></ul></section>';
+      '<li>Catálogo de cultivos, precios y lotes ilustrativos. El resumen apoya la decisión del productor, no la reemplaza.</li></ul></details>';
 
     $('view-dash').innerHTML = (nl || kpis) + (c ? '<div id="slot-map-dash"></div>' : '') + tabla + clima + pie;
     bindNuevo();
