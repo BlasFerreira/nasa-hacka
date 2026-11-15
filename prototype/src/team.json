@@ -1,8 +1,8 @@
 [
-  {
-    "nombre": "Blas Ferreira",
-    "linkedin": "https://www.linkedin.com/in/blasferreira/",
-    "rol": "",
-    "avatar": "/team/blas-ferreira.webp"
-  }
+  { "nombre": "Integrante 1", "linkedin": "", "rol": "", "avatar": "/team/integrante-1.webp" },
+  { "nombre": "Integrante 2", "linkedin": "", "rol": "", "avatar": "/team/integrante-2.webp" },
+  { "nombre": "Integrante 3", "linkedin": "", "rol": "", "avatar": "/team/integrante-3.webp" },
+  { "nombre": "Blas Ferreira", "linkedin": "https://www.linkedin.com/in/blasferreira/", "rol": "", "avatar": "/team/blas-ferreira.webp" },
+  { "nombre": "Integrante 5", "linkedin": "", "rol": "", "avatar": "/team/integrante-5.webp" },
+  { "nombre": "Integrante 6", "linkedin": "", "rol": "", "avatar": "/team/integrante-6.webp" }
 ]

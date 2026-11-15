@@ -225,12 +225,14 @@ table tr{opacity:0;transform:translateY(8px);transition:.5s cubic-bezier(.2,.8,.
 #team-panel h2{margin:0 0 4px;font-size:22px;letter-spacing:-.01em}
 #team-panel .sub{margin:0 0 18px;color:#aab6d3;font-size:14px}
 #team-panel ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
-#team-panel a.p{display:flex;align-items:center;gap:14px;padding:10px 14px 10px 10px;border:1px solid rgba(255,255,255,.18);border-radius:14px;color:#fff;text-decoration:none;background:rgba(255,255,255,.05)}
+#team-panel .p{display:flex;align-items:center;gap:14px;padding:10px 14px 10px 10px;border:1px solid rgba(255,255,255,.18);border-radius:14px;color:#fff;text-decoration:none;background:rgba(255,255,255,.05)}
 #team-panel a.p:hover{background:rgba(255,255,255,.12);border-color:#fff}
-#team-panel a.p img,#team-panel a.p .ini{width:56px;height:56px;border-radius:50%;object-fit:cover;flex:none;background:#0b3d91;display:grid;place-items:center;font-weight:600}
-#team-panel a.p b{display:block;font-size:16px}
-#team-panel a.p small{display:block;color:#aab6d3;font-size:13px}
-#team-panel a.p .in{width:18px;height:18px;fill:#7db4ff;margin-left:auto;flex:none}
+#team-panel .p img,#team-panel .p .ini{width:56px;height:56px;border-radius:50%;object-fit:cover;flex:none;background:#0b3d91;display:grid;place-items:center;font-weight:600}
+#team-panel .p b{display:block;font-size:16px}
+#team-panel .p small{display:block;color:#aab6d3;font-size:13px}
+#team-panel .p .in{width:18px;height:18px;fill:#7db4ff;margin-left:auto;flex:none}
+#team-panel ul{max-height:none}
+@media (min-width:520px){#team-panel ul{grid-template-columns:1fr 1fr}}
 #team-panel .close{margin-top:18px;width:100%;background:#0b3d91;color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:11px;font:600 14px/1 inherit;cursor:pointer}
 @media (max-width:560px){.team-btn{right:clamp(12px,3vw,18px);top:calc(clamp(44px,7vh,60px) + 40px);padding:7px 14px;font-size:13px}}
 .app-cta.big{font-size:16px;padding:13px 26px;margin-top:22px}
@@ -350,15 +352,22 @@ table tr{opacity:0;transform:translateY(8px);transition:.5s cubic-bezier(.2,.8,.
 (function () {
   // Datos del equipo: mantener igual que prototype/src/team.json (la app los toma de ahí).
   var TEAM = [
-    { nombre: "Blas Ferreira", linkedin: "https://www.linkedin.com/in/blasferreira/", rol: "", avatar: "/team/blas-ferreira.webp" }
+    { nombre: "Team member 1", linkedin: "", rol: "", avatar: "/team/integrante-1.webp" },
+    { nombre: "Team member 2", linkedin: "", rol: "", avatar: "/team/integrante-2.webp" },
+    { nombre: "Team member 3", linkedin: "", rol: "", avatar: "/team/integrante-3.webp" },
+    { nombre: "Blas Ferreira", linkedin: "https://www.linkedin.com/in/blasferreira/", rol: "", avatar: "/team/blas-ferreira.webp" },
+    { nombre: "Team member 5", linkedin: "", rol: "", avatar: "/team/integrante-5.webp" },
+    { nombre: "Team member 6", linkedin: "", rol: "", avatar: "/team/integrante-6.webp" }
   ];
   var IN = '<svg class="in" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45z"/></svg>';
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function ini(n) { return n.split(/\s+/).filter(Boolean).slice(0, 2).map(function (p) { return p[0].toUpperCase(); }).join(''); }
   document.getElementById('team-list').innerHTML = TEAM.map(function (p) {
-    return '<li><a class="p" href="' + esc(p.linkedin) + '" target="_blank" rel="noopener noreferrer" aria-label="' + esc(p.nombre) + ' on LinkedIn (opens in a new tab)">' +
-      (p.avatar ? '<img src="' + esc(p.avatar) + '" alt="" width="56" height="56" loading="lazy">' : '<span class="ini" aria-hidden="true">' + esc(ini(p.nombre)) + '</span>') +
-      '<span><b>' + esc(p.nombre) + '</b>' + (p.rol ? '<small>' + esc(p.rol) + '</small>' : '') + '</span>' + IN + '</a></li>';
+    var cuerpo = (p.avatar ? '<img src="' + esc(p.avatar) + '" alt="" width="56" height="56" loading="lazy">' : '<span class="ini" aria-hidden="true">' + esc(ini(p.nombre)) + '</span>') +
+      '<span><b>' + esc(p.nombre) + '</b>' + (p.rol ? '<small>' + esc(p.rol) + '</small>' : '') + '</span>';
+    return '<li>' + (p.linkedin
+      ? '<a class="p" href="' + esc(p.linkedin) + '" target="_blank" rel="noopener noreferrer" aria-label="' + esc(p.nombre) + ' on LinkedIn (opens in a new tab)">' + cuerpo + IN + '</a>'
+      : '<div class="p">' + cuerpo + '</div>') + '</li>';
   }).join('');
   var panel = document.getElementById('team-panel'), btn = document.getElementById('team-btn'), last = null;
   function abrir() { last = document.activeElement; panel.classList.add('open'); panel.setAttribute('aria-hidden', 'false'); document.getElementById('team-close').focus(); }
