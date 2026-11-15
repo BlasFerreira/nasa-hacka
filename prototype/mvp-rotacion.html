@@ -545,6 +545,26 @@ details.lote-det > .form { padding-top: 0; }
 .opt-borr { display: grid; gap: 6px; font-size: 13px; }
 .opt-borr li { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
+/* Barra fija para cambiar de propuesta y campaña */
+.opt-dock { position: sticky; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 30; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center;
+  padding: 10px 12px; border-radius: 14px; background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(10px);
+  border: 1px solid var(--border); box-shadow: 0 10px 30px -12px rgb(0 0 0 / .35); }
+.dk-grupo { display: inline-flex; flex-wrap: wrap; gap: 3px; padding: 3px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); }
+.dk-grupo button { border: 0; background: transparent; border-radius: 8px; padding: 6px 11px; font-weight: 600; font-size: 13px; color: var(--muted); cursor: pointer; min-height: 34px; }
+.dk-grupo button small { font-weight: 400; }
+.dk-grupo button[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); }
+.dk-kpis { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-left: auto; }
+.dk-kpi { display: grid; line-height: 1.15; }
+.dk-kpi small { font-size: 11px; color: var(--muted); }
+.dk-kpi b { font-size: 15px; font-family: var(--mono); }
+.dk-kpi em { font-style: normal; font-size: 12px; font-family: var(--mono); }
+.dk-kpi em.pos { color: var(--good); } .dk-kpi em.neg { color: var(--bad); }
+@media (max-width: 640px) { .dk-kpis { margin-left: 0; } .dk-grupo button { padding: 6px 8px; } }
+@media (prefers-reduced-motion: no-preference) {
+  .opt-flash .opt-cmp td.num, .opt-flash .dna-tab td.num, .opt-flash .opt-plan td, .opt-flash .dk-kpi b { animation: optFlash .7s ease; }
+  @keyframes optFlash { from { background: color-mix(in srgb, var(--primary) 16%, transparent); } to { background: transparent; } }
+}
+
 /* DNA del campo */
 .dna-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (max-width: 700px) { .dna-pair { grid-template-columns: 1fr; } }
@@ -798,6 +818,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
         <div class="tl-legend" id="opt-ley"></div>
       </section>
       <div id="opt-res"></div>
+      <div class="opt-dock" id="opt-dock" hidden role="region" aria-label="Elegir propuesta y campaña"></div>
     </div>
 
     <!-- Recorrido: el campo de 60 ha, paso a paso. Es mundo.html embebido, para no salir de la app. -->
@@ -3815,18 +3836,13 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
       (R.c0 + j) + '/' + String(R.c0 + j + 1).slice(2) + '</button>' + (j < 2 ? '<span aria-hidden="true">→</span>' : '')).join('');
     $('opt-ley').innerHTML = [...usados].map(u => '<span><i style="background:' + CROP_COL[u] + '"></i>' + (M.CULTIVOS[u] ? esc(M.CULTIVOS[u].nombre) : u === 'cobertura' ? 'Solo cobertura' : 'Barbecho') + '</span>').join('') +
       (mp ? '' : '<span>El mapa necesita conexión: la tabla de abajo muestra el mismo plan.</span>');
-    $('opt-camp').querySelectorAll('[data-camp]').forEach(b => b.addEventListener('click', () => { opt.camp = +b.dataset.camp; pintarMapasOpt(c); refrescarDNA(c); }));
+    $('opt-camp').querySelectorAll('[data-camp]').forEach(b => b.addEventListener('click', () => { opt.camp = +b.dataset.camp; cambioOpt(c, '[data-camp="' + opt.camp + '"]'); }));
   }
 
   function renderOpt() {
     const c = campoDe(state.campo);
     if (opt.campo !== c.id && !opt.corriendo) { opt.res = null; opt.fijos = new Set(); opt.campo = c.id; }
     $('opt-conf').innerHTML = configOptHTML(c);
-    const tiene = opt.res && !opt.corriendo;
-    $('opt-maps-card').hidden = !tiene;
-    if (tiene) { const h = resultadosOptHTML(c); $('opt-res-top').innerHTML = h.top; $('opt-res').innerHTML = h.res; pintarMapasOpt(c); }
-    else { $('opt-res-top').innerHTML = ''; $('opt-res').innerHTML = opt.corriendo ? '' : '<div class="card empty">Elegí tus prioridades y restricciones y tocá «Optimizar mi campo». El cálculo corre en tu navegador y tarda unos segundos.</div>'; }
-    // Eventos.
     const conf = $('opt-conf');
     conf.querySelectorAll('[data-wp]').forEach(b => b.addEventListener('click', () => { state.wPreset = b.dataset.wp; state.pesos = Object.assign({}, WEIGHT_PRESETS[b.dataset.wp].w); renderWeightPresets(); renderWeights(); renderOpt(); }));
     conf.querySelectorAll('[data-ex]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.ex; if (opt.excluir.has(k)) opt.excluir.delete(k); else opt.excluir.add(k); renderOpt(); }));
@@ -3834,16 +3850,55 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
     if ($('opt-cob')) $('opt-cob').addEventListener('change', e => { opt.coberturas = e.target.checked; renderOpt(); });
     if ($('opt-div')) $('opt-div').addEventListener('change', e => { opt.diversificar = e.target.checked; });
     if ($('opt-run')) $('opt-run').addEventListener('click', () => { if (!opt.corriendo) correrOptimizacion(); });
-    $('opt-res-top').querySelectorAll('[data-est]').forEach(b => b.addEventListener('click', () => { opt.est = b.dataset.est; renderOpt(); }));
-    if (tiene) refrescarDNA(c);
+    actualizarResultadosOpt(c);
+  }
+  // Barra fija de abajo: estrategia, campaña y los números clave contra el plan actual, siempre a mano.
+  function dockHTML() {
+    const R = opt.res, P = R.props[opt.est], A = R.actual;
+    const iguales = (a, b) => a.combo.map(firma).join('|') === b.combo.map(firma).join('|');
+    const ks = Object.keys(ESTR);
+    const est = ks.map(k => { const igual = ks.find(j => ks.indexOf(j) < ks.indexOf(k) && iguales(R.props[j], R.props[k]));
+      return '<button type="button" data-est="' + k + '" aria-pressed="' + (opt.est === k) + '" title="' + esc(ESTR[k].d) + (igual ? ' · igual a «' + ESTR[igual].t + '»' : '') + '">' + ESTR[k].t + (igual ? ' <small>=</small>' : '') + '</button>'; }).join('');
+    const camps = [0, 1, 2].map(j => '<button type="button" data-camp="' + j + '" aria-pressed="' + (j === opt.camp) + '">' + (R.c0 + j) + '/' + String(R.c0 + j + 1).slice(2) + '</button>').join('');
+    const kpi = (t, a, b, f) => { const d = b - a; return '<span class="dk-kpi"><small>' + t + '</small><b>' + f(b) + '</b><em class="' + (d > 0 ? 'pos' : d < 0 ? 'neg' : '') + '">' + (d > 0 ? '+' : d < 0 ? '−' : '±') + f(Math.abs(d)) + '</em></span>'; };
+    return '<div class="dk-grupo" role="group" aria-label="Propuesta">' + est + '</div>' +
+      '<div class="dk-grupo" role="group" aria-label="Campaña">' + camps + '</div>' +
+      '<div class="dk-kpis" aria-live="polite">' + kpi('Margen típico', A.med, P.med, usd) + kpi('Año malo', A.malo, P.malo, usd) + kpi('Suelo cubierto', A.cob, P.cob, v => Math.round(v) + ' %') + '</div>';
+  }
+  // Actualiza solo los resultados (mapas, plan, indicadores, DNA y barra): no rehace los ajustes ni mueve el scroll.
+  function actualizarResultadosOpt(c) {
+    const tiene = opt.res && !opt.corriendo;
+    $('opt-maps-card').hidden = !tiene;
+    $('opt-dock').hidden = !tiene;
+    if (!tiene) {
+      $('opt-res-top').innerHTML = '';
+      $('opt-res').innerHTML = opt.corriendo ? '' : '<div class="card empty">Elegí tus prioridades y restricciones y tocá «Optimizar mi campo». El cálculo corre en tu navegador y tarda unos segundos.</div>';
+      return;
+    }
+    const h = resultadosOptHTML(c);
+    $('opt-res-top').innerHTML = '';
+    $('opt-res').innerHTML = h.res;
+    pintarMapasOpt(c);
+    refrescarDNA(c);
+    $('opt-dock').innerHTML = dockHTML();
+    $('opt-dock').querySelectorAll('[data-est]').forEach(b => b.addEventListener('click', () => { opt.est = b.dataset.est; cambioOpt(c, '[data-est="' + opt.est + '"]'); }));
+    $('opt-dock').querySelectorAll('[data-camp]').forEach(b => b.addEventListener('click', () => { opt.camp = +b.dataset.camp; cambioOpt(c, '[data-camp="' + opt.camp + '"]'); }));
     if ($('opt-save')) $('opt-save').addEventListener('click', () => {
       const R = opt.res, P = R.props[opt.est], b = leerBorradores();
       b.unshift({ id: 'b' + Date.now().toString(36), campo: c.id, titulo: ESTR[opt.est].t + ' · ' + c.nombre, fecha: new Date().toLocaleString('es-AR'),
         resumen: 'margen típico ' + usd(P.med) + '/año · año malo ' + usd(P.malo) + '/año',
         plan: R.lotes.map((id, i) => ({ lote: id, rotacion: P.combo[i].seq })), pesos: R.pesos, siembra: R.siembra });
-      escribirBorradores(b.slice(0, 20)); renderOpt();
+      escribirBorradores(b.slice(0, 20)); actualizarResultadosOpt(c);
     });
-    $('opt-res').querySelectorAll('[data-borr-del]').forEach(x => x.addEventListener('click', () => { escribirBorradores(leerBorradores().filter(b => b.id !== x.dataset.borrDel)); renderOpt(); }));
+    $('opt-res').querySelectorAll('[data-borr-del]').forEach(x => x.addEventListener('click', () => { escribirBorradores(leerBorradores().filter(b => b.id !== x.dataset.borrDel)); actualizarResultadosOpt(c); }));
+  }
+  // Cambio de estrategia o campaña: se actualiza todo en el lugar, se mantiene el scroll y el foco vuelve al botón.
+  function cambioOpt(c, foco) {
+    const y = window.scrollY;
+    actualizarResultadosOpt(c);
+    window.scrollTo(0, y);
+    const v = $('view-opt'); v.classList.remove('opt-flash'); void v.offsetWidth; v.classList.add('opt-flash');
+    const b = $('opt-dock').querySelector(foco); if (b) b.focus({ preventScroll: true });
   }
 
   /* ---------- render general ---------- */
