@@ -545,6 +545,47 @@ details.lote-det > .form { padding-top: 0; }
 .opt-borr { display: grid; gap: 6px; font-size: 13px; }
 .opt-borr li { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
+/* Barra fija para cambiar de propuesta y campaña */
+.opt-dock { position: sticky; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 30; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center;
+  padding: 10px 12px; border-radius: 14px; background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(10px);
+  border: 1px solid var(--border); box-shadow: 0 10px 30px -12px rgb(0 0 0 / .35); }
+.dk-grupo { display: inline-flex; flex-wrap: wrap; gap: 3px; padding: 3px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); }
+.dk-grupo button { border: 0; background: transparent; border-radius: 8px; padding: 6px 11px; font-weight: 600; font-size: 13px; color: var(--muted); cursor: pointer; min-height: 34px; }
+.dk-grupo button small { font-weight: 400; }
+.dk-grupo button[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); }
+.dk-kpis { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-left: auto; }
+.dk-kpi { display: grid; line-height: 1.15; }
+.dk-kpi small { font-size: 11px; color: var(--muted); }
+.dk-kpi b { font-size: 15px; font-family: var(--mono); }
+.dk-kpi em { font-style: normal; font-size: 12px; font-family: var(--mono); }
+.dk-kpi em.pos { color: var(--good); } .dk-kpi em.neg { color: var(--bad); }
+@media (max-width: 640px) { .dk-kpis { margin-left: 0; } .dk-grupo button { padding: 6px 8px; } }
+@media (prefers-reduced-motion: no-preference) {
+  .opt-flash .opt-cmp td.num, .opt-flash .dna-tab td.num, .opt-flash .opt-plan td, .opt-flash .dk-kpi b { animation: optFlash .7s ease; }
+  @keyframes optFlash { from { background: color-mix(in srgb, var(--primary) 16%, transparent); } to { background: transparent; } }
+}
+
+/* DNA del campo */
+.dna-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 700px) { .dna-pair { grid-template-columns: 1fr; } }
+.dna-pair figure { margin: 0; display: grid; gap: 4px; justify-items: center; }
+.dna-pair figcaption { font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+.dna-pair figcaption i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.radar { width: 100%; max-width: 320px; height: auto; display: block; overflow: visible; }
+.radar .rd-grid { fill: none; stroke: var(--border); stroke-width: 1; }
+.radar .rd-lab { font: 600 12px var(--font); fill: var(--text); dominant-baseline: middle; }
+.radar .rd-pol { stroke-width: 2; }
+.radar .rd-dash { stroke-dasharray: 5 4; stroke-width: 1.6; }
+.dna-tab small { display: block; color: var(--muted); font-weight: 400; }
+.dna-tab td, .dna-tab th { text-align: left; } .dna-tab td.num { text-align: right; }
+.dna-tab td.pos { color: var(--good); font-weight: 600; } .dna-tab td.neg { color: var(--bad); font-weight: 600; }
+.dna-lotes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.dna-lote { display: grid; gap: 4px; justify-items: center; border: 1px solid var(--border); background: var(--surface); border-radius: 12px; padding: 8px; cursor: pointer; text-align: center; }
+.dna-lote .radar { max-width: 130px; }
+.dna-lote small { display: block; color: var(--muted); }
+.dna-lote[aria-pressed="true"] { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+.dna-det { display: grid; gap: 6px; margin-top: 6px; }
+
 /* Pestañas */
 .tabs { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); align-self: flex-start; max-width: 100%; }
 .tabs button { border: 0; background: transparent; border-radius: 7px; padding: 6px 14px; font-weight: 500; color: var(--muted); cursor: pointer; min-height: 32px; }
@@ -777,6 +818,7 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
         <div class="tl-legend" id="opt-ley"></div>
       </section>
       <div id="opt-res"></div>
+      <div class="opt-dock" id="opt-dock" hidden role="region" aria-label="Elegir propuesta y campaña"></div>
     </div>
 
     <!-- Recorrido: el campo de 60 ha, paso a paso. Es mundo.html embebido, para no salir de la app. -->
@@ -2602,8 +2644,16 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       paso(.5 + .35 * li / lotes.length, 'Probando las candidatas de ' + l.nombre + ' en ' + ventanas.length + ' tramos climáticos reales…'); await espera();
       const base = input(c, l);
       for (const r of cand[l.id]) {
-        r.vm = []; r.vs = [];
-        for (const v of ventanas) { const e = M.evaluarRotacion(Object.assign({}, base, { escenario: v }), r.seq, ini, state.pesos); r.vm.push(e ? e.indicadores.margen_anual : 0); r.vs.push(e ? e.score : 0); }
+        r.vm = []; r.vs = []; r.dz = [0, 1, 2].map(() => ({ n: 0, agua: 0, calor: 0 }));
+        for (const v of ventanas) {
+          const e = M.evaluarRotacion(Object.assign({}, base, { escenario: v }), r.seq, ini, state.pesos);
+          r.vm.push(e ? e.indicadores.margen_anual : 0); r.vs.push(e ? e.score : 0);
+          if (e) for (const p of e.pasos) { // DNA: agua y calor de cada ciclo, por campaña del plan
+            const k = campDeD(M.parseFecha(p.siembra)) - c0;
+            if (!p.viable || !p.diario || k < 0 || k > 2) continue;
+            r.dz[k].n++; r.dz[k].agua += Math.min(1, p.diario.ratio); r.dz[k].calor += p.diario.factores.calor;
+          }
+        }
         r.porCamp = porCampania(r, c0);
       }
     }
@@ -2739,8 +2789,118 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     return { top: '<section class="card opt-card"><h2>Propuestas para ' + esc(c.nombre) + '</h2>' + tabs + '</section>',
       res: '<section class="card opt-card"><h2>Plan por lote y campaña</h2>' + plan + '</section>' +
         '<section class="card opt-card"><h2>Resultados del campo</h2>' + cmp + '</section>' +
+        '<section class="card opt-card dna" id="opt-dna">' + dnaHTML(c) + '</section>' +
         '<section class="card opt-card"><h2>Qué cambia y por qué</h2><ul class="opt-exp">' + exp.join('') + '</ul>' + metodo + borr + '</section>' };
   }
+  /* ---------- DNA del campo: perfil 0–100 (más es mejor) con dimensiones que el motor calcula ----------
+     Agua: lluvia ÷ demanda (Kc × ET0), tope 100 %. Calor: multiplicador de calor del motor (60 % = 0, 100 % = 100).
+     Suelo: índice de salud de suelo del motor. Nutrientes: 1 − N a reponer ÷ 250 kg/ha (referencia del motor).
+     Cobertura: días de la campaña con cultivo o cobertura. Sequía: margen en un tramo malo ÷ margen típico (p10 ÷ mediana),
+     del plan completo: no depende de la campaña. Agua y calor necesitan la serie diaria (solo celdas precargadas). */
+  const DNA_DIM = [
+    { k: 'agua', t: 'Agua', d: 'Demanda del cultivo cubierta por la lluvia', src: 'NASA POWER diario (lluvia, ET0 FAO-56) · Kc supuesto' },
+    { k: 'sequia', t: 'Sequía', d: 'Margen en un tramo malo ÷ margen típico (plan completo)', src: '22 tramos reales NASA POWER · precios y rindes MAGyP' },
+    { k: 'calor', t: 'Calor', d: 'Sin calor extremo en el período crítico', src: 'NASA POWER diario · penalización supuesta' },
+    { k: 'suelo', t: 'Suelo', d: 'Índice de salud de suelo del motor', src: 'Rastrojo, erosión, raíces y diversidad · coeficientes ilustrativos' },
+    { k: 'nutrientes', t: 'Nutrientes', d: 'Poco nitrógeno a reponer', src: 'Balance del motor · extracción ilustrativa' },
+    { k: 'cobertura', t: 'Cobertura', d: 'Días de la campaña con suelo cubierto', src: 'Fechas de siembra y cosecha del motor' },
+  ];
+  const opt_dna = { lote: null };
+  const c100 = v => Math.max(0, Math.min(100, Math.round(v)));
+  function dnaLote(r, k, c0) {
+    const a = Date.UTC(c0 + k, 3, 1), b = Date.UTC(c0 + k + 1, 3, 1), dias = (b - a) / 864e5;
+    const ok = r.pasos.filter(p => p.viable), enK = ok.filter(p => campDeD(M.parseFecha(p.siembra)) - c0 === k);
+    let cub = 0; for (const p of ok) { const s0 = M.parseFecha(p.siembra).getTime(), s1 = M.parseFecha(p.fin).getTime(); cub += Math.max(0, Math.min(s1, b) - Math.max(s0, a)) / 864e5; }
+    const dz = r.dz && r.dz[k];
+    const md = q(r.vm, .5), malo = q(r.vm, .1);
+    return {
+      agua: dz && dz.n ? c100(100 * dz.agua / dz.n) : null,
+      calor: dz && dz.n ? c100(100 * (dz.calor / dz.n - .6) / .4) : null,
+      suelo: enK.length ? c100(100 * enK.reduce((s, p) => s + p.salud, 0) / enK.length) : 0,
+      nutrientes: c100(100 * (1 - enK.reduce((s, p) => s + (p.n_rep || 0), 0) / 250)),
+      cobertura: c100(100 * cub / dias),
+      sequia: md > 0 ? c100(100 * malo / md) : 0,
+    };
+  }
+  function dnaCampo(combo, k, c0, ha, HA) {
+    const out = {}, porLote = combo.map(r => dnaLote(r, k, c0));
+    for (const d of DNA_DIM) {
+      if (d.k === 'sequia') { // del campo: tramo por tramo sumando todos los lotes
+        const nv = combo[0].vm.length, m = Array(nv).fill(0);
+        combo.forEach((r, i) => r.vm.forEach((v, w) => { m[w] += v * ha[i]; }));
+        const md = q(m, .5); out.sequia = md > 0 ? c100(100 * q(m, .1) / md) : 0; continue;
+      }
+      const v = porLote.map((x, i) => [x[d.k], ha[i]]).filter(([x]) => x != null);
+      out[d.k] = v.length ? c100(v.reduce((s, [x, h]) => s + x * h, 0) / v.reduce((s, [, h]) => s + h, 0)) : null;
+    }
+    return { campo: out, porLote };
+  }
+  function radarSVG(series, tam, etiquetas) {
+    const S = tam, cx = S / 2, cy = S / 2 + (etiquetas ? 4 : 0), R = S / 2 - (etiquetas ? 46 : 10), n = DNA_DIM.length;
+    const ang = i => -Math.PI / 2 + 2 * Math.PI * i / n, pt = (i, v) => [cx + R * v / 100 * Math.cos(ang(i)), cy + R * v / 100 * Math.sin(ang(i))];
+    let g = '';
+    for (const lv of [25, 50, 75, 100]) g += '<polygon class="rd-grid" points="' + DNA_DIM.map((_, i) => pt(i, lv).map(x => x.toFixed(1)).join(',')).join(' ') + '"/>';
+    DNA_DIM.forEach((d, i) => { const [x, y] = pt(i, 100); g += '<line class="rd-grid" x1="' + cx + '" y1="' + cy + '" x2="' + x.toFixed(1) + '" y2="' + y.toFixed(1) + '"/>';
+      if (etiquetas) { const [lx, ly] = pt(i, 122); g += '<text class="rd-lab" x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" text-anchor="' + (Math.abs(lx - cx) < 4 ? 'middle' : lx > cx ? 'start' : 'end') + '">' + d.t + '</text>'; } });
+    for (const s of series) {
+      const pts = DNA_DIM.map((d, i) => pt(i, s.v[d.k] == null ? 0 : s.v[d.k]).map(x => x.toFixed(1)).join(',')).join(' ');
+      g += '<polygon points="' + pts + '" style="fill:' + s.col + ';fill-opacity:' + (s.dash ? 0 : .22) + ';stroke:' + s.col + '" class="rd-pol' + (s.dash ? ' rd-dash' : '') + '"><title>' + esc(s.t) + '</title></polygon>';
+      if (!s.dash) DNA_DIM.forEach((d, i) => { if (s.v[d.k] == null) return; const [x, y] = pt(i, s.v[d.k]); g += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="2.6" style="fill:' + s.col + '"/>'; });
+    }
+    return '<svg class="radar" viewBox="0 0 ' + S + ' ' + (S + (etiquetas ? 8 : 0)) + '" role="img" aria-label="' + esc(series.map(s => s.t + ': ' + DNA_DIM.map(d => d.t + ' ' + (s.v[d.k] ?? 'sin dato')).join(', ')).join('. ')) + '">' + g + '</svg>';
+  }
+  function dnaHTML(c) {
+    const R = opt.res, P = R.props[opt.est], A = R.actual, k = opt.camp, camp = (R.c0 + k) + '/' + String(R.c0 + k + 1).slice(2);
+    const da = dnaCampo(A.combo, k, R.c0, R.ha, R.HA), dp = dnaCampo(P.combo, k, R.c0, R.ha, R.HA);
+    const COL_A = 'var(--r0)', COL_P = 'var(--primary)';
+    const fmt = v => v == null ? 'sin dato' : v;
+    const filas = DNA_DIM.map(d => { const a = da.campo[d.k], b = dp.campo[d.k], dd = a == null || b == null ? null : b - a;
+      return '<tr><td><b>' + d.t + '</b><small>' + esc(d.d) + '</small></td><td class="num">' + fmt(a) + '</td><td class="num">' + fmt(b) + '</td><td class="num ' + (dd > 0 ? 'pos' : dd < 0 ? 'neg' : '') + '">' +
+        (dd == null ? '—' : (dd > 0 ? '+' : dd < 0 ? '−' : '±') + Math.abs(dd)) + '</td><td><small>' + esc(d.src) + '</small></td></tr>'; }).join('');
+    // ¿Por qué cambió? Las 3 dimensiones con más diferencia y los lotes que más la explican (diferencia × superficie).
+    const lotes = R.lotes.map(id => c.lotes.find(l => l.id === id));
+    const nombreRot = r => r.seq.map(x => M.CULTIVOS[x].nombre).join(' → ');
+    const top = DNA_DIM.map(d => ({ d, dd: (dp.campo[d.k] ?? 0) - (da.campo[d.k] ?? 0) })).filter(x => da.campo[x.d.k] != null && dp.campo[x.d.k] != null && x.dd !== 0)
+      .sort((a, b) => Math.abs(b.dd) - Math.abs(a.dd)).slice(0, 3);
+    const porque = top.map(({ d, dd }) => {
+      let txt = '<b>' + d.t + ' ' + (dd > 0 ? '+' : '−') + Math.abs(dd) + '</b> en ' + camp + (d.k === 'sequia' ? ' (plan completo)' : '') + '. ';
+      if (d.k === 'sequia') txt += 'Se calcula con el margen de todo el campo en los ' + R.nv + ' tramos reales: en el tramo malo el campo conserva ' + dp.campo.sequia + ' % de su margen típico, contra ' + da.campo.sequia + ' % hoy.';
+      else {
+        const aporte = lotes.map((l, i) => ({ l, i, x: ((dp.porLote[i][d.k] ?? 0) - (da.porLote[i][d.k] ?? 0)) * R.ha[i] })).filter(x => x.x !== 0 && Math.sign(x.x) === Math.sign(dd)).sort((a, b) => Math.abs(b.x) - Math.abs(a.x))[0];
+        if (aporte) { const i = aporte.i;
+          txt += 'El lote que más empuja en esa dirección (por diferencia y superficie) es ' + esc(aporte.l.nombre) + ' (' + fmt(da.porLote[i][d.k]) + ' → ' + fmt(dp.porLote[i][d.k]) + '), donde ' +
+            (firma(A.combo[i]) === firma(P.combo[i]) ? 'la rotación no cambia (cambia el clima de la campaña).' : 'la propuesta pasa de ' + esc(nombreRot(A.combo[i])) + ' a ' + esc(nombreRot(P.combo[i])) + '.'); }
+        else txt += 'Ningún lote explica solo el cambio: es la suma de variaciones chicas en varios lotes.';
+      }
+      return '<li>' + txt + ' <span class="hint">Respaldo: ' + esc(d.src) + '.</span></li>';
+    });
+    if (!opt_dna.lote || !R.lotes.includes(opt_dna.lote)) opt_dna.lote = R.lotes[0];
+    const lotesG = lotes.map((l, i) => '<button type="button" class="dna-lote" data-dna-lote="' + l.id + '" aria-pressed="' + (opt_dna.lote === l.id) + '">' +
+      radarSVG([{ v: da.porLote[i], col: COL_A, dash: true, t: 'Actual' }, { v: dp.porLote[i], col: COL_P, t: 'Propuesto' }], 150, false) +
+      '<span><b>' + esc(l.nombre) + '</b><small>' + l.superficie + ' ha</small></span></button>').join('');
+    const iL = R.lotes.indexOf(opt_dna.lote), lS = lotes[iL];
+    const detalle = '<div class="dna-det"><h3 class="sec">' + esc(lS.nombre) + ' · ' + camp + '</h3>' +
+      '<p class="hint">Actual: ' + esc(nombreRot(A.combo[iL])) + ' · Propuesta: ' + esc(nombreRot(P.combo[iL])) + ' · Suelo registrado: ' + esc(NOMBRE_TEX[lS.textura]) + ', drenaje ' + esc(lS.drenaje) + ', pH ' + lS.ph + ' (ilustrativo).</p>' +
+      '<div class="esc-tab-wrap"><table class="esc-tab dna-tab"><thead><tr><th>Dimensión</th><th>Actual</th><th>Propuesto</th><th>Diferencia</th></tr></thead><tbody>' +
+      DNA_DIM.map(d => { const a = da.porLote[iL][d.k], b = dp.porLote[iL][d.k], dd = a == null || b == null ? null : b - a;
+        return '<tr><td>' + d.t + '</td><td class="num">' + fmt(a) + '</td><td class="num">' + fmt(b) + '</td><td class="num ' + (dd > 0 ? 'pos' : dd < 0 ? 'neg' : '') + '">' + (dd == null ? '—' : (dd > 0 ? '+' : dd < 0 ? '−' : '±') + Math.abs(dd)) + '</td></tr>'; }).join('') +
+      '</tbody></table></div></div>';
+    const sinDiario = DNA_DIM.some(d => da.campo[d.k] == null) ? '<p class="hint">Agua y calor necesitan la serie diaria de NASA POWER, que está precargada solo para las celdas de los campos de ejemplo: en esta celda aparecen «sin dato».</p>' : '';
+    return '<div class="rank-head"><h2>DNA del campo · ' + camp + '</h2><span class="hint">Perfil de 0 a 100 (más es mejor) · ' + esc(ESTR[opt.est].t) + '</span></div>' +
+      '<div class="dna-pair"><figure><figcaption><i style="background:' + COL_A + '"></i>DNA actual</figcaption>' + radarSVG([{ v: da.campo, col: COL_A, t: 'Actual' }], 300, true) + '</figure>' +
+      '<figure><figcaption><i style="background:' + COL_P + '"></i>DNA propuesto <span class="hint">(línea punteada: actual)</span></figcaption>' +
+      radarSVG([{ v: da.campo, col: COL_A, dash: true, t: 'Actual' }, { v: dp.campo, col: COL_P, t: 'Propuesto' }], 300, true) + '</figure></div>' +
+      '<div class="esc-tab-wrap"><table class="esc-tab dna-tab"><thead><tr><th>Dimensión</th><th>Actual</th><th>Propuesto</th><th>Diferencia</th><th>De dónde sale</th></tr></thead><tbody>' + filas + '</tbody></table></div>' + sinDiario +
+      '<h3 class="sec">¿Por qué cambió tu DNA?</h3>' + (porque.length ? '<ul class="opt-exp">' + porque.join('') + '</ul>' : '<p class="hint">Sin diferencias en esta campaña.</p>') +
+      '<p class="hint">Las dimensiones salen del mismo motor que el resto de la app. Suelo, nutrientes y requisitos de cultivo usan parámetros ilustrativos; agua y calor usan clima observado de NASA POWER con umbrales supuestos. Es un perfil comparativo, no una medición del lote.</p>' +
+      '<h3 class="sec">DNA por lote</h3><p class="hint">Tocá un lote para ver el detalle. Línea punteada: actual; color: propuesta.</p><div class="dna-lotes">' + lotesG + '</div>' + detalle;
+  }
+  function refrescarDNA(c) {
+    const box = $('opt-dna'); if (!box || !opt.res) return;
+    box.innerHTML = dnaHTML(c);
+    box.querySelectorAll('[data-dna-lote]').forEach(b => b.addEventListener('click', () => { opt_dna.lote = b.dataset.dnaLote; refrescarDNA(c); const nb = $('opt-dna').querySelector('[data-dna-lote="' + opt_dna.lote + '"]'); if (nb) nb.focus(); }));
+  }
+
   function leerBorradores() { try { return JSON.parse(localStorage.getItem('fieldshift.borradores.v1') || '[]'); } catch (e) { return []; } }
   function escribirBorradores(b) { try { localStorage.setItem('fieldshift.borradores.v1', JSON.stringify(b)); } catch (e) { /* sin almacenamiento */ } }
 
@@ -2783,18 +2943,13 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
       (R.c0 + j) + '/' + String(R.c0 + j + 1).slice(2) + '</button>' + (j < 2 ? '<span aria-hidden="true">→</span>' : '')).join('');
     $('opt-ley').innerHTML = [...usados].map(u => '<span><i style="background:' + CROP_COL[u] + '"></i>' + (M.CULTIVOS[u] ? esc(M.CULTIVOS[u].nombre) : u === 'cobertura' ? 'Solo cobertura' : 'Barbecho') + '</span>').join('') +
       (mp ? '' : '<span>El mapa necesita conexión: la tabla de abajo muestra el mismo plan.</span>');
-    $('opt-camp').querySelectorAll('[data-camp]').forEach(b => b.addEventListener('click', () => { opt.camp = +b.dataset.camp; pintarMapasOpt(c); }));
+    $('opt-camp').querySelectorAll('[data-camp]').forEach(b => b.addEventListener('click', () => { opt.camp = +b.dataset.camp; cambioOpt(c, '[data-camp="' + opt.camp + '"]'); }));
   }
 
   function renderOpt() {
     const c = campoDe(state.campo);
     if (opt.campo !== c.id && !opt.corriendo) { opt.res = null; opt.fijos = new Set(); opt.campo = c.id; }
     $('opt-conf').innerHTML = configOptHTML(c);
-    const tiene = opt.res && !opt.corriendo;
-    $('opt-maps-card').hidden = !tiene;
-    if (tiene) { const h = resultadosOptHTML(c); $('opt-res-top').innerHTML = h.top; $('opt-res').innerHTML = h.res; pintarMapasOpt(c); }
-    else { $('opt-res-top').innerHTML = ''; $('opt-res').innerHTML = opt.corriendo ? '' : '<div class="card empty">Elegí tus prioridades y restricciones y tocá «Optimizar mi campo». El cálculo corre en tu navegador y tarda unos segundos.</div>'; }
-    // Eventos.
     const conf = $('opt-conf');
     conf.querySelectorAll('[data-wp]').forEach(b => b.addEventListener('click', () => { state.wPreset = b.dataset.wp; state.pesos = Object.assign({}, WEIGHT_PRESETS[b.dataset.wp].w); renderWeightPresets(); renderWeights(); renderOpt(); }));
     conf.querySelectorAll('[data-ex]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.ex; if (opt.excluir.has(k)) opt.excluir.delete(k); else opt.excluir.add(k); renderOpt(); }));
@@ -2802,15 +2957,55 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     if ($('opt-cob')) $('opt-cob').addEventListener('change', e => { opt.coberturas = e.target.checked; renderOpt(); });
     if ($('opt-div')) $('opt-div').addEventListener('change', e => { opt.diversificar = e.target.checked; });
     if ($('opt-run')) $('opt-run').addEventListener('click', () => { if (!opt.corriendo) correrOptimizacion(); });
-    $('opt-res-top').querySelectorAll('[data-est]').forEach(b => b.addEventListener('click', () => { opt.est = b.dataset.est; renderOpt(); }));
+    actualizarResultadosOpt(c);
+  }
+  // Barra fija de abajo: estrategia, campaña y los números clave contra el plan actual, siempre a mano.
+  function dockHTML() {
+    const R = opt.res, P = R.props[opt.est], A = R.actual;
+    const iguales = (a, b) => a.combo.map(firma).join('|') === b.combo.map(firma).join('|');
+    const ks = Object.keys(ESTR);
+    const est = ks.map(k => { const igual = ks.find(j => ks.indexOf(j) < ks.indexOf(k) && iguales(R.props[j], R.props[k]));
+      return '<button type="button" data-est="' + k + '" aria-pressed="' + (opt.est === k) + '" title="' + esc(ESTR[k].d) + (igual ? ' · igual a «' + ESTR[igual].t + '»' : '') + '">' + ESTR[k].t + (igual ? ' <small>=</small>' : '') + '</button>'; }).join('');
+    const camps = [0, 1, 2].map(j => '<button type="button" data-camp="' + j + '" aria-pressed="' + (j === opt.camp) + '">' + (R.c0 + j) + '/' + String(R.c0 + j + 1).slice(2) + '</button>').join('');
+    const kpi = (t, a, b, f) => { const d = b - a; return '<span class="dk-kpi"><small>' + t + '</small><b>' + f(b) + '</b><em class="' + (d > 0 ? 'pos' : d < 0 ? 'neg' : '') + '">' + (d > 0 ? '+' : d < 0 ? '−' : '±') + f(Math.abs(d)) + '</em></span>'; };
+    return '<div class="dk-grupo" role="group" aria-label="Propuesta">' + est + '</div>' +
+      '<div class="dk-grupo" role="group" aria-label="Campaña">' + camps + '</div>' +
+      '<div class="dk-kpis" aria-live="polite">' + kpi('Margen típico', A.med, P.med, usd) + kpi('Año malo', A.malo, P.malo, usd) + kpi('Suelo cubierto', A.cob, P.cob, v => Math.round(v) + ' %') + '</div>';
+  }
+  // Actualiza solo los resultados (mapas, plan, indicadores, DNA y barra): no rehace los ajustes ni mueve el scroll.
+  function actualizarResultadosOpt(c) {
+    const tiene = opt.res && !opt.corriendo;
+    $('opt-maps-card').hidden = !tiene;
+    $('opt-dock').hidden = !tiene;
+    if (!tiene) {
+      $('opt-res-top').innerHTML = '';
+      $('opt-res').innerHTML = opt.corriendo ? '' : '<div class="card empty">Elegí tus prioridades y restricciones y tocá «Optimizar mi campo». El cálculo corre en tu navegador y tarda unos segundos.</div>';
+      return;
+    }
+    const h = resultadosOptHTML(c);
+    $('opt-res-top').innerHTML = '';
+    $('opt-res').innerHTML = h.res;
+    pintarMapasOpt(c);
+    refrescarDNA(c);
+    $('opt-dock').innerHTML = dockHTML();
+    $('opt-dock').querySelectorAll('[data-est]').forEach(b => b.addEventListener('click', () => { opt.est = b.dataset.est; cambioOpt(c, '[data-est="' + opt.est + '"]'); }));
+    $('opt-dock').querySelectorAll('[data-camp]').forEach(b => b.addEventListener('click', () => { opt.camp = +b.dataset.camp; cambioOpt(c, '[data-camp="' + opt.camp + '"]'); }));
     if ($('opt-save')) $('opt-save').addEventListener('click', () => {
       const R = opt.res, P = R.props[opt.est], b = leerBorradores();
       b.unshift({ id: 'b' + Date.now().toString(36), campo: c.id, titulo: ESTR[opt.est].t + ' · ' + c.nombre, fecha: new Date().toLocaleString('es-AR'),
         resumen: 'margen típico ' + usd(P.med) + '/año · año malo ' + usd(P.malo) + '/año',
         plan: R.lotes.map((id, i) => ({ lote: id, rotacion: P.combo[i].seq })), pesos: R.pesos, siembra: R.siembra });
-      escribirBorradores(b.slice(0, 20)); renderOpt();
+      escribirBorradores(b.slice(0, 20)); actualizarResultadosOpt(c);
     });
-    $('opt-res').querySelectorAll('[data-borr-del]').forEach(x => x.addEventListener('click', () => { escribirBorradores(leerBorradores().filter(b => b.id !== x.dataset.borrDel)); renderOpt(); }));
+    $('opt-res').querySelectorAll('[data-borr-del]').forEach(x => x.addEventListener('click', () => { escribirBorradores(leerBorradores().filter(b => b.id !== x.dataset.borrDel)); actualizarResultadosOpt(c); }));
+  }
+  // Cambio de estrategia o campaña: se actualiza todo en el lugar, se mantiene el scroll y el foco vuelve al botón.
+  function cambioOpt(c, foco) {
+    const y = window.scrollY;
+    actualizarResultadosOpt(c);
+    window.scrollTo(0, y);
+    const v = $('view-opt'); v.classList.remove('opt-flash'); void v.offsetWidth; v.classList.add('opt-flash');
+    const b = $('opt-dock').querySelector(foco); if (b) b.focus({ preventScroll: true });
   }
 
   /* ---------- render general ---------- */
