@@ -604,6 +604,65 @@ body.twin-on .equipo { border-top-color: #1e3549; }
   body .tw-ctrl input[type="range"] { height: 28px; background-size: 100% 6px; background-repeat: no-repeat; background-position: center; }
   .equipo-lista a { min-height: 44px; }
 }
+/* Capas del visor del twin cuando el visor es angosto (por ventana chica o por el Copilot abierto) */
+.tw-stage { container-type: inline-size; }
+@container (max-width: 760px) {
+  .tw-tr { left: 8px; right: 8px; top: 8px; display: flex; justify-content: center; }
+  .tw-tl { top: 62px; left: 8px; max-width: calc(100% - 16px); }
+  .tw-sidetag { top: 60px; }
+}
+/* Field Shift Copilot */
+.cop-fab { position: fixed; right: 20px; bottom: 20px; z-index: 60; width: 54px; height: 54px; border-radius: 50%; border: 0; cursor: pointer; display: grid; place-items: center;
+  background: var(--primary); color: var(--on-primary); box-shadow: 0 10px 28px -8px rgb(11 61 145 / .55), 0 2px 6px rgb(0 0 0 / .18); transition: transform .15s ease, box-shadow .15s ease; }
+.cop-fab:hover { transform: translateY(-2px); box-shadow: 0 14px 32px -8px rgb(11 61 145 / .6), 0 2px 6px rgb(0 0 0 / .2); }
+.cop-fab:focus-visible { outline: 3px solid var(--ring); outline-offset: 3px; }
+.cop-fab[aria-expanded="true"] { display: none; }
+body:has(#opt-dock:not([hidden])) .cop-fab { bottom: 104px; }
+body.twin-on .cop-fab { background: #59C9E8; color: #071421; }
+/* Espacio al final para que el botón flotante no tape lo último de cada página ni del panel del twin. */
+.shell { padding-bottom: 88px; } .tw-side { padding-bottom: 76px; }
+body.twin-on .cop-fab { width: 48px; height: 48px; right: 16px; bottom: 16px; }
+.cop-panel { position: fixed; top: 0; right: 0; bottom: 0; z-index: 70; width: min(410px, 100vw); display: grid; grid-template-rows: auto auto 1fr auto auto auto;
+  background: var(--surface); border-left: 1px solid var(--border); box-shadow: -18px 0 40px -24px rgb(0 0 0 / .35); color: var(--text); }
+.cop-panel[hidden] { display: none; }
+.cop-head { display: flex; align-items: center; gap: 10px; padding: 14px 14px 10px; border-bottom: 1px solid var(--border); }
+.cop-ico { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--primary); color: var(--on-primary); flex: none; }
+.cop-tt { flex: 1; min-width: 0; } .cop-tt h2 { margin: 0; font-size: 16px; } .cop-tt p { margin: 0; font-size: 12.5px; color: var(--muted); }
+.cop-ib { border: 1px solid var(--border); background: transparent; color: var(--text); border-radius: 9px; width: 36px; height: 36px; display: grid; place-items: center; cursor: pointer; }
+.cop-ib:hover { border-color: var(--primary); color: var(--primary); }
+.cop-ctx { margin: 0; padding: 8px 14px; font-size: 12.5px; color: var(--muted); border-bottom: 1px solid var(--border); background: var(--surface-2); }
+.cop-ctx-k { font-weight: 600; color: var(--primary); text-transform: uppercase; letter-spacing: .05em; font-size: 11.5px; }
+.cop-msgs { overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; overscroll-behavior: contain; }
+.cop-hola { font-size: 14px; } .cop-hola p { margin: 0 0 6px; } .cop-nota { color: var(--muted); font-size: 12.5px; }
+.cop-m { max-width: 92%; font-size: 14px; line-height: 1.45; overflow-wrap: anywhere; }
+.cop-m p { margin: 0 0 6px; } .cop-m p:last-child { margin-bottom: 0; }
+.cop-m.user { align-self: flex-end; background: var(--primary); color: var(--on-primary); padding: 8px 12px; border-radius: 14px 14px 4px 14px; }
+.cop-m.bot { align-self: flex-start; background: var(--bg); border: 1px solid var(--border); padding: 10px 12px; border-radius: 14px 14px 14px 4px; display: grid; gap: 6px; }
+.cop-carga { color: var(--muted); font-style: italic; }
+.cop-ul { margin: 0; padding-left: 18px; display: grid; gap: 3px; font-size: 13px; }
+.cop-card { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--primary); border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; }
+.cop-card.viejo { opacity: .6; border-left-color: var(--muted); }
+.cop-ct { font-weight: 600; font-size: 14px; } .cop-cs { font-size: 12.5px; color: var(--muted); margin-top: -4px; }
+.cop-dl { margin: 0; display: grid; gap: 0; font-size: 13.5px; }
+.cop-dl dt { color: var(--muted); font-size: 12px; margin-top: 6px; } .cop-dl dt:first-child { margin-top: 0; }
+.cop-dl dd { margin: 0; font-weight: 500; font-variant-numeric: tabular-nums; }
+.cop-av { color: var(--warn); font-size: 12.5px; margin: 0; }
+.cop-fu { color: var(--muted); font-size: 12px; margin: 0; }
+.cop-viejo { color: var(--muted); font-size: 12px; font-style: italic; }
+.cop-acc { display: flex; flex-wrap: wrap; gap: 6px; } .cop-acc .btn { min-height: 34px; font-size: 13px; }
+.cop-sug { display: flex; flex-wrap: wrap; gap: 6px; }
+.cop-sug button { border: 1px solid var(--border); background: var(--surface); color: var(--primary); border-radius: 999px; padding: 6px 11px; font: 500 12.5px var(--font); cursor: pointer; text-align: left; }
+.cop-sug button:hover { border-color: var(--primary); }
+.cop-sug-f { padding: 8px 14px 2px; border-top: 1px solid var(--border); flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; }
+.cop-sug-f button { white-space: nowrap; flex: none; }
+.cop-form { display: flex; gap: 8px; padding: 10px 14px; }
+.cop-form input { flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; font: 400 14px var(--font); background: var(--bg); color: var(--text); }
+.cop-form input:focus { outline: 2px solid var(--ring); outline-offset: 1px; }
+.cop-pie { margin: 0; padding: 0 14px 12px; font-size: 11.5px; color: var(--muted); }
+/* En pantallas anchas el contenido se corre para que el panel no lo tape (el twin se redimensiona solo). */
+@media (min-width: 1200px) { body.cop-open .shell { margin-right: 410px; } body.cop-open .topbar { padding-right: 430px; } }
+@media (max-width: 640px) { .cop-panel { width: 100vw; } .cop-fab { right: 14px; bottom: 14px; } }
+@media (prefers-reduced-motion: reduce) { .cop-fab { transition: none; } }
 /* Climate Twin 3.1 */
 .tw-haze { position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0; transition: opacity .6s ease;
   background: linear-gradient(180deg, transparent 0%, rgb(255 170 90 / .10) 45%, rgb(255 140 70 / .16) 70%, transparent 100%); background-size: 100% 220%; }
@@ -637,6 +696,7 @@ body.twin-on .ctx .btn:hover { border-color: #59C9E8; color: #59C9E8; }
 .tw-grid { display: grid; grid-template-columns: minmax(0, 1fr) clamp(300px, 25vw, 380px); gap: 10px; align-items: start; }
 .tw-view.sin-panel .tw-grid { grid-template-columns: minmax(0, 1fr); }
 .tw-view.sin-panel .tw-side { display: none; }
+@media (max-width: 1699px) { body.cop-open .tw-view .tw-grid { grid-template-columns: minmax(0, 1fr); } body.cop-open .tw-view .tw-side { display: none; } }
 .tw-main { display: grid; min-width: 0; border-radius: 14px; overflow: hidden; border: 1px solid #1b3247; }
 .tw-stage { position: relative; overflow: hidden; height: clamp(360px, calc(100dvh - 372px), 940px);
   background: linear-gradient(180deg, #06111f 0%, #0d2338 32%, #23425b 58%, #2b4a63 72%, #2b4a63 100%); transition: background .8s ease; }
@@ -2178,6 +2238,26 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     <h2 id="equipo-t" class="section-label">Contribuidores</h2>
     <ul class="equipo-lista" id="equipo-lista"></ul>
   </footer>
+  <!-- Field Shift Copilot: comandos asistidos que usan las herramientas reales de la app -->
+  <button class="cop-fab" id="cop-fab" type="button" aria-expanded="false" aria-controls="cop-panel" title="Preguntale a Field Shift" aria-label="Preguntale a Field Shift">
+    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.2 3.6c-.5.4-1.3.1-1.3-.6V16A2.5 2.5 0 0 1 4 13.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8.5 9.5h7M8.5 12.5h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+  </button>
+  <aside class="cop-panel" id="cop-panel" hidden aria-labelledby="cop-t" role="complementary">
+    <header class="cop-head">
+      <div class="cop-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.2 3.6c-.5.4-1.3.1-1.3-.6V16A2.5 2.5 0 0 1 4 13.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></div>
+      <div class="cop-tt"><h2 id="cop-t">Field Shift Copilot</h2><p>Asistente contextual de decisiones agrícolas · <span id="cop-est">Listo</span></p></div>
+      <button class="cop-ib" type="button" id="cop-clear" title="Nueva conversación" aria-label="Nueva conversación"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button class="cop-ib" type="button" id="cop-x" title="Cerrar" aria-label="Cerrar el Copilot"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    </header>
+    <p class="cop-ctx"><span class="cop-ctx-k">Contexto</span> <span id="cop-ctx"></span></p>
+    <div class="cop-msgs" id="cop-msgs" aria-live="polite"></div>
+    <div class="cop-sug cop-sug-f" id="cop-sug"></div>
+    <form class="cop-form" id="cop-form" autocomplete="off">
+      <input id="cop-in" type="text" maxlength="400" placeholder="Ej.: ¿qué pasa si se repite la sequía de 2022/23?" aria-label="Escribí tu pregunta">
+      <button class="btn primary" type="submit">Enviar</button>
+    </form>
+    <p class="cop-pie">Comandos asistidos (intérprete local, sin IA generativa). Tus datos no salen del navegador.</p>
+  </aside>
   </main>
 </div>
 
@@ -2576,6 +2656,9 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
       seca: secaCrit <= UMBRALES.seca_dias ? 1 : clamp(1 - .02 * (secaCrit - UMBRALES.seca_dias), .6, 1),
       deficit: ratio >= UMBRALES.deficit_ratio ? 1 : clamp(.8 + .2 * ratio / UMBRALES.deficit_ratio, .8, 1),
     };
+    // Lote con riego (SUPUESTO): el equipo cubre la falta de agua, así que no penalizan el déficit de lluvia ni la racha
+    // seca. Calor extremo y heladas siguen igual: el riego no los evita. No modela capacidad del equipo ni disponibilidad de agua.
+    if (lote.riego) { f.seca = 1; f.deficit = 1; }
     return { campania: campHist(lote, siembra), umbral_calor: caliente, lluvia: Math.round(P), et0: Math.round(ET), etc: Math.round(etc),
       ratio: Math.round(ratio * 100) / 100, calor_critico: calor, heladas, lluvias_intensas: intensas,
       seca_max: secaMax, seca_critico: secaCrit, gwet_min: Math.round(gMin * 100) / 100, gwet_bajo_dias: gBajo,
@@ -2754,8 +2837,11 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
     const rb = rendBase(cid, lote.zona), anioEsc = anioEscenario(lote, siembra);
     let rend = rb.t_ha * apt.indice, rendModelo = false;
     if (anioEsc !== null && rb.modelo && rb.modelo.anomalia_prevista[anioEsc] !== undefined) {
-      const aptN = aptitud(cid, Object.assign({}, lote, { escenario: null, pisoClima: null }), siembra, cosechaLimite);
-      if (!aptN.descartado) { rend = rb.t_ha * aptN.indice * (1 + rb.modelo.anomalia_prevista[anioEsc]); rendModelo = true; }
+      // El modelo está calibrado con rindes de secano. Con riego (SUPUESTO documentado): el rinde es el mayor entre el de
+      // secano del modelo y el que da la aptitud con riego; regar nunca rinde menos que no regar.
+      const aptN = aptitud(cid, Object.assign({}, lote, { escenario: null, pisoClima: null, riego: false }), siembra, cosechaLimite);
+      if (!aptN.descartado) { const secano = rb.t_ha * aptN.indice * (1 + rb.modelo.anomalia_prevista[anioEsc]);
+        rend = lote.riego ? Math.max(secano, rend) : secano; rendModelo = !lote.riego || secano >= rend; }
     }
     const margen = margenUsd(cid, lote.zona, rend);
     const ec = econDe(cid, lote.zona);
@@ -3360,7 +3446,7 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
       const c = campoDe(state.campo);
       $('ctx').innerHTML = '<div class="ctx-l"><div class="ctx-k">' + migas([['Resumen general', '#/inicio'], [c.nombre, '#/campo/' + c.id], ['Climate Twin']]) + '</div>' +
         '<h1 id="page-h1" tabindex="-1">Climate Twin · ' + esc(c.nombre) + '</h1><p class="ctx-s" id="tw-ctx-s">' + esc(twinSubtitulo(c)) + '</p></div>' +
-        '<div class="ctx-r"><button class="btn" type="button" id="tw-panel" aria-pressed="' + tw.panel + '">' + (tw.panel ? 'Ocultar panel' : 'Mostrar panel') + '</button>' +
+        '<div class="ctx-r"><button class="btn" type="button" data-cop-preguntar="Explicá esta simulación">Preguntar sobre esta simulación</button><button class="btn" type="button" id="tw-panel" aria-pressed="' + tw.panel + '">' + (tw.panel ? 'Ocultar panel' : 'Mostrar panel') + '</button>' +
         '<a class="btn" href="#/optimizar/' + c.id + '">Optimizar</a><a class="btn" href="#/campo/' + c.id + '">Volver al campo</a></div>';
       $('tw-panel').addEventListener('click', () => { tw.panel = !tw.panel; $('view-twin').classList.toggle('sin-panel', !tw.panel); renderCtx(); });
       return;
@@ -3913,7 +3999,7 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
       (escAct.id === 'promedio' ? '' : ' · con el clima real de ' + (escAct.secuencia != null ? escAct.secuencia + '/' + String(escAct.secuencia + 1).slice(2) + ' a ' + (escAct.secuencia + 2) + '/' + String(escAct.secuencia + 3).slice(2) : esc(escAct.campania))) + '</div>' +
       '<h2>' + titulo + '</h2><p class="v-score">' + puntaje + '</p>' + (why ? '<ul class="v-why">' + why + '</ul>' : '') +
       '<div class="v-actions"><span class="hint">Puntaje de 0 a 100. Cambiá las prioridades en «Ajustes» y mirá cómo cambia.</span>' +
-      '<a class="btn" href="#/climate-twin/' + actual().campo.id + '">Ver el campo en Climate Twin 3D</a>' +
+      '<a class="btn" href="#/climate-twin/' + actual().campo.id + '">Ver el campo en Climate Twin 3D</a><button class="btn" type="button" data-cop-preguntar="¿Por qué esta recomendación?">¿Por qué esta recomendación?</button>' +
       '<button class="btn" type="button" id="rot-reset">Restablecer ejemplos</button></div></section>';
     const tlCmp = '<section class="card tl-cmp" aria-label="Las 3 rotaciones en el tiempo"><div class="rank-head"><h2>Las 3 rotaciones en el tiempo</h2></div>' +
       r.rotaciones.map((e, i) => e.pasos ? '<div class="tl-row"><span class="rn"><span class="rtag sm" style="--rc:' + ROT_COL[i] + '">' + ROT_TAG[i] + '</span><span>' + esc(e.nombre) + '</span></span>' +
@@ -5061,7 +5147,7 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
       (st.relajada ? 'Ninguna combinación cumplía la regla de diversificación, así que se mostró la mejor sin esa regla. ' : '') +
       'Es la mejor alternativa encontrada dentro de esas candidatas, no el óptimo garantizado. Suelo, requisitos de cultivo y coberturas son ilustrativos; clima de NASA POWER y precios y rindes de MAGyP. No es una predicción verificada.</p>';
     const borradores = leerBorradores().filter(b => b.campo === c.id);
-    const borr = '<div class="opt-row"><button class="btn" type="button" id="opt-save">Guardar esta propuesta como borrador</button><span class="hint">No cambia tus lotes ni tu rotación actual.</span></div>' +
+    const borr = '<div class="opt-row"><button class="btn" type="button" data-cop-preguntar="Explicá esta estrategia">Explicar esta estrategia</button><button class="btn" type="button" id="opt-save">Guardar esta propuesta como borrador</button><span class="hint">No cambia tus lotes ni tu rotación actual.</span></div>' +
       (borradores.length ? '<ul class="opt-borr">' + borradores.map((b, i) => '<li><b>' + esc(b.titulo) + '</b><span class="hint">' + esc(b.fecha) + '</span><span class="hint">' + esc(b.resumen) + '</span><button class="btn" type="button" data-borr-del="' + b.id + '">Borrar</button></li>').join('') + '</ul>' : '');
     return { top: '<section class="card opt-card"><h2>Propuestas para ' + esc(c.nombre) + '</h2>' + tabs + '</section>',
       res: '<section class="card opt-card"><h2>Plan por lote y campaña</h2>' + plan + '</section>' +
@@ -6190,6 +6276,410 @@ float fsVeg = 0.0; vec2 fsOa = vec2(0.0), fsOb = vec2(0.0); float fsB = 0.0;
     catch (e) { tw.three = null; $('tw-canvas').innerHTML = ''; twinPintar(); return; }
     twinAmbiente(); twinPintar();
   }
+
+  /* ---------- Field Shift Copilot ----------
+     Comandos asistidos en español. Un intérprete LOCAL y determinista (reglas, sinónimos y extracción de parámetros;
+     no es IA generativa) reconoce la intención y llama a las funciones reales de la app: motor (compararRotaciones,
+     compararEscenarios), optimizador (correrOptimizacion), Climate Twin (twinEvaluar, twinCritico, twinRecalcular…).
+     El Copilot interpreta y coordina; Field Shift calcula. Nada se envía fuera del navegador.
+     Capas: copInterpretar (texto → intención) → copEjecutar (valida y llama a la app) → copRender (presenta).
+     Punto de extensión para un LLM futuro: window.FS_COPILOT_INTERPRETE(texto, contexto) puede devolver
+     { tipo, params } con los mismos tipos de COP_TIPOS; igual se validan acá y nunca se ejecuta código del texto. */
+  const COP_TIPOS = ['AYUDA', 'RIEGO', 'FUENTES', 'EXPLICAR', 'ESCENARIO', 'COMPARAR', 'OPTIMIZAR', 'ESTRATEGIA', 'TWIN_ABRIR', 'TWIN_CRITICO', 'TWIN_FOCO', 'TWIN_CAPA', 'IR'];
+  const COP_CLAVE = 'fieldshift.copilot.v1';
+  const cop = { abierto: false, msgs: [], ocupado: false, acciones: new Map(), sec: 0 };
+  const norm = s => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
+  // Firma de la configuración que cambia los resultados: si cambia, las tarjetas viejas se marcan como desactualizadas.
+  const copFirma = () => JSON.stringify([state.pesos, state.siembra, CAMPOS.map(c => c.lotes.map(l => [l.id, l.rotacion_habitual, l.textura, l.drenaje, l.ph, l.pendiente])), opt.res ? opt.campo + opt.est : '']);
+
+  /* --- contexto: se lee del estado existente, sin copias --- */
+  function copContexto() {
+    const v = state.vista, x = { vista: v, campo: null, lote: null };
+    if (v === 'campo' || v === 'optimizar' || v === 'twin') x.campo = campoDe(state.campo) || null;
+    if (esLote(v)) { const a = actual(); if (a) { x.campo = a.campo; x.lote = a.lote; } }
+    if (v === 'twin' && tw.datos) { x.esc = tw.esc; x.fecha = fechaT(tw.datos, tw.t); x.plan = tw.cmp ? 'comparar' : tw.est;
+      x.loteTw = tw.sel ? (x.campo && x.campo.lotes.find(l => l.id === tw.sel)) || null : null; }
+    if (v === 'optimizar' && x.campo && hayOptDe(x.campo)) x.estrategia = opt.est;
+    x.prioridades = state.wPreset ? WEIGHT_PRESETS[state.wPreset].t : 'personalizadas';
+    return x;
+  }
+  function copCtxTexto(x) {
+    const p = [];
+    if (x.campo) p.push(x.campo.nombre);
+    if (x.lote) p.push(x.lote.nombre);
+    if (x.vista === 'twin' && x.esc) p.push(TWIN_ESC[x.esc].t + (x.fecha ? ' · ' + x.fecha : ''), x.loteTw ? x.loteTw.nombre : '');
+    if (x.vista === 'optimizar') p.push(x.estrategia ? ESTR[x.estrategia].t : 'Optimizar');
+    if (esLote(x.vista)) p.push(VISTAS_LOTE[x.vista]);
+    if (!p.length) p.push('Todos tus campos');
+    return p.filter(Boolean).join(' · ') + ' · prioridades: ' + x.prioridades;
+  }
+
+  /* --- intérprete determinista --- */
+  function copBuscarLote(t, campo) {
+    const pool = campo ? campo.lotes.map(l => ({ l, c: campo })) : lotesPlano.map(x => ({ l: x.lote, c: x.campo }));
+    return pool.find(({ l }) => { const n = norm(l.nombre).replace(/^lote /, ''); return n.length > 2 && new RegExp('\\b' + n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(t); }) || null;
+  }
+  function copBuscarCampo(t) { return CAMPOS.find(c => { const n = norm(c.nombre); return t.includes(n) || n.split(' ').filter(w => w.length > 3 && !['campo', 'estancia'].includes(w)).some(w => t.includes(w)); }) || null; }
+  function copInterpretar(texto) {
+    const t = norm(texto), x = copContexto();
+    if (typeof window.FS_COPILOT_INTERPRETE === 'function') { try { const r = window.FS_COPILOT_INTERPRETE(texto, x); if (r && COP_TIPOS.includes(r.tipo)) return r; } catch (e) { /* sigue el intérprete local */ } }
+    const campoTxt = copBuscarCampo(t), loteTxt = copBuscarLote(t, campoTxt || x.campo);
+    const campo = (loteTxt && loteTxt.c) || campoTxt || x.campo, lote = loteTxt ? loteTxt.l : x.lote;
+    const num = re => { const m = t.match(re); return m ? parseFloat(m[1].replace(',', '.')) : null; };
+    const P = { campo, lote };
+    if (/^(hola|buenas|hey)\b/.test(t) && t.length < 14) return { tipo: 'AYUDA', params: P };
+    if (/(que (podes|puede|sabes)|ayuda|como funciona|que hace field shift|comandos)/.test(t)) return { tipo: 'AYUDA', params: P };
+    if (/(datos|fuente|fuentes).*(nasa|clima|usa|utiliz)|nasa power|de donde salen? (los )?datos|que datos/.test(t)) return { tipo: 'FUENTES', params: P };
+    if (/riego|regar|regad|irrigac|pivot|aspersi|goteo/.test(t)) {
+      const m = t.match(/(?:usd|u\$s|us\$|\$)\s?(\d+(?:[.,]\d+)?)|(\d+(?:[.,]\d+)?)\s?(?:usd|u\$s|us\$|dolares|dolar)/);
+      return { tipo: 'RIEGO', params: Object.assign(P, { costo: m ? parseFloat((m[1] || m[2]).replace(',', '.')) : null }) };
+    }
+    if (/(explica|resum|que muestra).*(simulacion|escenario)/.test(t) && x.vista === 'twin') return { tipo: 'ESCENARIO', params: Object.assign(P, { esc: tw.esc, dT: TWIN_ESC[tw.esc].tipo === 'hip' ? tw.dT : null, dp: TWIN_ESC[tw.esc].tipo === 'hip' ? tw.dp : null }) };
+    if (/momento critico|peor momento|pico (del|de la)|cuando (fue|es) (lo )?peor/.test(t)) return { tipo: 'TWIN_CRITICO', params: P };
+    const capa = /(capa|activa|mostra|ver).*(estres|exposicion|riesgo)/.test(t) ? 'riesgo' : /(capa|activa|modo|ver).*satelit/.test(t) ? 'satelite' : /(capa|activa|ver) (de )?cultivos/.test(t) ? 'cultivo' : /(capa|activa|ver) (de )?resultados/.test(t) ? 'resultados' : null;
+    if (capa) return { tipo: 'TWIN_CAPA', params: Object.assign(P, { capa }) };
+    if (loteTxt && /(enfoca|enfocar|centra|acerca|selecciona|mostrame el lote|ir al lote|zoom)/.test(t)) return { tipo: 'TWIN_FOCO', params: P };
+    if (/(explica(me)?|por que|porque|que significa).*(estrategia|propuesta|plan optimizado)/.test(t)) return { tipo: 'ESTRATEGIA', params: P };
+    if (/compar|vs\.?|contra el optimizad|actual (y|con) (el |la )?optimizad|que pierdo|que gano/.test(t) && !/(sequia|calor|lluvi)/.test(t)) return { tipo: 'COMPARAR', params: P };
+    // Optimización: objetivo y restricciones que el optimizador realmente admite.
+    if (/optimiz|busca(me)? (una )?(estrategia|rotacion|combinacion|plan)|mas resilient|resiste mejor|priorizar|prioriza|mas rentable|mayor margen/.test(t)) {
+      const obj = /resilien|resist|ano malo|sequia/.test(t) ? 'resiliencia' : /margen|rentab|ganancia|plata/.test(t) ? 'margen' : /cobertura|suelo/.test(t) ? 'suelo' : 'equilibrado';
+      // «sin soja», «excluyendo trigo y cebada»: solo las palabras que siguen a la negación, hasta «con», «pero» o un signo.
+      const listas = [...t.matchAll(/\b(?:sin|excluir|excluyendo|no quiero|no uses|no sembrar)\b((?:\s*(?:,|\by\b|\bni\b|\bo\b)?\s*[a-z]+){1,6})/g)].map(m => m[1].split(/\b(?:con|pero|para|que|en|de)\b|[.;]/)[0]);
+      const excluir = Object.keys(M.CULTIVOS).filter(k => M.CULTIVOS[k].tipo !== 'cobertura' && listas.some(l => new RegExp('\\b' + norm(M.CULTIVOS[k].nombre).split(' ')[0] + '\\b').test(l)));
+      const noSoportado = [];
+      if (/(maximo|como mucho|no mas de|menos de) \d+ ?%/.test(t)) noSoportado.push('un tope de superficie distinto del 70 % por cultivo (el optimizador solo admite «diversificar: ningún cultivo en más del 70 %»)');
+      if (/arrend|precio/.test(t)) noSoportado.push('arrendamiento o precios a medida');
+      return { tipo: 'OPTIMIZAR', params: Object.assign(P, { obj, excluir, noSoportado }) };
+    }
+    // Escenarios climáticos (Climate Twin).
+    let esc = null;
+    if (/sequia|seca\b|sin lluvia|ano seco/.test(t) && /calor|temperatura|grados/.test(t)) esc = 'combinado';
+    else if (/sequia|ano seco|2022|seca\b/.test(t)) esc = 'sequia';
+    else if (/ola de calor|calor|temperatura|grados|caliente/.test(t)) esc = 'calor';
+    else if (/lluvi|llueve|llover|inund|precipitac|agua/.test(t) && !/datos/.test(t)) esc = 'lluvias';
+    else if (/(clima )?(habitual|normal|promedio)/.test(t) && /(clima|escenario|simul|ano)/.test(t)) esc = 'habitual';
+    if (esc) {
+      const pct = num(/(\d+(?:[.,]\d+)?) ?%/), grados = num(/\+? ?(\d+(?:[.,]\d+)?) ?(?:°|grados|º)/);
+      const menos = /menos|baja|cae|reduc|-\s?\d/.test(t);
+      const p = Object.assign(P, { esc });
+      if (pct != null && (esc === 'lluvias' || esc === 'combinado')) p.dp = menos ? -pct : pct;
+      if (grados != null && (esc === 'calor' || esc === 'combinado')) p.dT = grados;
+      if (/^(abri|abrir|mostra|ver|ir)/.test(t) && /gemelo|twin|3d/.test(t)) p.abrir = true;
+      return { tipo: 'ESCENARIO', params: p };
+    }
+    if (/gemelo|climate twin|\btwin\b|3d|simulador/.test(t)) return { tipo: 'TWIN_ABRIR', params: P };
+    if (/por que|porque|explica|recomend|vulnerable|riesgo|que significa|puntaje|como le va/.test(t)) return { tipo: 'EXPLICAR', params: P };
+    if (/plan a 3|tres anos|3 anos|rotaciones/.test(t) && lote) return { tipo: 'IR', params: Object.assign(P, { destino: 'rotaciones' }) };
+    if (/que sembrar|sembrar ahora|proximo cultivo/.test(t) && lote) return { tipo: 'IR', params: Object.assign(P, { destino: 'cultivo' }) };
+    if (/(abri|abrir|ir a|ver|mostra|explorar).*(campo|lotes|mis campos)/.test(t) || campoTxt) return { tipo: 'IR', params: Object.assign(P, { destino: 'campo' }) };
+    return { tipo: 'DESCONOCIDO', params: P };
+  }
+
+  /* --- acciones: validan, llaman a la app y devuelven resultados estructurados --- */
+  const copAccion = (t, fn, primaria) => { const id = 'ca' + (++cop.sec); cop.acciones.set(id, fn); return { id, t, primaria }; };
+  const copPedirCampo = (tipo, params) => ({ texto: '¿Sobre qué campo?', acciones: CAMPOS.filter(c => c.lotes.length).map(c => copAccion(c.nombre, () => copEjecutar(tipo, Object.assign({}, params, { campo: c })))) });
+  const pct1 = v => Math.round(v) + ' %', fx = v => (v > 0 ? '+' : v < 0 ? '−' : '±');
+  function copIrTwin(c, luego) {
+    const h = '#/climate-twin/' + c.id;
+    if (location.hash !== h) ir(h);
+    if (!luego) return;
+    let n = 0; const esp = () => { if (state.vista === 'twin' && tw.campo === c.id && tw.datos) luego(); else if (++n < 60) setTimeout(esp, 100); }; setTimeout(esp, 50);
+  }
+  // Aplica un escenario al twin igual que su selector (si está abierto, recalcula sin recrear la escena).
+  function copAplicarEscenario(c, esc, dT, dp) {
+    tw.esc = esc; if (TWIN_HIP[esc]) Object.assign(tw, TWIN_HIP[esc]);
+    if (dT != null) tw.dT = dT; if (dp != null) tw.dp = dp;
+    if (state.vista === 'twin' && tw.campo === c.id) { twinFundido(); twinRecalcular(c, true); }
+  }
+  const COP_EJ = {
+    AYUDA() {
+      return { texto: 'Soy un asistente de comandos: entiendo pedidos frecuentes en español y los ejecuto con las herramientas de Field Shift. Los cálculos los hace el motor de la app, con clima de NASA POWER y precios de MAGyP. No es una IA generativa: si algo no lo reconozco, te lo digo.',
+        lista: ['Simular un escenario: «¿qué pasa con una sequía como la de 2022/23?», «llueve 30 % menos», «ola de calor de +4 °C»',
+          'Explicar: «¿por qué me recomendás esto?», «¿por qué el lote Arenoso es vulnerable?», «¿qué datos NASA se usan?»',
+          'Comparar y optimizar: «compará mi plan con el optimizado», «buscá una estrategia más resiliente», «optimizá sin soja»',
+          'Riego: «¿y si tuviera riego?», «¿conviene regar el lote Arenoso a USD 250 por hectárea?»',
+          'Climate Twin: «abrí el gemelo digital», «mostrame el momento crítico», «enfocá el lote Bajo», «activá la capa de estrés»'] };
+    },
+    FUENTES() {
+      return { texto: 'De dónde salen los datos que usa Field Shift:', lista: [
+        'Clima: NASA POWER, promedio mensual ' + M.FUENTE_CLIMA.periodo + ' por celda de 0,5° × 0,625° (unos 55 × 60 km); el mismo para todos los lotes de la celda.',
+        'Clima diario: NASA POWER 2001–2025 (lluvia, temperaturas máxima y mínima, humedad radicular GWETROOT y ET0 FAO-56 calculada) para las pruebas de clima y Climate Twin.',
+        'Rendimientos y precios: MAGyP (Estimaciones Agrícolas y Resultados Agrícolas 2026/27).',
+        'Suelo, requisitos de cultivo, umbrales y Kc: supuestos ilustrativos documentados en el motor; a validar con INTA o un agrónomo.'] };
+    },
+    EXPLICAR({ campo, lote }) {
+      const x = copContexto();
+      // En Climate Twin: por qué un lote está estresado en este escenario (factores que calculó el motor para el ciclo).
+      if (x.vista === 'twin' && tw.datos && (lote || x.loteTw)) {
+        const l = lote || x.loteTw, L = tw.datos.lotes.find(y => y.l.id === l.id); if (!L) return { texto: 'Ese lote no está en este campo.' };
+        const est = twinEstado(tw.datos, tw.t)[tw.datos.lotes.indexOf(L)], p = est.paso || L.pasos.find(q => q.viable && q.tipo !== 'cobertura' && q.d0 >= 0);
+        if (!p) return { texto: l.nombre + ' no tiene un cultivo comercial del plan en esta campaña.' };
+        const d = p.diario, f = [];
+        if (d) { if (d.ratio < M.UMBRALES.deficit_ratio) f.push('Lluvia del ciclo: ' + Math.round(100 * d.ratio) + ' % de lo que demanda el cultivo (Kc × ET0).');
+          if (d.calor_critico) f.push(d.calor_critico + ' días de calor extremo (≥ ' + String(d.umbral_calor).replace('.', ',') + ' °C) en su período crítico.');
+          if (d.seca_critico > M.UMBRALES.seca_dias) f.push('Racha seca de ' + d.seca_critico + ' días en el período crítico.');
+          if (d.heladas) f.push(d.heladas + ' heladas durante el ciclo.'); }
+        if (p.f_agua != null && p.f_agua < .8) f.push('Agua total del ciclo en el borde de su rango (factor ' + Math.round(100 * p.f_agua) + ' %).');
+        if (p.f_temp != null && p.f_temp < .8) f.push('Temperatura media del ciclo en el borde de su rango (factor ' + Math.round(100 * p.f_temp) + ' %).');
+        return { texto: l.nombre + ' con ' + M.CULTIVOS[p.cultivo].nombre + ' en «' + TWIN_ESC[tw.esc].t + '»:',
+          tarjeta: { titulo: 'Estrés del ciclo ' + (p.viable ? (1 - p.aptitud).toFixed(2).replace('.', ',') : '1,00') + (est.acum ? ' · hoy ' + (1 - est.apt).toFixed(2).replace('.', ',') : ''),
+            filas: [['Cultivo', M.CULTIVOS[p.cultivo].nombre], ['Aptitud del motor', p.viable ? Math.round(100 * p.aptitud) + ' %' : 'no viable'], ['Período crítico', est.enCritico ? 'ahora' : 'no']],
+            lista: f.length ? f : ['El motor no marca factores climáticos limitantes para este ciclo.'], fuente: 'Motor de Field Shift · NASA POWER diario' + (TWIN_ESC[tw.esc].tipo === 'hip' ? ' perturbado (hipotético)' : '') + ' · umbrales y Kc supuestos' } };
+      }
+      if (!lote) return campo ? { texto: '¿Qué lote de ' + campo.nombre + '?', acciones: campo.lotes.map(l => copAccion(l.nombre, () => copEjecutar('EXPLICAR', { campo, lote: l }))) }
+        : { texto: '¿Qué lote querés que te explique?', acciones: lotesPlano.slice(0, 6).map(y => copAccion(y.lote.nombre, () => copEjecutar('EXPLICAR', { campo: y.campo, lote: y.lote }))) };
+      const c = campo && campo.lotes.includes(lote) ? campo : lotesPlano.find(y => y.lote === lote).campo;
+      const r = M.compararRotaciones(inputEsc(c, lote), rotacionesDe(lote), M.parseFecha(state.siembra), state.pesos);
+      const ce = M.compararEscenarios(input(c, lote), rotacionesDe(lote), M.parseFecha(state.siembra), state.pesos);
+      const m = r.mejor, base = r.rotaciones[0], iM = r.rotaciones.indexOf(m);
+      const lista = (iM > 0 ? difClima(ce.filas[iM], ce.filas[0]) : []).concat(m.diferencias || []);
+      const top = Object.keys(m.aporte || {}).sort((a, b) => m.aporte[b] - m.aporte[a]).slice(0, 3).map(k => M.COMPONENTES_NOMBRE[k] + ' (' + m.aporte[k].toFixed(1) + ' pts)');
+      return { texto: m.id === 'actual' ? 'Para ' + lote.nombre + ', tu rotación actual sigue siendo la mejor con tus prioridades.' : 'Para ' + lote.nombre + ' conviene «' + m.nombre + '».',
+        tarjeta: { titulo: m.nombre, filas: [['Puntaje', Math.round(m.score) + ' pts (de 100)'], ['Tu rotación actual', Math.round(base.score) + ' pts'], ['Prioridades', copContexto().prioridades], ['Lo que más suma', top.join(' · ')]],
+          lista: lista.slice(0, 5).map(([sg, tx]) => (sg === '+' ? '＋ ' : '－ ') + tx), fuente: 'Motor de Field Shift · clima NASA POWER · rendimientos y precios MAGyP · suelo y requisitos ilustrativos' },
+        acciones: [copAccion('Ver Plan a 3 años', () => ir(hrefLote(lote.id, 'rotaciones')), true), copAccion('Qué sembrar ahora', () => ir(hrefLote(lote.id, 'cultivo')))] };
+    },
+    // ¿Y si tuviera riego? Mismo campo y misma rotación actual, con y sin riego, en los tramos climáticos reales
+    // (3 campañas seguidas, NASA POWER) que usa el optimizador. El margen del motor no incluye el costo del riego:
+    // la diferencia es lo máximo que el riego puede costar por hectárea y por año para pagarse (punto de equilibrio).
+    RIEGO({ campo, lote, costo }) {
+      if (!campo) return copPedirCampo('RIEGO', { costo });
+      const lotes = lote && campo.lotes.includes(lote) ? [lote] : campo.lotes; if (!lotes.length) return { texto: campo.nombre + ' no tiene lotes.' };
+      if (costo != null && (costo < 0 || costo > 5000)) return { texto: 'Indicá el costo del riego en USD por hectárea por año (entre 0 y 5.000).' };
+      const ini = M.parseFecha(state.siembra), zid = climaLote(campo, lotes[0]).zid;
+      const ventanas = Object.keys(M.ESCENARIOS[zid] || {}).filter(k => /^s\d{4}$/.test(k));
+      if (!ventanas.length) return { texto: 'No hay serie climática diaria de NASA POWER para la celda de ' + campo.nombre + ': no puedo comparar años reales.' };
+      const medir = (l, riego) => { const base = Object.assign(input(campo, l), { riego }), seq = l.rotacion_habitual.slice();
+        const v = ventanas.map(w => { const e = M.evaluarRotacion(Object.assign({}, base, { escenario: w }), seq, ini, state.pesos); return e ? e.indicadores.margen_anual : 0; });
+        const sq = ventanas.includes('s2022') ? v[ventanas.indexOf('s2022')] : null;
+        return { med: q(v, .5), malo: q(v, .1), peor: Math.min(...v), sq }; };
+      const HA = lotes.reduce((a, l) => a + l.superficie, 0), filas = [];
+      let dMed = 0, dMalo = 0, dSq = 0, hasSq = true;
+      for (const l of lotes) {
+        const s0 = medir(l, false), s1 = medir(l, true), w = l.superficie / HA;
+        dMed += (s1.med - s0.med) * w; dMalo += (s1.malo - s0.malo) * w; if (s0.sq == null) hasSq = false; else dSq += (s1.sq - s0.sq) * w;
+        filas.push(l.nombre.replace(/^Lote /, '') + ' (' + l.superficie + ' ha): +' + usd(s1.med - s0.med).replace('USD ', 'USD ') + '/ha/año típico · +' + usd(s1.malo - s0.malo) + ' en un año malo' + (Math.abs(s1.med - s0.med) < 5 && Math.abs(s1.malo - s0.malo) < 5 ? ' (el motor lo limita por otros factores, como calor extremo, drenaje o época, no por agua)' : '') + (l.riego ? ' · ya figura con riego' : ''));
+      }
+      const f = (n, v) => [n, (v >= 0 ? '+' : '−') + usd(Math.abs(v)) + '/ha/año'];
+      if (lotes.length === 1 && Math.abs(dMed) < 5 && Math.abs(dMalo) < 5) filas.push('El riego casi no cambia el resultado: en este lote el motor no encuentra el agua como factor limitante (pesan más el calor extremo, el drenaje o la época).');
+      const filasT = [f('Diferencia de margen en un año típico', dMed), f('Diferencia en un año malo (1 de cada 10)', dMalo)];
+      if (hasSq) filasT.push(f('Diferencia en el tramo que arranca con la sequía 2022/23', dSq));
+      filasT.push(['Punto de equilibrio', 'el riego se paga si su costo total queda por debajo de ' + usd(Math.max(0, dMed)) + '/ha/año (año típico)']);
+      let texto; const quien = lotes.length === 1 ? lotes[0].nombre : campo.nombre;
+      if (costo != null) {
+        const neto = dMed - costo, netoMalo = dMalo - costo;
+        filasT.push(['Con tu costo de ' + usd(costo) + '/ha/año', (neto >= 0 ? 'deja +' : 'pierde −') + usd(Math.abs(neto)) + '/ha/año en un año típico · ' + (netoMalo >= 0 ? '+' : '−') + usd(Math.abs(netoMalo)) + ' en un año malo']);
+        texto = neto >= 0 ? 'Con un costo de ' + usd(costo) + '/ha/año, el riego en ' + quien + ' se paga en un año típico y deja unos ' + usd(neto) + '/ha/año.'
+          : 'Con un costo de ' + usd(costo) + '/ha/año, el riego en ' + quien + ' no se paga en un año típico' + (netoMalo >= 0 ? ', aunque sí en un año malo' : '') + '.';
+      } else texto = 'Con riego, ' + (lotes.length === 1 ? lotes[0].nombre : campo.nombre) + ' ganaría unos ' + usd(Math.max(0, dMed)) + '/ha/año de margen en un año típico y ' + usd(Math.max(0, dMalo)) + ' en un año malo. Para saber si es rentable, comparalo con lo que te cuesta regar (decime, por ejemplo, «riego a USD 250 por hectárea»).';
+      return { texto, tarjeta: { titulo: 'Con riego vs. sin riego · ' + (lotes.length === 1 ? lotes[0].nombre : campo.nombre + ' (' + HA + ' ha)'),
+        sub: 'rotación actual · ' + ventanas.length + ' tramos reales de 3 campañas (NASA POWER) · margen bruto MAGyP sin costo de riego', filas: filasT, lista: lotes.length > 1 || filas.length > 1 ? filas.slice(lotes.length > 1 ? 0 : 1) : null,
+        avisos: ['Supuesto: el equipo cubre toda la falta de agua (sin límite de capacidad ni de disponibilidad de agua). El calor extremo y las heladas siguen afectando igual.',
+          'No incluye inversión, energía, agua ni mantenimiento del riego: por eso se muestra el punto de equilibrio y no un veredicto sin tu costo.',
+          'Estimación conservadora: el rinde con riego no supera el promedio de secano de MAGyP (no hay datos de rindes bajo riego); un equipo bien manejado puede rendir más.'],
+        fuente: 'Motor de Field Shift (evaluarRotacion con y sin riego) · NASA POWER diario · rendimientos y precios MAGyP' },
+        acciones: lotes.length === 1 ? [copAccion('Ver el lote', () => ir(hrefLote(lotes[0].id, 'rotaciones')), true)] : campo.lotes.map(l => copAccion('Solo ' + l.nombre.replace(/^Lote /, ''), () => copEjecutar('RIEGO', { campo, lote: l, costo }))) };
+    },
+    ESCENARIO({ campo, esc, dT, dp, abrir }) {
+      if (!campo) return copPedirCampo('ESCENARIO', { esc, dT, dp, abrir });
+      if (!campo.lotes.length) return { texto: campo.nombre + ' no tiene lotes para simular.' };
+      if (dT != null && (dT < 0 || dT > 5)) return { texto: 'La ola de calor hipotética admite de 0 a +5 °C sobre la campaña de referencia. Probá con un valor en ese rango.' };
+      if (dp != null && (dp < -60 || dp > 100)) return { texto: 'El cambio de lluvia hipotético admite de −60 % a +100 %. Probá con un valor en ese rango.' };
+      const prev = { esc: tw.esc, dT: tw.dT, dp: tw.dp, base: tw.base }; if (tw.campo !== campo.id) tw.base = null;
+      const evaluar = (e, a, b) => { tw.esc = e; Object.assign(tw, TWIN_HIP[e] || {}); if (a != null) tw.dT = a; if (b != null) tw.dp = b; return twinEvaluar(campo, hayOptDe(campo) && tw.est === 'optimizada' ? 'optimizada' : 'actual'); };
+      let D, H;
+      try { H = evaluar('habitual'); D = evaluar(esc, dT, dp); } catch (e) { Object.assign(tw, prev); return { texto: 'No pude evaluar el escenario: ' + e.message }; }
+      const usados = { dT: tw.dT, dp: tw.dp }; Object.assign(tw, prev);
+      const s = D.serie, A = twinAgg(D), B = twinAgg(H), k = twinCritico(D), e = TWIN_ESC[esc];
+      const lluvia = s.prec.reduce((a, v) => a + (v || 0), 0), et0 = s.et0 ? s.et0.reduce((a, v) => a + (v || 0), 0) : null;
+      const calorD = s.tipo === 'dia' && D.umbral ? s.tmax.filter(v => v != null && v >= D.umbral).length : null;
+      const lotes = D.lotes.map(L => { const p = L.pasos.find(q => q.viable && q.tipo !== 'cobertura' && q.d0 >= 0 && q.d0 < 365) || L.pasos.find(q => q.d1 > 0 && q.d0 < 365);
+        return L.l.nombre.replace(/^Lote /, '') + ': ' + (p ? M.CULTIVOS[p.cultivo].nombre + ' · estrés ' + (p.viable ? (1 - p.aptitud).toFixed(2).replace('.', ',') : '1,00') : 'sin cultivo comercial'); });
+      const desc = esc === 'habitual' ? 'promedio mensual 2001–25' : e.tipo === 'real' ? 'campaña real ' + D.anio + '/' + String(D.anio + 1).slice(2) + ', día por día'
+        : 'hipotético sobre la campaña real ' + D.anio + '/' + String(D.anio + 1).slice(2) + (esc !== 'lluvias' ? ' · ' + (usados.dT >= 0 ? '+' : '') + String(usados.dT).replace('.', ',') + ' °C' : '') + (esc !== 'calor' ? ' · lluvia ' + (usados.dp > 0 ? '+' : '') + usados.dp + ' %' : '');
+      const aplicar = () => { copAplicarEscenario(campo, esc, esc === 'calor' || esc === 'combinado' ? usados.dT : null, esc === 'lluvias' || esc === 'combinado' ? usados.dp : null); };
+      if (state.vista === 'twin' && tw.campo === campo.id) aplicar();
+      else if (abrir) { aplicar(); copIrTwin(campo); }
+      const av = [];
+      if (e.tipo === 'hip') av.push('Escenario hipotético: no es un pronóstico.');
+      if (esc === 'lluvias') av.push('El motor no modela anegamiento ni daño por lluvia intensa.');
+      if (esc === 'calor' || esc === 'combinado') av.push('La ET0 no se recalcula con la temperatura perturbada.');
+      const titulo = esc === 'lluvias' && usados.dp < 0 ? 'Menos lluvia (' + usados.dp + ' %)' : e.t;
+      if (esc === 'lluvias' && usados.dp < 0) av.push('En Climate Twin se ve dentro del escenario «Lluvias intensas», con la lluvia ajustada a ' + usados.dp + ' %.');
+      return { texto: titulo + ' en ' + campo.nombre + (state.vista === 'twin' && tw.campo === campo.id ? ' (ya aplicado en el gemelo).' : '.'),
+        tarjeta: { titulo, sub: desc, filas: [
+          ['Lluvia de la campaña', Math.round(lluvia) + ' mm' + (et0 ? ' contra ' + Math.round(et0) + ' mm de ET0' : '')],
+          calorD != null ? ['Días de calor extremo', calorD + ' (≥ ' + String(D.umbral).replace('.', ',') + ' °C)'] : null,
+          ['Margen de la campaña', usd(A.margen) + (esc !== 'habitual' ? ' (clima habitual: ' + usd(B.margen) + ')' : '')],
+          ['Aptitud media de los cultivos', Math.round(A.apt) + ' %' + (esc !== 'habitual' ? ' (habitual: ' + Math.round(B.apt) + ' %)' : '')],
+          k ? [k.titulo, fechaT(D, k.t) + ' · ' + k.metrica + ': ' + k.valor] : null].filter(Boolean),
+          lista: lotes, avisos: av, fuente: 'twinEvaluar (motor de Field Shift) · NASA POWER ' + (s.tipo === 'dia' ? 'diario' : 'mensual') + ' · plan ' + (hayOptDe(campo) && tw.est === 'optimizada' ? 'optimizado' : 'actual') },
+        acciones: [copAccion('Abrir en Climate Twin', () => { aplicar(); copIrTwin(campo); }, true), copAccion('Ver el momento crítico', () => { aplicar(); copIrTwin(campo, () => twinMomentoCritico()); })] };
+    },
+    COMPARAR({ campo }) {
+      if (!campo) return copPedirCampo('COMPARAR', {});
+      if (!hayOptDe(campo)) return { texto: 'Todavía no hay un plan optimizado para ' + campo.nombre + '. Puedo calcularlo con tus prioridades actuales (' + copContexto().prioridades + ') y después compararlo.',
+        acciones: [copAccion('Calcular el plan optimizado', () => copEjecutar('OPTIMIZAR', { campo, obj: 'equilibrado', excluir: [], noSoportado: [], confirmado: true, luego: 'COMPARAR' }), true)] };
+      const R = opt.res, A = R.actual, Pp = R.props[opt.est], fila = (n, a, b, f, alto) => { const d = b - a; return [n, f(a) + ' → ' + f(b) + ' (' + fx(d) + f(Math.abs(d)).replace(/^USD /, 'USD ') + (Math.abs(d) > 1e-9 ? ((d > 0) === alto ? ', mejor' : ', peor') : '') + ')']; };
+      const filas = [fila('Margen típico por año', A.med, Pp.med, usd, true), fila('Margen en un año malo', A.malo, Pp.malo, usd, true), fila('Puntaje por prioridades', A.score, Pp.score, v => Math.round(v) + ' pts', true),
+        fila('Suelo cubierto', A.cob, Pp.cob, pct1, true), fila('Nitrógeno a reponer', A.n, Pp.n, v => Math.round(v).toLocaleString('es-AR') + ' kg/año', false)];
+      const peores = filas.filter(f => /peor\)$/.test(f[1])).map(f => f[0].toLowerCase());
+      const acc = [copAccion('Ver en el optimizador', () => ir('#/optimizar/' + campo.id), true)];
+      acc.push(copAccion('Comparar en Climate Twin', () => { tw.cmp = true; copIrTwin(campo, () => { if (!tw.cmp) { tw.cmp = true; } twinRecalcular(campo, false); }); }));
+      if (state.vista === 'twin' && tw.campo === campo.id && !tw.cmp) { tw.cmp = true; twinRecalcular(campo, false); }
+      return { texto: 'Plan actual frente a «' + ESTR[opt.est].t + '» en ' + campo.nombre + (peores.length ? '. Ojo: empeora en ' + peores.join(' y ') + '.' : '.'),
+        tarjeta: { titulo: 'Actual → ' + ESTR[opt.est].t, sub: 'mediana de ' + R.nv + ' tramos reales de 3 campañas (NASA POWER)', filas,
+          fuente: 'Farm-Wide Optimizer · motor de Field Shift · ' + R.ventanas + ' secuencias climáticas reales' }, acciones: acc };
+    },
+    ESTRATEGIA({ campo }) {
+      if (!campo) return copPedirCampo('ESTRATEGIA', {});
+      if (!hayOptDe(campo)) return COP_EJ.COMPARAR({ campo });
+      const R = opt.res, Pp = R.props[opt.est], lotes = R.lotes.map(id => campo.lotes.find(l => l.id === id));
+      const cambios = lotes.map((l, i) => { const a = R.actual.combo[i].seq, b = Pp.combo[i].seq, n = s => s.map(k => M.CULTIVOS[k].nombre).join(' → ');
+        return l.nombre + ': ' + (a.join() === b.join() ? 'mantiene ' + n(a) : 'antes ' + n(a) + ' · propuesta ' + n(b)); });
+      const base = COP_EJ.COMPARAR({ campo });
+      base.texto = '«' + ESTR[opt.est].t + '» (' + ESTR[opt.est].d.toLowerCase() + ') propone estos cambios por lote; los números salen de probar cada combinación en ' + R.nv + ' tramos climáticos reales.';
+      base.tarjeta.lista = cambios;
+      if (R.stats.relajada) (base.tarjeta.avisos = base.tarjeta.avisos || []).push('No hubo combinaciones que cumplieran la diversificación del 70 %: se relajó esa regla.');
+      return base;
+    },
+    OPTIMIZAR({ campo, obj, excluir, noSoportado, confirmado, luego }) {
+      if (!campo) return copPedirCampo('OPTIMIZAR', { obj, excluir, noSoportado });
+      if (!campo.lotes.length) return { texto: campo.nombre + ' no tiene lotes para optimizar.' };
+      const est = obj === 'resiliencia' ? 'resiliencia' : obj === 'margen' ? 'margen' : 'equilibrado', presetSuelo = obj === 'suelo' && state.wPreset !== 'suelo';
+      const params = ['Campo: ' + campo.nombre + ' (' + nLotes(campo.lotes.length) + ')', 'Propuesta a mostrar: ' + ESTR[est].t + ' — ' + ESTR[est].d.toLowerCase(),
+        'Prioridades: ' + (presetSuelo ? WEIGHT_PRESETS.suelo.t + ' (cambia las prioridades de toda la app)' : copContexto().prioridades),
+        'Cultivos excluidos: ' + (excluir.length ? excluir.map(k => M.CULTIVOS[k].nombre).join(', ') : 'ninguno') + ' · coberturas ' + (opt.coberturas ? 'permitidas' : 'no') + ' · diversificar ' + (opt.diversificar ? 'sí (70 %)' : 'no')];
+      const av = noSoportado.length ? ['No puedo respetar: ' + noSoportado.join('; ') + '. El optimizador no lo implementa.'] : [];
+      if (!confirmado && (presetSuelo || hayOptDe(campo))) return { texto: 'Voy a correr el optimizador con estos parámetros' + (hayOptDe(campo) ? ' (reemplaza el resultado anterior de este campo; no cambia tus lotes)' : '') + '. ¿Confirmás?',
+        tarjeta: { titulo: 'Parámetros', lista: params, avisos: av },
+        acciones: [copAccion('Sí, optimizar', () => copEjecutar('OPTIMIZAR', { campo, obj, excluir, noSoportado, confirmado: true, luego }), true), copAccion('Cancelar', () => copMsg('bot', { texto: 'Listo, no cambié nada.' }))] };
+      return { async: async () => {
+        if (presetSuelo) aplicarPreset('suelo');
+        opt.excluir = new Set(excluir); opt.est = est;
+        ir('#/optimizar/' + campo.id); await new Promise(r => setTimeout(r, 60));
+        await correrOptimizacion();
+        if (!hayOptDe(campo)) return { texto: 'El optimizador no devolvió resultados para ' + campo.nombre + '.' };
+        const r = COP_EJ[luego === 'COMPARAR' ? 'COMPARAR' : 'ESTRATEGIA']({ campo });
+        r.texto = 'Listo. ' + r.texto; if (av.length) (r.tarjeta.avisos = r.tarjeta.avisos || []).push(...av);
+        return r; }, texto: 'Optimizando ' + campo.nombre + '… el cálculo corre en tu navegador y tarda unos segundos.', tarjeta: { titulo: 'Parámetros', lista: params, avisos: av } };
+    },
+    TWIN_ABRIR({ campo }) {
+      if (!campo) return copPedirCampo('TWIN_ABRIR', {});
+      copIrTwin(campo); return { texto: 'Abro Climate Twin de ' + campo.nombre + ' con el escenario «' + TWIN_ESC[tw.esc].t + '».' };
+    },
+    TWIN_CRITICO({ campo }) {
+      if (!campo) return copPedirCampo('TWIN_CRITICO', {});
+      let k = null; copIrTwin(campo, () => { twinMomentoCritico(); });
+      if (state.vista === 'twin' && tw.campo === campo.id && tw.critico) k = tw.critico;
+      return k ? { texto: k.titulo + ': ' + fechaT(tw.datos, k.t) + ' · ' + k.metrica + ' (' + k.valor + ').', avisos: k.tipo === 'pico' ? ['Es el pico del evento climático; el motor no lo convierte en un daño agrícola.'] : [] }
+        : { texto: 'Abro Climate Twin de ' + campo.nombre + ' y salto al momento crítico de «' + TWIN_ESC[tw.esc].t + '».' };
+    },
+    TWIN_FOCO({ campo, lote }) {
+      if (!campo || !lote) return { texto: '¿Qué lote querés enfocar?' };
+      copIrTwin(campo, () => twinSeleccionar(lote.id, true));
+      return { texto: 'Enfoco ' + lote.nombre + ' en Climate Twin.' };
+    },
+    TWIN_CAPA({ campo, capa }) {
+      if (!campo) return copPedirCampo('TWIN_CAPA', { capa });
+      const nombre = { riesgo: 'Estrés', satelite: 'Satélite', cultivo: 'Cultivos', resultados: 'Resultados' }[capa];
+      // Usa el mismo control del visor (incluye la animación de cámara y de volúmenes).
+      copIrTwin(campo, () => { const b = document.querySelector('[data-tmodo="' + capa + '"]'); if (b && tw.modo !== capa) b.click(); });
+      return { texto: 'Activo la capa «' + nombre + '» en Climate Twin.' + (capa === 'riesgo' ? ' Altura = estrés del ciclo acumulado (0–1): no es una probabilidad de pérdida.' : '') };
+    },
+    IR({ campo, lote, destino }) {
+      if (destino === 'campo') { if (!campo) return copPedirCampo('IR', { destino }); ir('#/campo/' + campo.id); return { texto: 'Abro ' + campo.nombre + '.' }; }
+      if (!lote) return { texto: '¿De qué lote?' };
+      ir(hrefLote(lote.id, destino)); return { texto: 'Abro «' + VISTAS_LOTE[destino] + '» de ' + lote.nombre + '.' };
+    },
+    DESCONOCIDO() {
+      return { texto: 'No reconozco ese pedido. Soy un asistente de comandos: puedo simular escenarios climáticos, explicar resultados, comparar y optimizar estrategias, y manejar Climate Twin. Probá con alguna de las sugerencias de abajo o escribí «¿qué puede hacer Field Shift?».' };
+    },
+  };
+  async function copEjecutar(tipo, params) {
+    if (!COP_EJ[tipo]) tipo = 'DESCONOCIDO';
+    cop.ocupado = true; copEstado();
+    try {
+      let r = COP_EJ[tipo](params || {});
+      if (r && r.async) { const f = r.async; delete r.async; copMsg('bot', r); r = await f(); }
+      if (r) copMsg('bot', r);
+    } catch (e) { copMsg('bot', { texto: 'Algo falló al ejecutar la acción: ' + e.message + '. No cambié tus datos.' }); }
+    cop.ocupado = false; copEstado();
+  }
+  function copEnviar(texto) {
+    texto = String(texto || '').trim().slice(0, 400); if (!texto || cop.ocupado) return;
+    copMsg('user', { texto });
+    const { tipo, params } = copInterpretar(texto);
+    copEjecutar(tipo, params);
+  }
+
+  /* --- presentación (sin lógica agronómica) --- */
+  function copMsg(rol, r) {
+    cop.msgs.push(Object.assign({ rol, firma: copFirma(), t: Date.now() }, r));
+    if (cop.msgs.length > 60) cop.msgs.splice(0, cop.msgs.length - 60);
+    copGuardar(); copRender();
+  }
+  function copGuardar() {
+    try { localStorage.setItem(COP_CLAVE, JSON.stringify(cop.msgs.slice(-30).map(m => ({ rol: m.rol, texto: m.texto, lista: m.lista, tarjeta: m.tarjeta, avisos: m.avisos, firma: m.firma, t: m.t, viejo: true })))); } catch (e) { /* sin almacenamiento */ }
+  }
+  function copSugerencias() {
+    const x = copContexto();
+    if (x.vista === 'twin') return ['Mostrame el momento crítico', 'Explicá el riesgo de este lote', 'Compará actual y optimizado', 'Simulá la sequía de 2022/23'];
+    if (x.vista === 'optimizar') return ['Explicá esta estrategia', 'Buscá una estrategia más resiliente', 'Compará mi plan con el optimizado'];
+    if (x.lote) return ['¿Por qué esta recomendación?', '¿Qué pasa con una sequía como la de 2022/23?', '¿Qué datos NASA se usan?'];
+    if (x.campo) return ['¿Qué pasa si se repite la sequía de 2022/23?', '¿Y si tuviera riego?', 'Optimizá mi campo', 'Compará mi plan con el optimizado', 'Abrí el gemelo digital'];
+    return ['¿Qué puede hacer Field Shift?', 'Simulá una sequía como la de 2022/23', '¿Qué datos NASA se usan?'];
+  }
+  function copTarjeta(k, viejo) {
+    return '<div class="cop-card' + (viejo ? ' viejo' : '') + '"><div class="cop-ct">' + esc(k.titulo) + '</div>' + (k.sub ? '<div class="cop-cs">' + esc(k.sub) + '</div>' : '') +
+      (k.filas && k.filas.length ? '<dl class="cop-dl">' + k.filas.map(([a, b]) => '<dt>' + esc(a) + '</dt><dd>' + esc(b) + '</dd>').join('') + '</dl>' : '') +
+      (k.lista && k.lista.length ? '<ul class="cop-ul">' + k.lista.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul>' : '') +
+      (k.avisos && k.avisos.length ? k.avisos.map(t => '<p class="cop-av">⚠ ' + esc(t) + '</p>').join('') : '') +
+      (k.fuente ? '<p class="cop-fu">Fuente: ' + esc(k.fuente) + '</p>' : '') + '</div>';
+  }
+  function copRender() {
+    const box = $('cop-msgs'); if (!box) return;
+    const firma = copFirma();
+    box.innerHTML = (cop.msgs.length ? '' : '<div class="cop-hola"><p><b>Hola.</b> Puedo ayudarte a analizar tus campos, comparar estrategias y explorar escenarios climáticos.</p><p class="cop-nota">Entiendo comandos frecuentes en español; los cálculos los hace el motor de Field Shift.</p></div>') +
+      cop.msgs.map(m => {
+        const viejo = m.tarjeta && (m.viejo || m.firma !== firma);
+        if (m.rol === 'user') return '<div class="cop-m user">' + esc(m.texto) + '</div>';
+        return '<div class="cop-m bot">' + (m.texto ? '<p>' + esc(m.texto) + '</p>' : '') +
+          (m.lista ? '<ul class="cop-ul">' + m.lista.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul>' : '') +
+          (m.avisos && m.avisos.length ? m.avisos.map(t => '<p class="cop-av">⚠ ' + esc(t) + '</p>').join('') : '') +
+          (m.tarjeta ? copTarjeta(m.tarjeta, viejo) + (viejo ? '<p class="cop-viejo">Calculado con otra configuración o en otra sesión: volvé a preguntar para actualizarlo.</p>' : '') : '') +
+          (m.acciones && !m.viejo ? '<div class="cop-acc">' + m.acciones.map(a => '<button type="button" class="btn' + (a.primaria ? ' primary' : '') + '" data-cop-acc="' + a.id + '">' + esc(a.t) + '</button>').join('') + '</div>' : '') +
+          (m.sugerir ? '<div class="cop-sug">' + copSugerencias().map(s => '<button type="button" data-cop-sug="' + esc(s) + '">' + esc(s) + '</button>').join('') + '</div>' : '') + '</div>';
+      }).join('') +
+      (cop.ocupado ? '<div class="cop-m bot cop-carga" aria-live="polite">Calculando…</div>' : '');
+    $('cop-sug').innerHTML = copSugerencias().map(s => '<button type="button" data-cop-sug="' + esc(s) + '">' + esc(s) + '</button>').join('');
+    // Si la última respuesta no entra, se muestra desde su comienzo (no desde el final de la tarjeta).
+    const ult = box.lastElementChild;
+    box.scrollTop = ult && ult.offsetHeight > box.clientHeight - 16 ? ult.offsetTop - box.offsetTop - 8 : box.scrollHeight;
+  }
+  function copEstado() { const e = $('cop-est'); if (e) e.textContent = cop.ocupado ? 'Calculando…' : 'Listo'; if (cop.abierto) copRender(); }
+  function copCtx() { const e = $('cop-ctx'); if (e) e.textContent = copCtxTexto(copContexto()); }
+  function copAbrir(abrir, preguntar) {
+    cop.abierto = abrir; document.body.classList.toggle('cop-open', abrir);
+    $('cop-panel').hidden = !abrir; $('cop-fab').setAttribute('aria-expanded', String(abrir));
+    if (abrir) { copCtx(); copRender(); if (preguntar) copEnviar(preguntar); else setTimeout(() => $('cop-in').focus(), 30); }
+    else $('cop-fab').focus();
+  }
+  try { const g = JSON.parse(localStorage.getItem(COP_CLAVE) || '[]'); if (Array.isArray(g)) cop.msgs = g.filter(m => m && (m.rol === 'user' || m.rol === 'bot')).slice(-30); } catch (e) { /* sin historial */ }
+  $('cop-fab').addEventListener('click', () => copAbrir(!cop.abierto));
+  $('cop-x').addEventListener('click', () => copAbrir(false));
+  $('cop-clear').addEventListener('click', () => { cop.msgs = []; cop.acciones.clear(); copGuardar(); copRender(); $('cop-in').focus(); });
+  $('cop-form').addEventListener('submit', e => { e.preventDefault(); const i = $('cop-in'); copEnviar(i.value); i.value = ''; });
+  $('cop-panel').addEventListener('click', e => {
+    const s = e.target.closest('[data-cop-sug]'); if (s) { copEnviar(s.dataset.copSug); return; }
+    const a = e.target.closest('[data-cop-acc]'); if (a) { const fn = cop.acciones.get(a.dataset.copAcc); if (fn) { a.disabled = true; fn(); } }
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && cop.abierto && !document.body.classList.contains('drawer-open') && !($('drawer') && $('drawer').classList.contains('open'))) copAbrir(false); });
+  // Accesos contextuales (misma instancia): botones con data-cop-preguntar en cualquier vista.
+  document.addEventListener('click', e => { const b = e.target.closest('[data-cop-preguntar]'); if (b) { e.preventDefault(); copAbrir(true, b.dataset.copPreguntar); } });
+  window.addEventListener('hashchange', () => setTimeout(copCtx, 0));
+  window.FieldShiftCopilot = { contexto: copContexto, interpretar: copInterpretar, ejecutar: copEjecutar, enviar: copEnviar, abrir: copAbrir };
 
   /* ---------- render general ---------- */
   function renderResults() {

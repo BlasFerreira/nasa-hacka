@@ -3,7 +3,7 @@
    - Leaflet, íconos y fuentes se guardan al instalar o la primera vez que se usan.
    - Los mosaicos del mapa se guardan al verlos, con un tope, para poder revisar el campo sin señal.
    - Las consultas a la API de NASA POWER van siempre a la red. */
-const VERSION = 'v1';
+const VERSION = 'v2';
 const SHELL = 'fs-shell-' + VERSION;
 const RUNTIME = 'fs-runtime-' + VERSION;
 const TILES = 'fs-tiles-' + VERSION;
@@ -59,10 +59,12 @@ async function conRevalidacion(request, nombre) {
   return guardado || (await red) || Response.error();
 }
 // Caché primero (mosaicos de mapa): rápido y sirve sin conexión.
+// Un pedido con CORS (texturas de Climate Twin) no puede usar una respuesta opaca guardada por Leaflet: en ese caso se
+// pide a la red y se guarda la versión con CORS, que también le sirve a Leaflet.
 async function cachePrimero(request) {
   const c = await caches.open(TILES);
   const guardado = await c.match(request);
-  if (guardado) return guardado;
+  if (guardado && !(request.mode === 'cors' && guardado.type === 'opaque')) return guardado;
   try {
     const resp = await fetch(request);
     if (resp && (resp.ok || resp.type === 'opaque')) { c.put(request, resp.clone()); recortar(c, MAX_TILES); }

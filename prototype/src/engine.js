@@ -388,6 +388,9 @@
       seca: secaCrit <= UMBRALES.seca_dias ? 1 : clamp(1 - .02 * (secaCrit - UMBRALES.seca_dias), .6, 1),
       deficit: ratio >= UMBRALES.deficit_ratio ? 1 : clamp(.8 + .2 * ratio / UMBRALES.deficit_ratio, .8, 1),
     };
+    // Lote con riego (SUPUESTO): el equipo cubre la falta de agua, así que no penalizan el déficit de lluvia ni la racha
+    // seca. Calor extremo y heladas siguen igual: el riego no los evita. No modela capacidad del equipo ni disponibilidad de agua.
+    if (lote.riego) { f.seca = 1; f.deficit = 1; }
     return { campania: campHist(lote, siembra), umbral_calor: caliente, lluvia: Math.round(P), et0: Math.round(ET), etc: Math.round(etc),
       ratio: Math.round(ratio * 100) / 100, calor_critico: calor, heladas, lluvias_intensas: intensas,
       seca_max: secaMax, seca_critico: secaCrit, gwet_min: Math.round(gMin * 100) / 100, gwet_bajo_dias: gBajo,
@@ -566,8 +569,11 @@
     const rb = rendBase(cid, lote.zona), anioEsc = anioEscenario(lote, siembra);
     let rend = rb.t_ha * apt.indice, rendModelo = false;
     if (anioEsc !== null && rb.modelo && rb.modelo.anomalia_prevista[anioEsc] !== undefined) {
-      const aptN = aptitud(cid, Object.assign({}, lote, { escenario: null, pisoClima: null }), siembra, cosechaLimite);
-      if (!aptN.descartado) { rend = rb.t_ha * aptN.indice * (1 + rb.modelo.anomalia_prevista[anioEsc]); rendModelo = true; }
+      // El modelo está calibrado con rindes de secano. Con riego (SUPUESTO documentado): el rinde es el mayor entre el de
+      // secano del modelo y el que da la aptitud con riego; regar nunca rinde menos que no regar.
+      const aptN = aptitud(cid, Object.assign({}, lote, { escenario: null, pisoClima: null, riego: false }), siembra, cosechaLimite);
+      if (!aptN.descartado) { const secano = rb.t_ha * aptN.indice * (1 + rb.modelo.anomalia_prevista[anioEsc]);
+        rend = lote.riego ? Math.max(secano, rend) : secano; rendModelo = !lote.riego || secano >= rend; }
     }
     const margen = margenUsd(cid, lote.zona, rend);
     const ec = econDe(cid, lote.zona);
