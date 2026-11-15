@@ -362,6 +362,16 @@ body.map-fs { overflow: hidden; }
 .crop-map-label { background: #0b3d91; color: #fff; border: 2px solid #fff; border-radius: 7px; box-shadow: 0 2px 8px rgb(0 0 0 / .35); padding: 4px 7px; font: 600 11px/1.25 var(--font); white-space: nowrap; }
 .leaflet-container { font-family: var(--font); }
 .map-ctl .sep { width: 1px; background: rgb(255 255 255 / 0.25); margin: 4px 2px; }
+/* Contribuidores (pie de todas las páginas de la app). */
+.equipo { margin-top: 28px; padding: 20px 4px 8px; border-top: 1px solid var(--border); display: grid; gap: 12px; }
+.equipo[hidden] { display: none; }
+.equipo-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+.equipo-lista a { display: flex; align-items: center; gap: 10px; padding: 6px 14px 6px 6px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); text-decoration: none; min-height: 44px; }
+.equipo-lista a:hover { border-color: #0b3d91; box-shadow: 0 1px 6px rgb(11 61 145 / .18); }
+.equipo-lista img, .equipo-lista .ini { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex: none; background: #0b3d91; color: #fff; display: grid; place-items: center; font-size: 13px; font-weight: 600; }
+.equipo-lista b { display: block; font-weight: 600; font-size: 14px; line-height: 1.2; }
+.equipo-lista small { display: block; color: var(--muted); font-size: 12px; line-height: 1.2; }
+.equipo-lista .in { width: 16px; height: 16px; fill: #0a66c2; flex: none; }
 .install { display: grid; gap: 8px; padding: 8px 4px 0; }
 .install[hidden], .install [hidden] { display: none; }
 
@@ -677,6 +687,10 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
     <div class="stack" id="view-recorrido" hidden>
       <iframe id="recorrido-frame" title="Recorrido: el campo hectárea por hectárea" class="recorrido-frame"></iframe>
     </div>
+  <footer class="equipo" id="equipo" aria-labelledby="equipo-t" hidden>
+    <h2 id="equipo-t" class="section-label">Contribuidores</h2>
+    <ul class="equipo-lista" id="equipo-lista"></ul>
+  </footer>
   </main>
 </div>
 
@@ -2292,6 +2306,19 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
 
   $('f-siembra').value = state.siembra;
   renderPresets(); renderWeightPresets(); renderWeights(); bindControls(); initMapa(); loadLote(); aplicarRuta(false);
+
+  /* ---------- contribuidores (datos en prototype/src/team.json) ---------- */
+  (function () {
+    const eq = window.TEAM || [];
+    if (!eq.length) return;
+    const ini = n => n.split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join('');
+    const IN = '<svg class="in" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45z"/></svg>';
+    $('equipo-lista').innerHTML = eq.map(p =>
+      '<li><a href="' + esc(p.linkedin) + '" target="_blank" rel="noopener noreferrer" aria-label="' + esc(p.nombre) + ' en LinkedIn (se abre en una pestaña nueva)">' +
+      (p.avatar ? '<img src="' + esc(p.avatar) + '" alt="" width="36" height="36" loading="lazy">' : '<span class="ini" aria-hidden="true">' + esc(ini(p.nombre)) + '</span>') +
+      '<span><b>' + esc(p.nombre) + '</b>' + (p.rol ? '<small>' + esc(p.rol) + '</small>' : '') + '</span>' + IN + '</a></li>').join('');
+    $('equipo').hidden = false;
+  })();
 
   /* ---------- PWA: service worker e instalación ---------- */
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {

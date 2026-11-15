@@ -215,6 +215,24 @@ table tr{opacity:0;transform:translateY(8px);transition:.5s cubic-bezier(.2,.8,.
 .app-cta:focus-visible{outline:2px solid #fff;outline-offset:3px}
 .app-cta svg{width:15px;height:15px}
 .app-cta.top{position:absolute;z-index:30;right:calc(clamp(18px,3vw,40px) + 92px);top:clamp(10px,2vh,24px)}
+.team-btn{position:absolute;z-index:30;right:calc(clamp(18px,3vw,40px) + 92px + 160px);top:clamp(10px,2vh,24px);display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.5);border-radius:999px;padding:9px 16px;font:600 14px/1 inherit;cursor:pointer;pointer-events:auto;backdrop-filter:blur(6px);transition:background .15s}
+.team-btn:hover{background:rgba(255,255,255,.22)}
+.team-btn:focus-visible{outline:2px solid #fff;outline-offset:3px}
+.team-btn svg{width:15px;height:15px}
+#team-panel{position:fixed;inset:0;z-index:100;display:none;place-items:center;background:rgba(3,10,28,.72);backdrop-filter:blur(6px);padding:20px}
+#team-panel.open{display:grid}
+#team-panel .box{width:min(520px,100%);max-height:86vh;overflow:auto;background:#0b1530;color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:18px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+#team-panel h2{margin:0 0 4px;font-size:22px;letter-spacing:-.01em}
+#team-panel .sub{margin:0 0 18px;color:#aab6d3;font-size:14px}
+#team-panel ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+#team-panel a.p{display:flex;align-items:center;gap:14px;padding:10px 14px 10px 10px;border:1px solid rgba(255,255,255,.18);border-radius:14px;color:#fff;text-decoration:none;background:rgba(255,255,255,.05)}
+#team-panel a.p:hover{background:rgba(255,255,255,.12);border-color:#fff}
+#team-panel a.p img,#team-panel a.p .ini{width:56px;height:56px;border-radius:50%;object-fit:cover;flex:none;background:#0b3d91;display:grid;place-items:center;font-weight:600}
+#team-panel a.p b{display:block;font-size:16px}
+#team-panel a.p small{display:block;color:#aab6d3;font-size:13px}
+#team-panel a.p .in{width:18px;height:18px;fill:#7db4ff;margin-left:auto;flex:none}
+#team-panel .close{margin-top:18px;width:100%;background:#0b3d91;color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:11px;font:600 14px/1 inherit;cursor:pointer}
+@media (max-width:560px){.team-btn{right:clamp(12px,3vw,18px);top:calc(clamp(44px,7vh,60px) + 40px);padding:7px 14px;font-size:13px}}
 .app-cta.big{font-size:16px;padding:13px 26px;margin-top:22px}
 @media (max-width:560px){.app-cta.top{right:clamp(12px,3vw,18px);top:clamp(44px,7vh,60px);padding:7px 14px;font-size:13px}}
 
@@ -235,6 +253,7 @@ table tr{opacity:0;transform:translateY(8px);transition:.5s cubic-bezier(.2,.8,.
   <div class="hud brand"><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V8"/><path d="M12 13c-4 0-6-2-6-6 4 0 6 2 6 6Z"/><path d="M12 10c0-3 2-5 6-5 0 4-2 5-6 5Z"/></svg></span>Field Shift<small id="teamline"></small></div>
   <div class="hud count" id="count"><b>01</b> / 07</div>
   <a class="app-cta top" href="/app">Open the app <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+  <button class="team-btn" id="team-btn" type="button" aria-haspopup="dialog" aria-controls="team-panel">Team <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c2.4 0 4 1.8 4 4.5"/></svg></button>
   <nav class="hud rail" id="rail" aria-label="Chapters"></nav>
   <div class="hud tl" id="tl"><span id="tl-d">Nov 2026</span><div class="tbar"><i id="tl-f"></i></div><span class="tls">3-year replay · NASA POWER climate</span></div>
   <div class="hud hint" id="hint"><div class="mouse"></div>Scroll to dive</div>
@@ -319,6 +338,37 @@ table tr{opacity:0;transform:translateY(8px);transition:.5s cubic-bezier(.2,.8,.
   </section>
 </div>
 
+<div id="team-panel" role="dialog" aria-modal="true" aria-labelledby="team-t" aria-hidden="true">
+  <div class="box">
+    <h2 id="team-t">The team</h2>
+    <p class="sub">Contributors to Field Shift. Each link opens LinkedIn in a new tab.</p>
+    <ul id="team-list"></ul>
+    <button class="close" id="team-close" type="button">Close</button>
+  </div>
+</div>
+<script>
+(function () {
+  // Datos del equipo: mantener igual que prototype/src/team.json (la app los toma de ahí).
+  var TEAM = [
+    { nombre: "Blas Ferreira", linkedin: "https://www.linkedin.com/in/blasferreira/", rol: "", avatar: "/team/blas-ferreira.webp" }
+  ];
+  var IN = '<svg class="in" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45z"/></svg>';
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function ini(n) { return n.split(/\s+/).filter(Boolean).slice(0, 2).map(function (p) { return p[0].toUpperCase(); }).join(''); }
+  document.getElementById('team-list').innerHTML = TEAM.map(function (p) {
+    return '<li><a class="p" href="' + esc(p.linkedin) + '" target="_blank" rel="noopener noreferrer" aria-label="' + esc(p.nombre) + ' on LinkedIn (opens in a new tab)">' +
+      (p.avatar ? '<img src="' + esc(p.avatar) + '" alt="" width="56" height="56" loading="lazy">' : '<span class="ini" aria-hidden="true">' + esc(ini(p.nombre)) + '</span>') +
+      '<span><b>' + esc(p.nombre) + '</b>' + (p.rol ? '<small>' + esc(p.rol) + '</small>' : '') + '</span>' + IN + '</a></li>';
+  }).join('');
+  var panel = document.getElementById('team-panel'), btn = document.getElementById('team-btn'), last = null;
+  function abrir() { last = document.activeElement; panel.classList.add('open'); panel.setAttribute('aria-hidden', 'false'); document.getElementById('team-close').focus(); }
+  function cerrar() { panel.classList.remove('open'); panel.setAttribute('aria-hidden', 'true'); if (last && last.focus) last.focus(); }
+  btn.addEventListener('click', abrir);
+  document.getElementById('team-close').addEventListener('click', cerrar);
+  panel.addEventListener('click', function (e) { if (e.target === panel) cerrar(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && panel.classList.contains('open')) { e.stopPropagation(); cerrar(); } }, true);
+})();
+</script>
 <script>window.__DATA__ = {
  "pesos": {
   "ingreso": 0.24999999999999994,
