@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Field Shift · Tu campo, hectárea por hectárea</title>
-<meta name="description" content="Recorré un campo de 60 hectáreas y mirá qué conviene hacer en cada una, con clima real de NASA POWER y rendimientos y precios oficiales de MAGyP.">
+<title>Field Shift · Your farm, hectare by hectare</title>
+<meta name="description" content="Walk through a 60-hectare farm and see what is best to do on each one, with real NASA POWER climate and official MAGyP yields and prices.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -129,18 +129,18 @@ button { font: inherit; color: inherit; }
 </head>
 <body>
 <header class="top">
-  <a class="brand" href="mvp-rotacion.html#/inicio" target="_top" style="color:inherit;text-decoration:none" title="Abrir el asistente">← Field Shift</a>
-  <span class="src"><b>Clima:</b> NASA POWER · <b>Rendimientos y precios:</b> MAGyP · <b>Suelo:</b> ilustrativo</span>
+  <a class="brand" href="mvp-rotacion.html#/inicio" target="_top" style="color:inherit;text-decoration:none" title="Open the assistant">← Field Shift</a>
+  <span class="src"><b>Climate:</b> NASA POWER · <b>Yields and prices:</b> MAGyP · <b>Soil:</b> illustrative</span>
 </header>
 
 <main class="world">
-  <section class="stage" id="stage" aria-label="Mapa del campo de 60 hectáreas">
-    <svg id="map" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Campo de 60 hectáreas en perspectiva. Cada cuadro es una hectárea.">
+  <section class="stage" id="stage" aria-label="Map of the 60-hectare farm">
+    <svg id="map" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet" role="img" aria-label="60-hectare farm in perspective. Each square is one hectare.">
       <g id="cam"></g>
     </svg>
     <div class="rain" id="rain" aria-hidden="true"></div>
     <div class="hud" id="toolbar"></div>
-    <div class="hud" id="clim" aria-label="Lluvia de cada campaña real, julio a junio"></div>
+    <div class="hud" id="clim" aria-label="Rainfall of each real season, July to June"></div>
     <div class="hud off" id="legend"></div>
     <aside class="hud" id="info" hidden></aside>
     <div class="dots" id="dots" aria-hidden="true"></div>
@@ -149,87 +149,87 @@ button { font: inherit; color: inherit; }
   <div class="steps" id="steps">
     <article class="step" data-mode="campo">
       <div class="card">
-        <span class="kick">Paso 1 · El campo</span>
-        <h2>Un campo, 60 hectáreas, 60 decisiones</h2>
-        <p>Este es un campo de la Pampa húmeda, cerca de Pergamino. Bajá despacio: vamos a ver qué tiene cada hectárea y qué conviene hacer en ella.</p>
-        <p class="muted">El campo lo armamos para mostrar el método. <span class="tag ilus">suelo ilustrativo</span> <span class="tag real">clima, rendimientos y precios reales</span></p>
+        <span class="kick">Step 1 · The farm</span>
+        <h2>One farm, 60 hectares, 60 decisions</h2>
+        <p>This is a farm in the Humid Pampas, near Pergamino. Scroll slowly: we will see what each hectare has and what is best to do on it.</p>
+        <p class="muted">We built this farm to show the method. <span class="tag ilus">illustrative soil</span> <span class="tag real">real climate, yields and prices</span></p>
       </div>
     </article>
 
     <article class="step" data-mode="terreno">
       <div class="card">
-        <span class="kick">Paso 2 · El suelo</span>
-        <h2>Ninguna hectárea es igual a la de al lado</h2>
-        <p>La loma es de suelo franco y bien drenado. Hacia abajo se pone más arcilloso, y en una esquina hay un manchón arenoso. Cada textura retiene agua y nutrientes de otra manera.</p>
+        <span class="kick">Step 2 · The soil</span>
+        <h2>No hectare is the same as the next one</h2>
+        <p>The hilltop is well-drained loam. Lower down it becomes more clayey, and one corner has a sandy patch. Each texture holds water and nutrients differently.</p>
         <p class="dyn" id="dyn-terreno"></p>
       </div>
     </article>
 
     <article class="step" data-mode="agua">
       <div class="card">
-        <span class="kick">Paso 3 · El agua</span>
-        <h2>El relieve decide dónde se queda el agua</h2>
-        <p>En el bajo el agua se estanca y en el médano se va enseguida. Un mismo cultivo se comporta distinto en cada punto, aunque llueva igual sobre todo el campo.</p>
+        <span class="kick">Step 3 · Water</span>
+        <h2>The terrain decides where water stays</h2>
+        <p>In the lowland water pools, and on the sand dune it drains right away. The same crop behaves differently at each spot, even if it rains the same over the whole farm.</p>
         <p class="dyn" id="dyn-agua"></p>
       </div>
     </article>
 
     <article class="step" data-mode="clima">
       <div class="card">
-        <span class="kick">Paso 4 · El clima <span class="tag real">NASA POWER</span></span>
-        <h2>Cada campaña real, no un promedio</h2>
-        <p>Usamos la serie real de NASA POWER para este punto. Cada barra es la lluvia de una campaña, de julio a junio. Las rojas son las más secas.</p>
+        <span class="kick">Step 4 · Climate <span class="tag real">NASA POWER</span></span>
+        <h2>Every real season, not an average</h2>
+        <p>We use the real NASA POWER series for this point. Each bar is one season's rainfall, July to June. The red ones are the driest.</p>
         <p class="dyn" id="dyn-clima"></p>
       </div>
     </article>
 
     <article class="step" data-mode="siembra">
       <div class="card">
-        <span class="kick">Paso 5 · Qué sembrar <span class="tag real">MAGyP</span></span>
-        <h2>Lo que conviene en cada hectárea, hoy</h2>
-        <p>Para cada hectárea el motor filtra los cultivos que entran, los puntúa con tus prioridades y se queda con el primero. Cambiá la fecha o las prioridades arriba del mapa y mirá cómo se reparte el campo.</p>
+        <span class="kick">Step 5 · What to plant <span class="tag real">MAGyP</span></span>
+        <h2>What is best on each hectare, today</h2>
+        <p>For each hectare the engine filters the crops that fit, scores them with your priorities and keeps the top one. Change the date or the priorities above the map and see how the farm divides up.</p>
         <p class="dyn" id="dyn-siembra"></p>
       </div>
     </article>
 
     <article class="step" data-mode="malo">
       <div class="card">
-        <span class="kick">Paso 6 · El año malo</span>
-        <h2>¿Y si el año sale mal?</h2>
-        <p>Probamos el cultivo elegido, sembrado igual, contra el clima de cada campaña real. Acá el color es el margen bruto en un año malo, 1 de cada 10. El rojo es perder plata.</p>
+        <span class="kick">Step 6 · The bad year</span>
+        <h2>What if the year goes badly?</h2>
+        <p>We test the chosen crop, sown the same way, against the weather of every real season. Here the color is the gross margin in a bad year, 1 in 10. Red means losing money.</p>
         <p class="dyn" id="dyn-malo"></p>
       </div>
     </article>
 
     <article class="step" data-mode="rotacion">
       <div class="card">
-        <span class="kick">Paso 7 · La rotación</span>
-        <h2>No es solo qué sembrar: es qué viene después</h2>
-        <p>Para cada hectárea comparamos tu rotación actual con dos alternativas a tres años: doble cultivo con trigo y una con cultivos de cobertura. El color dice qué haría el motor.</p>
+        <span class="kick">Step 7 · The rotation</span>
+        <h2>It is not just what to plant: it is what comes next</h2>
+        <p>For each hectare we compare your current rotation with two three-year alternatives: double crop with wheat and one with cover crops. The color shows what the engine would do.</p>
         <p class="dyn" id="dyn-rotacion"></p>
       </div>
     </article>
 
     <article class="step" data-mode="explora">
       <div class="card">
-        <span class="kick">Paso 8 · Explorá</span>
-        <h2>Tocá una hectárea</h2>
-        <p>Elegí una y mirá el detalle: suelo, mejor cultivo, margen en un año normal y en uno malo, y la rotación sugerida. Cambiá la capa del mapa con los botones.</p>
+        <span class="kick">Step 8 · Explore</span>
+        <h2>Tap a hectare</h2>
+        <p>Pick one and see the details: soil, best crop, margin in a normal year and in a bad one, and the suggested rotation. Change the map layer with the buttons.</p>
         <p class="dyn" id="dyn-explora"></p>
-        <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="cta" href="mvp-rotacion.html#/inicio" target="_top" style="text-decoration:none">Abrir el asistente para mi lote</a><button class="cta" type="button" id="reset" style="background:transparent;color:var(--text);border-color:var(--border)">Volver al principio</button></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="cta" href="mvp-rotacion.html#/inicio" target="_top" style="text-decoration:none">Open the assistant for my plot</a><button class="cta" type="button" id="reset" style="background:transparent;color:var(--text);border-color:var(--border)">Back to the start</button></div>
       </div>
     </article>
   </div>
 </main>
 
 <section class="foot">
-  <h3>Qué es real y qué no</h3>
+  <h3>What is real and what is not</h3>
   <ul>
-    <li><b>Real:</b> el clima de cada campaña (NASA POWER, un punto de referencia cerca de Pergamino), los rendimientos por zona, los precios a cosecha y los costos (MAGyP, informe de septiembre 2026).</li>
-    <li><b>Ilustrativo:</b> el suelo, el relieve y el pH de cada hectárea. No tenemos suelo real de este campo; lo armamos para mostrar cómo cambia la decisión.</li>
-    <li>El margen es <b>bruto, sin arrendamiento</b>. La soja de segunda usa el rendimiento y el precio de la soja en general.</li>
-    <li>El «año malo» sale de un modelo que acierta qué años son malos pero <b>subestima cuánto caen</b>. El año malo real puede ser peor.</li>
-    <li>Las rotaciones alternativas son las de ejemplo del equipo, no una optimización: son ideas para hablar con un agrónomo. Esto apoya la decisión del productor, no la reemplaza.</li>
+    <li><b>Real:</b> each season's climate (NASA POWER, a reference point near Pergamino), yields by area, harvest prices and costs (MAGyP, September 2026 report).</li>
+    <li><b>Illustrative:</b> the soil, terrain and pH of each hectare. We do not have real soil data for this farm; we built it to show how the decision changes.</li>
+    <li>The margin is <b>gross, without land rent</b>. Double-crop soybean uses the yield and price of soybean in general.</li>
+    <li>The “bad year” comes from a model that gets which years are bad right but <b>underestimates how much yields drop</b>. The real bad year can be worse.</li>
+    <li>The alternative rotations are the team's examples, not an optimization: they are ideas to discuss with an agronomist. This supports the farmer's decision, it does not replace it.</li>
   </ul>
 </section>
 
@@ -246,19 +246,19 @@ button { font: inherit; color: inherit; }
 
   /* ---------- paleta ---------- */
   const CULT = {
-    soja: ['Soja', '#84cc16'], maiz_temprano: ['Maíz temprano', '#fde047'], maiz_tardio: ['Maíz tardío', '#ca8a04'],
-    girasol: ['Girasol', '#fb923c'], sorgo: ['Sorgo', '#c2410c'], trigo: ['Trigo', '#d9b86c'], cebada: ['Cebada', '#b99b6b'],
-    centeno: ['Centeno', '#94a3b8'], avena: ['Avena', '#cbd5e1'], vicia: ['Vicia', '#a78bfa'], mijo: ['Mijo', '#2dd4bf'], crotalaria: ['Crotalaria', '#5eead4'],
+    soja: ['Soybean', '#84cc16'], maiz_temprano: ['Early maize', '#fde047'], maiz_tardio: ['Late maize', '#ca8a04'],
+    girasol: ['Sunflower', '#fb923c'], sorgo: ['Sorghum', '#c2410c'], trigo: ['Wheat', '#d9b86c'], cebada: ['Barley', '#b99b6b'],
+    centeno: ['Rye', '#94a3b8'], avena: ['Oats', '#cbd5e1'], vicia: ['Vetch', '#a78bfa'], mijo: ['Pearl millet', '#2dd4bf'], crotalaria: ['Sunn hemp', '#5eead4'],
   };
-  const TEX = { arenoso: ['Arenoso', '#ecd39c'], franco_arenoso: ['Franco arenoso', '#d8b074'], franco: ['Franco', '#b4803f'], franco_limoso: ['Franco limoso', '#8b6030'], franco_arcilloso: ['Franco arcilloso', '#6a4527'], arcilloso: ['Arcilloso', '#432c1b'] };
-  const DREN = { excesivo: ['Excesivo', '#fcd34d'], bueno: ['Bueno', '#86efac'], moderado: ['Moderado', '#38bdf8'], pobre: ['Pobre', '#2563eb'] };
-  const ROT = { mantener: ['Mantener la actual', '#94a3b8'], cobertura: ['Cambiar, con cobertura', '#2dd4bf'], cambiar: ['Cambiar de rotación', '#f59e0b'] };
+  const TEX = { arenoso: ['Sandy', '#ecd39c'], franco_arenoso: ['Sandy loam', '#d8b074'], franco: ['Loam', '#b4803f'], franco_limoso: ['Silt loam', '#8b6030'], franco_arcilloso: ['Clay loam', '#6a4527'], arcilloso: ['Clay', '#432c1b'] };
+  const DREN = { excesivo: ['Excessive', '#fcd34d'], bueno: ['Good', '#86efac'], moderado: ['Moderate', '#38bdf8'], pobre: ['Poor', '#2563eb'] };
+  const ROT = { mantener: ['Keep the current one', '#94a3b8'], cobertura: ['Change, with cover crops', '#2dd4bf'], cambiar: ['Change rotation', '#f59e0b'] };
   const PRESETS = {
-    equilibrado: ['Equilibrado', { ingreso: .25, rapidez: .15, salud_suelo: .20, ahorro_insumos: .15, resiliencia: .15, cumplimiento: .10 }],
-    rendimiento: ['Mayor rendimiento', { ingreso: .55, rapidez: .10, salud_suelo: .10, ahorro_insumos: .10, resiliencia: .08, cumplimiento: .07 }],
-    suelo: ['Mejor salud de suelo', { ingreso: .10, rapidez: .10, salud_suelo: .50, ahorro_insumos: .12, resiliencia: .10, cumplimiento: .08 }],
+    equilibrado: ['Balanced', { ingreso: .25, rapidez: .15, salud_suelo: .20, ahorro_insumos: .15, resiliencia: .15, cumplimiento: .10 }],
+    rendimiento: ['Higher yield', { ingreso: .55, rapidez: .10, salud_suelo: .10, ahorro_insumos: .10, resiliencia: .08, cumplimiento: .07 }],
+    suelo: ['Better soil health', { ingreso: .10, rapidez: .10, salud_suelo: .50, ahorro_insumos: .12, resiliencia: .10, cumplimiento: .08 }],
   };
-  const FECHAS = [['14 nov', '2026-11-14'], ['10 ene', '2027-01-10'], ['10 may', '2027-05-10'], ['20 jun', '2027-06-20']];
+  const FECHAS = [['Nov 14', '2026-11-14'], ['Jan 10', '2027-01-10'], ['May 10', '2027-05-10'], ['Jun 20', '2027-06-20']];
   const MODE_LAYER = { campo: 'campo', terreno: 'suelo', agua: 'agua', clima: 'clima', siembra: 'cultivo', malo: 'malo', rotacion: 'rotacion', explora: null };
   const MODES = Object.keys(MODE_LAYER);
   const CAM = { campo: [1, 0], terreno: [1.12, 0], agua: [1.12, 0], clima: [.9, 0], siembra: [1.1, 0], malo: [1.1, 0], rotacion: [1.1, 0], explora: [1, 0] };
@@ -294,9 +294,9 @@ button { font: inherit; color: inherit; }
   const state = { mode: 'campo', layer: 'cultivo', fecha: FECHAS[0][1], preset: 'equilibrado', sel: null };
   const ESC = M.ESCENARIOS[ZONA], CAMP = Object.keys(ESC).filter(k => /^c\d{4}$/.test(k));
   // Rotaciones: la actual del lote y las dos alternativas de ejemplo del equipo para la Pampa húmeda.
-  const ROTS = l => [{ id: 'actual', nombre: 'Tu rotación actual', seq: l.rotacion_habitual },
-    { id: 'a', nombre: 'Doble cultivo con trigo', seq: ['maiz_tardio', 'trigo', 'soja'] },
-    { id: 'b', nombre: 'Con cultivos de cobertura', seq: ['maiz_temprano', 'avena', 'soja', 'vicia'] }];
+  const ROTS = l => [{ id: 'actual', nombre: 'Your current rotation', seq: l.rotacion_habitual },
+    { id: 'a', nombre: 'Double crop with wheat', seq: ['maiz_tardio', 'trigo', 'soja'] },
+    { id: 'b', nombre: 'With cover crops', seq: ['maiz_temprano', 'avena', 'soja', 'vicia'] }];
   const q10 = a => { const b = a.slice().sort((x, y) => x - y), i = .1 * (b.length - 1), lo = Math.floor(i);
     return lo + 1 < b.length ? b[lo] + (b[lo + 1] - b[lo]) * (i - lo) : b[lo]; };
   function calcular() {
@@ -349,7 +349,7 @@ button { font: inherit; color: inherit; }
   }
   for (const c of order) {
     c.h = c.e * EH;
-    const g = el('g', { class: 'cell', tabindex: 0, role: 'button', 'aria-label': 'Hectárea ' + c.n, 'data-n': c.n }, cam);
+    const g = el('g', { class: 'cell', tabindex: 0, role: 'button', 'aria-label': 'Hectare ' + c.n, 'data-n': c.n }, cam);
     c.pl = el('polygon', { fill: '#4d3b2c' }, g);
     c.pr = el('polygon', { fill: '#3b2d21' }, g);
     c.top = el('polygon', { class: 'top-face', fill: '#5b7a3a' }, g);
@@ -404,7 +404,7 @@ button { font: inherit; color: inherit; }
     }
     return '#777';
   }
-  const fmt = n => Math.round(n).toLocaleString('es-AR');
+  const fmt = n => Math.round(n).toLocaleString('en-US');
   const usd = n => (n < 0 ? '−' : '') + 'USD ' + fmt(Math.abs(n));
 
   function legendHTML(capa) {
@@ -412,9 +412,9 @@ button { font: inherit; color: inherit; }
     switch (capa) {
       case 'suelo': return it(TEX, TEXORD.filter(t => cells.some(c => c.lote.textura === t)));
       case 'agua': return it(DREN, ['excesivo', 'bueno', 'moderado', 'pobre']);
-      case 'cultivo': { const u = [...new Set(cells.map(c => c.res && c.res.cult).filter(Boolean))]; return it(CULT, u) + '<span class="muted">Altura = margen bruto</span>'; }
-      case 'malo': return '<span>Color y altura = margen en año malo</span><span><span class="mono">−60</span><i class="grad" style="background:linear-gradient(90deg,#dc2626,#f97316,#eab308,#84cc16,#16a34a);border:0"></i><span class="mono">700 USD/ha</span></span>';
-      case 'rotacion': return it(ROT, ['mantener', 'cobertura', 'cambiar']) + '<span class="muted">Altura = margen extra por año al cambiar</span>';
+      case 'cultivo': { const u = [...new Set(cells.map(c => c.res && c.res.cult).filter(Boolean))]; return it(CULT, u) + '<span class="muted">Height = gross margin</span>'; }
+      case 'malo': return '<span>Color and height = margin in a bad year</span><span><span class="mono">−60</span><i class="grad" style="background:linear-gradient(90deg,#dc2626,#f97316,#eab308,#84cc16,#16a34a);border:0"></i><span class="mono">700 USD/ha</span></span>';
+      case 'rotacion': return it(ROT, ['mantener', 'cobertura', 'cambiar']) + '<span class="muted">Height = extra margin per year from changing</span>';
     }
     return '';
   }
@@ -430,9 +430,9 @@ button { font: inherit; color: inherit; }
     const ym = (H - medMm / mx * (H - 6)).toFixed(1);
     const nom = y => y + '/' + String(y + 1).slice(2);
     const s = secas.slice().sort();
-    return '<div class="t">Lluvia de cada campaña (julio a junio) · NASA POWER · ' + campanas[0].y + '/' + String(campanas[0].y + 1).slice(2) + ' a ' + campanas[campanas.length - 1].y + '/' + String(campanas[campanas.length - 1].y + 1).slice(2) + '</div>' +
-      '<svg viewBox="0 0 ' + W + ' ' + (H + 2) + '" role="img" aria-label="Barras de lluvia por campaña">' + bars + '<line x1="0" x2="' + W + '" y1="' + ym + '" y2="' + ym + '" stroke="currentColor" stroke-dasharray="3 3" opacity=".6"/></svg>' +
-      '<div class="k">Promedio <b>' + fmt(medMm) + ' mm</b> · más secas: <b>' + nom(s[0]) + '</b> (' + fmt(campanas.find(c => c.y === s[0]).mm) + ' mm) y <b>' + nom(s[1]) + '</b> (' + fmt(campanas.find(c => c.y === s[1]).mm) + ' mm)</div>';
+    return '<div class="t">Rainfall of each season (July to June) · NASA POWER · ' + campanas[0].y + '/' + String(campanas[0].y + 1).slice(2) + ' to ' + campanas[campanas.length - 1].y + '/' + String(campanas[campanas.length - 1].y + 1).slice(2) + '</div>' +
+      '<svg viewBox="0 0 ' + W + ' ' + (H + 2) + '" role="img" aria-label="Rainfall bars by season">' + bars + '<line x1="0" x2="' + W + '" y1="' + ym + '" y2="' + ym + '" stroke="currentColor" stroke-dasharray="3 3" opacity=".6"/></svg>' +
+      '<div class="k">Average <b>' + fmt(medMm) + ' mm</b> · driest: <b>' + nom(s[0]) + '</b> (' + fmt(campanas.find(c => c.y === s[0]).mm) + ' mm) and <b>' + nom(s[1]) + '</b> (' + fmt(campanas.find(c => c.y === s[1]).mm) + ' mm)</div>';
   }
   $('clim').innerHTML = climaHTML();
   (function lluvia() {
@@ -446,24 +446,24 @@ button { font: inherit; color: inherit; }
   function dinamicos() {
     const tex = conteo(c => c.lote.textura), dr = conteo(c => c.lote.drenaje);
     $('dyn-terreno').innerHTML = TEXORD.filter(t => tex[t]).map(t => '<b>' + tex[t] + ' ha</b> ' + TEX[t][0].toLowerCase()).join(' · ');
-    $('dyn-agua').innerHTML = ['excesivo', 'bueno', 'moderado', 'pobre'].filter(d => dr[d]).map(d => '<b>' + dr[d] + ' ha</b> drenaje ' + DREN[d][0].toLowerCase()).join(' · ');
-    const lu = campanas.length ? 'La campaña más seca dejó <b>' + fmt(Math.min(...campanas.map(c => c.mm))) + ' mm</b> y el promedio es <b>' + fmt(medMm) + ' mm</b>: <b>' + Math.round(100 * (1 - Math.min(...campanas.map(c => c.mm)) / medMm)) + ' % menos</b>. Con años así se prueba cada decisión.' : '';
+    $('dyn-agua').innerHTML = ['excesivo', 'bueno', 'moderado', 'pobre'].filter(d => dr[d]).map(d => '<b>' + dr[d] + ' ha</b> ' + DREN[d][0].toLowerCase() + ' drainage').join(' · ');
+    const lu = campanas.length ? 'The driest season brought <b>' + fmt(Math.min(...campanas.map(c => c.mm))) + ' mm</b> and the average is <b>' + fmt(medMm) + ' mm</b>: <b>' + Math.round(100 * (1 - Math.min(...campanas.map(c => c.mm)) / medMm)) + '% less</b>. Every decision is tested against years like that.' : '';
     $('dyn-clima').innerHTML = lu;
     const cu = conteo(c => c.res.cult), tot = cells.filter(c => c.res.margen !== null);
     const medio = tot.reduce((s, c) => s + c.res.margen, 0) / (tot.length || 1);
     const lista = Object.keys(cu).sort((a, b) => cu[b] - cu[a]).map(k => '<b>' + cu[k] + ' ha</b> ' + CULT[k][0].toLowerCase()).join(' · ');
-    $('dyn-siembra').innerHTML = (lista || 'Ningún cultivo entra en esta fecha.') + (tot.length ? '<br>Margen bruto medio del campo: <b>' + usd(medio) + '/ha</b>.' : '') +
-      (Object.keys(cu).length <= 2 && tot.length ? '<br><span class="muted">En esta fecha casi todo el campo cae en el mismo cultivo: lo que cambia entre hectáreas es cuánto margen deja, y eso es la altura de cada columna.</span>' : '<br><span class="muted">La altura de cada columna es el margen bruto de la hectárea.</span>');
+    $('dyn-siembra').innerHTML = (lista || 'No crop fits on this date.') + (tot.length ? '<br>Average farm gross margin: <b>' + usd(medio) + '/ha</b>.' : '') +
+      (Object.keys(cu).length <= 2 && tot.length ? '<br><span class="muted">On this date almost the whole farm lands on the same crop: what changes between hectares is how much margin it leaves, and that is the height of each column.</span>' : '<br><span class="muted">The height of each column is the hectare\'s gross margin.</span>');
     const co = cells.filter(c => c.res.malo !== null), mediaOk = co.reduce((s, c) => s + c.res.medio, 0) / (co.length || 1), mediaMalo = co.reduce((s, c) => s + c.res.malo, 0) / (co.length || 1);
     const neg = co.filter(c => c.res.malo < 0).length;
-    $('dyn-malo').innerHTML = co.length ? 'Año normal: <b>' + usd(mediaOk) + '/ha</b>. Año malo: <b>' + usd(mediaMalo) + '/ha</b>. Perdés <b>' + usd(mediaOk - mediaMalo) + '/ha</b>, unos <b>' + usd((mediaOk - mediaMalo) * cells.length) + '</b> en todo el campo.' +
-      (neg ? '<br><b>' + neg + ' ha</b> pierden plata en un año malo.' : '<br>Ninguna hectárea pierde plata en un año malo con esta elección.') +
-      '<br><span class="muted">Para maíz y soja la caída de cada año sale de un modelo validado que ubica bien los años malos pero subestima cuánto caen: lo real puede ser peor.</span>' : '';
+    $('dyn-malo').innerHTML = co.length ? 'Normal year: <b>' + usd(mediaOk) + '/ha</b>. Bad year: <b>' + usd(mediaMalo) + '/ha</b>. You lose <b>' + usd(mediaOk - mediaMalo) + '/ha</b>, about <b>' + usd((mediaOk - mediaMalo) * cells.length) + '</b> across the whole farm.' +
+      (neg ? '<br><b>' + neg + ' ha</b> lose money in a bad year.' : '<br>No hectare loses money in a bad year with this choice.') +
+      '<br><span class="muted">For maize and soybean each year\'s drop comes from a validated model that places the bad years well but underestimates how much yields fall: the reality can be worse.</span>' : '';
     const ro = cells.filter(c => c.res.rot), cam = ro.filter(c => c.res.rot.tipo !== 'mantener');
     const gM = cam.reduce((s, c) => s + c.res.rot.dMedio, 0), porNombre = conteo(c => c.res.rot && c.res.rot.tipo !== 'mantener' ? c.res.rot.best.nombre : null);
-    $('dyn-rotacion').innerHTML = ro.length ? (cam.length ? 'En <b>' + cam.length + ' de ' + ro.length + ' ha</b> el motor cambiaría la rotación (' + Object.keys(porNombre).map(k => k.toLowerCase() + ': ' + porNombre[k] + ' ha').join(', ') + '). El margen bruto del campo cambiaría en <b>' + usd(gM) + '</b> por año.' : 'Con estas prioridades el motor mantiene tu rotación en todo el campo.') +
-      '<br><span class="muted">Las alternativas son las de ejemplo del equipo y se eligen por puntaje, no solo por plata: una puede ganar por suelo aunque deje menos margen.</span>' : '';
-    $('dyn-explora').innerHTML = state.sel ? '' : 'Tocá cualquier hectárea del mapa.';
+    $('dyn-rotacion').innerHTML = ro.length ? (cam.length ? 'On <b>' + cam.length + ' of ' + ro.length + ' ha</b> the engine would change the rotation (' + Object.keys(porNombre).map(k => k.toLowerCase() + ': ' + porNombre[k] + ' ha').join(', ') + '). The farm\'s gross margin would change by <b>' + usd(gM) + '</b> per year.' : 'With these priorities the engine keeps your rotation across the whole farm.') +
+      '<br><span class="muted">The alternatives are the team\'s examples and are chosen by score, not just by money: one can win on soil even if it leaves less margin.</span>' : '';
+    $('dyn-explora').innerHTML = state.sel ? '' : 'Tap any hectare on the map.';
   }
 
   /* ---------- barra de controles y capas ---------- */
@@ -471,9 +471,9 @@ button { font: inherit; color: inherit; }
     const mk = (titulo, items, cur, key) => '<div class="chips"><span>' + titulo + '</span>' + items.map(([k, t]) => '<button type="button" class="chip" aria-pressed="' + (cur === k) + '" data-k="' + key + '" data-v="' + k + '">' + t + '</button>').join('') + '</div>';
     let h = '';
     if (['siembra', 'malo', 'rotacion', 'explora'].includes(state.mode)) {
-      h += mk('Siembra', FECHAS.map(f => [f[1], f[0]]), state.fecha, 'fecha') + mk('Prioridad', Object.keys(PRESETS).map(k => [k, PRESETS[k][0]]), state.preset, 'preset');
+      h += mk('Sowing', FECHAS.map(f => [f[1], f[0]]), state.fecha, 'fecha') + mk('Priority', Object.keys(PRESETS).map(k => [k, PRESETS[k][0]]), state.preset, 'preset');
     }
-    if (state.mode === 'explora') h += mk('Capa', [['cultivo', 'Cultivo'], ['malo', 'Año malo'], ['rotacion', 'Rotación'], ['suelo', 'Suelo'], ['agua', 'Agua']], state.layer, 'layer');
+    if (state.mode === 'explora') h += mk('Layer', [['cultivo', 'Crop'], ['malo', 'Bad year'], ['rotacion', 'Rotation'], ['suelo', 'Soil'], ['agua', 'Water']], state.layer, 'layer');
     const st = $('stage'), vertical = st.clientHeight > st.clientWidth * 1.05;
     if (state.mode === 'explora' && state.sel && vertical) h = '';   // en pantallas angostas el detalle ocupa el lugar de los controles
     $('toolbar').innerHTML = h; $('toolbar').classList.toggle('on', !!h);
@@ -491,18 +491,18 @@ button { font: inherit; color: inherit; }
     if (!c || !c.res) { box.hidden = true; return; }
     const r = c.res, l = c.lote, m = r.mejor;
     const alt = r.top.slice(1, 3).map(e => CULT[e.cultivo][0] + ' ' + Math.round(e.score)).join(' · ');
-    let h = '<h3><span>Hectárea ' + c.n + '</span><button class="x" type="button" aria-label="Cerrar">×</button></h3>' +
-      '<p class="sub">' + TEX[l.textura][0] + ' · pH ' + l.ph + ' · drenaje ' + DREN[l.drenaje][0].toLowerCase() + ' · pendiente ' + l.pendiente + ' % · <span class="tag ilus" style="font-size:10px">ilustrativo</span></p>';
+    let h = '<h3><span>Hectare ' + c.n + '</span><button class="x" type="button" aria-label="Close">×</button></h3>' +
+      '<p class="sub">' + TEX[l.textura][0] + ' · pH ' + l.ph + ' · ' + DREN[l.drenaje][0].toLowerCase() + ' drainage · ' + l.pendiente + '% slope · <span class="tag ilus" style="font-size:10px">illustrative</span></p>';
     if (m) {
       h += '<div class="best"><span class="sw" style="background:' + CULT[m.cultivo][1] + '"></span><span><b>' + CULT[m.cultivo][0] + '</b> · score ' + Math.round(m.score) + '</span></div>' +
-        '<div class="row"><span>Margen bruto, año normal</span><b class="mono">' + usd(r.medio) + '/ha</b></div><div class="row"><span>Margen bruto, año malo</span><b class="mono">' + usd(r.malo) + '/ha</b></div>' +
-        (alt ? '<div class="alt">Siguientes: ' + alt + '</div>' : '');
+        '<div class="row"><span>Gross margin, normal year</span><b class="mono">' + usd(r.medio) + '/ha</b></div><div class="row"><span>Gross margin, bad year</span><b class="mono">' + usd(r.malo) + '/ha</b></div>' +
+        (alt ? '<div class="alt">Next: ' + alt + '</div>' : '');
       for (const a of m.alertas.slice(0, 2)) h += '<div class="al">' + a.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</div>';
-    } else h += '<p>Ningún cultivo del catálogo entra en esta hectárea en esta fecha.</p>';
+    } else h += '<p>No crop in the catalog fits on this hectare on this date.</p>';
     if (r.rot) {
       const sq = x => x.secuencia.map(cid => CULT[cid] ? CULT[cid][0] : cid).join(' → ');
-      h += '<div class="rot"><b>Rotación a 3 años</b><div class="row"><span>Actual: ' + sq(r.rot.actual) + '</span><b class="mono">' + usd(r.rot.actual.indicadores.margen_anual) + '/año</b></div>' +
-        (r.rot.tipo === 'mantener' ? '<div class="alt">El motor mantiene la actual.</div>' : '<div class="row"><span>' + r.rot.best.nombre + ': ' + sq(r.rot.best) + '</span><b class="mono">' + usd(r.rot.best.indicadores.margen_anual) + '/año</b></div>') + '</div>';
+      h += '<div class="rot"><b>3-year rotation</b><div class="row"><span>Current: ' + sq(r.rot.actual) + '</span><b class="mono">' + usd(r.rot.actual.indicadores.margen_anual) + '/yr</b></div>' +
+        (r.rot.tipo === 'mantener' ? '<div class="alt">The engine keeps the current one.</div>' : '<div class="row"><span>' + r.rot.best.nombre + ': ' + sq(r.rot.best) + '</span><b class="mono">' + usd(r.rot.best.indicadores.margen_anual) + '/yr</b></div>') + '</div>';
     }
     box.innerHTML = h; box.hidden = false;
     box.querySelector('.x').addEventListener('click', () => { state.sel = null; render(); });
@@ -538,7 +538,7 @@ button { font: inherit; color: inherit; }
     $('clim').classList.toggle('on', state.mode === 'clima');
     $('dots').innerHTML = MODES.map(m => '<i class="' + (m === state.mode ? 'on' : '') + '"></i>').join('');
     toolbar(); info(); camara();
-    $('dyn-explora').innerHTML = state.sel ? 'Hectárea <b>' + state.sel.n + '</b> seleccionada.' : 'Tocá cualquier hectárea del mapa.';
+    $('dyn-explora').innerHTML = state.sel ? 'Hectare <b>' + state.sel.n + '</b> selected.' : 'Tap any hectare on the map.';
   }
 
   /* ---------- scroll: el paso que cruza una línea dentro de la zona visible manda el modo ---------- */

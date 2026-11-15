@@ -3,7 +3,7 @@
    - Leaflet, íconos y fuentes se guardan al instalar o la primera vez que se usan.
    - Los mosaicos del mapa se guardan al verlos, con un tope, para poder revisar el campo sin señal.
    - Las consultas a la API de NASA POWER van siempre a la red. */
-const VERSION = 'v2';
+const VERSION = 'v3';
 const SHELL = 'fs-shell-' + VERSION;
 const RUNTIME = 'fs-runtime-' + VERSION;
 const TILES = 'fs-tiles-' + VERSION;

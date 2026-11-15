@@ -7,8 +7,8 @@ const path = require('path');
 
 const START = 2001, END = 2025;
 const PUNTOS = {
-  entre_rios:   { nombre: 'Entre Ríos',   referencia: 'cerca de Paraná',    lat: -31.73, lon: -60.53 },
-  pampa_humeda: { nombre: 'Pampa húmeda', referencia: 'cerca de Pergamino', lat: -33.89, lon: -60.57 },
+  entre_rios:   { nombre: 'Entre Ríos',   referencia: 'near Paraná',    lat: -31.73, lon: -60.53 },
+  pampa_humeda: { nombre: 'Humid Pampas', referencia: 'near Pergamino', lat: -33.89, lon: -60.57 },
 };
 const dim = (y, m) => new Date(Date.UTC(y, m, 0)).getUTCDate(); // m = 1..12
 
@@ -50,12 +50,12 @@ async function bajar(p) {
 
 (async () => {
   const out = {
-    fuente: 'NASA POWER (Prediction Of Worldwide Energy Resources), comunidad AG, resolución mensual',
+    fuente: 'NASA POWER (Prediction Of Worldwide Energy Resources), AG community, monthly resolution',
     url: 'https://power.larc.nasa.gov/',
-    parametros: { T2M: 'Temperatura del aire a 2 m (°C)', PRECTOTCORR: 'Precipitación corregida (mm/día, convertida a mm/mes)' },
+    parametros: { T2M: 'Air temperature at 2 m (°C)', PRECTOTCORR: 'Corrected precipitation (mm/day, converted to mm/month)' },
     periodo: START + '–' + END,
     descargado: new Date().toISOString().slice(0, 10),
-    nota: 'temp/precip: promedio mensual de los años del período. serie: valores mensuales de cada año (null = sin dato). Son puntos de referencia de la zona, no del campo exacto.',
+    nota: 'temp/precip: monthly mean over the period. serie: monthly values for each year (null = no data). These are reference points for the area, not the exact farm.',
     zonas: {},
   };
   for (const [id, p] of Object.entries(PUNTOS)) {

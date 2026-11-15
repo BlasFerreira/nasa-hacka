@@ -25,64 +25,64 @@
   }
 
   const CULTIVOS = {
-    soja: crop({ nombre: 'Soja', leguminosa: true, familia: 'fabaceae',
+    soja: crop({ nombre: 'Soybean', leguminosa: true, familia: 'fabaceae',
       temp_opt: [20, 26], temp_lim: [14, 32], agua_opt: [450, 700], agua_lim: [250, 1000],
       siembra_opt: [11, 1, 12, 15], ciclo_dias: 150, rend_t_ha: 3.2, precio_usd_t: 300, costo_usd_ha: 450,
       n_ext: 190, p_ext: 20, k_ext: 80, n_fijado: 140, n_residual: 20,
       rastrojo: .30, erosion: .30, raiz: .40, tol_sequia: .40, tol_anegamiento: .30 }),
-    maiz_temprano: crop({ nombre: 'Maíz temprano', familia: 'poaceae',
+    maiz_temprano: crop({ nombre: 'Early maize', familia: 'poaceae',
       temp_opt: [18, 26], temp_lim: [12, 32], agua_opt: [500, 800], agua_lim: [300, 1100],
       siembra_opt: [9, 10, 10, 31], ciclo_dias: 150, rend_t_ha: 9, precio_usd_t: 190, costo_usd_ha: 700,
       n_ext: 200, p_ext: 35, k_ext: 50,
       rastrojo: .90, erosion: .70, raiz: .60, tol_sequia: .40, tol_anegamiento: .30 }),
-    maiz_tardio: crop({ nombre: 'Maíz tardío', familia: 'poaceae',
+    maiz_tardio: crop({ nombre: 'Late maize', familia: 'poaceae',
       temp_opt: [18, 26], temp_lim: [12, 32], agua_opt: [450, 750], agua_lim: [300, 1100],
       siembra_opt: [11, 25, 1, 10], ciclo_dias: 155, margen_siembra_dias: 25,
       rend_t_ha: 7.5, precio_usd_t: 190, costo_usd_ha: 650, n_ext: 190, p_ext: 30, k_ext: 45,
       rastrojo: .90, erosion: .70, raiz: .60, tol_sequia: .40, tol_anegamiento: .30 }),
-    girasol: crop({ nombre: 'Girasol', familia: 'asteraceae',
+    girasol: crop({ nombre: 'Sunflower', familia: 'asteraceae',
       temp_opt: [18, 26], temp_lim: [12, 32], agua_opt: [400, 650], agua_lim: [250, 900],
       siembra_opt: [8, 15, 10, 15], ciclo_dias: 140, textura: TEX_LIVIANA,
       rend_t_ha: 2.5, precio_usd_t: 340, costo_usd_ha: 400, n_ext: 90, p_ext: 15, k_ext: 80,
       rastrojo: .50, erosion: .40, raiz: .80, tol_sequia: .70, tol_anegamiento: .20 }),
-    sorgo: crop({ nombre: 'Sorgo granífero', familia: 'poaceae',
+    sorgo: crop({ nombre: 'Sorghum', familia: 'poaceae',
       temp_opt: [22, 30], temp_lim: [16, 36], agua_opt: [350, 600], agua_lim: [200, 900],
       siembra_opt: [10, 20, 12, 20], ciclo_dias: 130, margen_siembra_dias: 25,
       textura: TEX_LIVIANA, drenaje: DREN_TOLERANTE,
       rend_t_ha: 6, precio_usd_t: 150, costo_usd_ha: 380, n_ext: 130, p_ext: 20, k_ext: 40,
       rastrojo: .80, erosion: .60, raiz: .70, tol_sequia: .90, tol_anegamiento: .40 }),
-    trigo: crop({ nombre: 'Trigo', familia: 'poaceae',
+    trigo: crop({ nombre: 'Wheat', familia: 'poaceae',
       temp_opt: [10, 18], temp_lim: [4, 24], agua_opt: [350, 550], agua_lim: [200, 800],
       ph_opt: [6.0, 7.5], ph_lim: [5.2, 8.3],
       siembra_opt: [6, 1, 7, 15], ciclo_dias: 180, margen_siembra_dias: 25, textura: TEX_PESADA,
       rend_t_ha: 3.8, precio_usd_t: 230, costo_usd_ha: 500, n_ext: 120, p_ext: 20, k_ext: 25,
       rastrojo: .80, erosion: .70, raiz: .50, tol_sequia: .50, tol_anegamiento: .40 }),
-    cebada: crop({ nombre: 'Cebada', familia: 'poaceae',
+    cebada: crop({ nombre: 'Barley', familia: 'poaceae',
       temp_opt: [10, 17], temp_lim: [4, 23], agua_opt: [300, 500], agua_lim: [180, 750],
       siembra_opt: [6, 10, 7, 20], ciclo_dias: 170, textura: TEX_PESADA,
       rend_t_ha: 3.5, precio_usd_t: 210, costo_usd_ha: 430, n_ext: 100, p_ext: 18, k_ext: 25,
       rastrojo: .80, erosion: .70, raiz: .50, tol_sequia: .50, tol_anegamiento: .30 }),
-    vicia: crop({ nombre: 'Vicia', tipo: 'cobertura', leguminosa: true, familia: 'fabaceae',
+    vicia: crop({ nombre: 'Vetch', tipo: 'cobertura', leguminosa: true, familia: 'fabaceae',
       temp_opt: [10, 18], temp_lim: [3, 24], agua_opt: [200, 400], agua_lim: [120, 700],
       siembra_opt: [3, 15, 6, 15], ciclo_dias: 150, textura: TEX_PESADA, pend_opt_max: 8, pend_lim_max: 25,
       costo_usd_ha: 55, n_fijado: 90, n_residual: 60,
       rastrojo: .70, erosion: .80, raiz: .50, tol_sequia: .50, tol_anegamiento: .30 }),
-    avena: crop({ nombre: 'Avena', tipo: 'cobertura', familia: 'poaceae',
+    avena: crop({ nombre: 'Oats', tipo: 'cobertura', familia: 'poaceae',
       temp_opt: [8, 18], temp_lim: [2, 25], agua_opt: [200, 450], agua_lim: [120, 750],
       siembra_opt: [3, 15, 7, 15], ciclo_dias: 140, drenaje: DREN_TOLERANTE, pend_opt_max: 8, pend_lim_max: 25,
       costo_usd_ha: 35, rastrojo: .90, erosion: .90, raiz: .60, tol_sequia: .60, tol_anegamiento: .50 }),
-    centeno: crop({ nombre: 'Centeno', tipo: 'cobertura', familia: 'poaceae',
+    centeno: crop({ nombre: 'Rye', tipo: 'cobertura', familia: 'poaceae',
       temp_opt: [6, 16], temp_lim: [0, 22], agua_opt: [180, 400], agua_lim: [100, 700],
       siembra_opt: [4, 1, 7, 1], ciclo_dias: 150, textura: TEX_LIVIANA, drenaje: DREN_TOLERANTE,
       pend_opt_max: 8, pend_lim_max: 25, costo_usd_ha: 35,
       rastrojo: 1, erosion: .90, raiz: .60, tol_sequia: .80, tol_anegamiento: .40 }),
-    crotalaria: crop({ nombre: 'Crotalaria', tipo: 'cobertura', leguminosa: true, familia: 'fabaceae',
+    crotalaria: crop({ nombre: 'Sunn hemp', tipo: 'cobertura', leguminosa: true, familia: 'fabaceae',
       temp_opt: [22, 30], temp_lim: [16, 35], agua_opt: [300, 600], agua_lim: [150, 900],
       ph_opt: [5.5, 7.0], ph_lim: [4.8, 8.0],
       siembra_opt: [11, 1, 1, 15], ciclo_dias: 120, margen_siembra_dias: 25, textura: TEX_LIVIANA,
       pend_opt_max: 8, pend_lim_max: 25, costo_usd_ha: 60, n_fijado: 80, n_residual: 55,
       rastrojo: .80, erosion: .70, raiz: .70, tol_sequia: .70, tol_anegamiento: .30 }),
-    mijo: crop({ nombre: 'Mijo', tipo: 'cobertura', familia: 'poaceae',
+    mijo: crop({ nombre: 'Pearl millet', tipo: 'cobertura', familia: 'poaceae',
       temp_opt: [22, 32], temp_lim: [16, 38], agua_opt: [250, 500], agua_lim: [130, 850],
       siembra_opt: [11, 1, 2, 1], ciclo_dias: 90, margen_siembra_dias: 25, textura: TEX_LIVIANA,
       drenaje: DREN_TOLERANTE, pend_opt_max: 8, pend_lim_max: 25, costo_usd_ha: 30,
@@ -117,20 +117,20 @@
       if (temp.concat(precip).some(v => v === null || v === undefined)) continue;
       camp.push({ campania: y + '/' + String(y + 1).slice(2), temp, precip, total: precip.reduce((a, b) => a + b, 0) });
     }
-    const esc = { promedio: { id: 'promedio', nombre: 'Clima promedio', campania: POWER.periodo, temp: z.temp, precip: z.precip, total: totalProm } };
-    for (const c of camp) esc['c' + c.campania.slice(0, 4)] = Object.assign({ id: 'c' + c.campania.slice(0, 4), nombre: 'Campaña ' + c.campania }, c);
+    const esc = { promedio: { id: 'promedio', nombre: 'Average climate', campania: POWER.periodo, temp: z.temp, precip: z.precip, total: totalProm } };
+    for (const c of camp) esc['c' + c.campania.slice(0, 4)] = Object.assign({ id: 'c' + c.campania.slice(0, 4), nombre: 'Season ' + c.campania }, c);
     CAMPANIAS[zid] = camp.map(c => 'c' + c.campania.slice(0, 4));
     // Secuencias: 3 campañas reales consecutivas (la que arranca y las dos siguientes), en lugar de repetir un año.
     const anioDe = c => +c.campania.slice(0, 4), hay = new Set(camp.map(anioDe));
     const seqs = camp.map(anioDe).filter(y => [1, 2].every(k => hay.has(y + k)));
-    for (const y of seqs) esc['s' + y] = { id: 's' + y, nombre: 'Campañas ' + y + '/' + String(y + 1).slice(2) + ' a ' + (y + 2) + '/' + String(y + 3).slice(2),
+    for (const y of seqs) esc['s' + y] = { id: 's' + y, nombre: 'Seasons ' + y + '/' + String(y + 1).slice(2) + ' to ' + (y + 2) + '/' + String(y + 3).slice(2),
       secuencia: y, campania: y + '/' + String(y + 1).slice(2), temp: esc['c' + y].temp, precip: esc['c' + y].precip, total: esc['c' + y].total };
     SECUENCIAS[zid] = seqs.map(y => 's' + y);
     if (camp.length) {
       const ord = camp.slice().sort((a, b) => a.total - b.total);
       const elegir = (id, nombre, c) => (esc[id] = Object.assign({ id, nombre }, c));
-      elegir('seco', 'Año seco', ord[0]);
-      elegir('humedo', 'Año húmedo', ord[ord.length - 1]);
+      elegir('seco', 'Dry year', ord[0]);
+      elegir('humedo', 'Wet year', ord[ord.length - 1]);
       // El año seco y el húmedo arrancan una secuencia real (si hay 2 campañas después; si no, la terminan).
       const ys = new Set(seqs), ultima = seqs[seqs.length - 1];
       for (const k of ['seco', 'humedo']) {
@@ -162,7 +162,7 @@
       }
       serie[y] = { temp: t, precip: pr };
     }
-    if (n.some(x => !x)) throw new Error('NASA POWER no devolvió datos para todos los meses');
+    if (n.some(x => !x)) throw new Error('NASA POWER did not return data for every month');
     return { temp: st.map((v, i) => Math.round(v / n[i] * 10) / 10), precip: sp.map((v, i) => Math.round(v / n[i])), serie };
   }
   // Agrega una zona climática en tiempo de ejecución (p. ej. la celda de NASA POWER de un lote nuevo).
@@ -197,9 +197,9 @@
   /* Rendimiento base del cultivo en la zona: observado (MAGyP) si existe; si no, el del catálogo (ilustrativo). */
   function rendBase(cid, zona) {
     const c = CULTIVOS[cid], z = ZONAS[zona] || ZONAS.pampa_humeda, k = MAGYP_DE[cid], r = k && z.rend && z.rend[k];
-    if (!r) return { t_ha: c.rend_t_ha, fuente: 'ilustrativo', modelo: null };
-    if (cid === 'maiz_tardio') return { t_ha: r.t_ha * FACTOR_MAIZ_TARDIO, fuente: 'observado · MAGyP (ajuste supuesto para tardío)', modelo: null, r };
-    return { t_ha: r.t_ha, fuente: 'observado · MAGyP', r,
+    if (!r) return { t_ha: c.rend_t_ha, fuente: 'illustrative', modelo: null };
+    if (cid === 'maiz_tardio') return { t_ha: r.t_ha * FACTOR_MAIZ_TARDIO, fuente: 'observed · MAGyP (assumed adjustment for late maize)', modelo: null, r };
+    return { t_ha: r.t_ha, fuente: 'observed · MAGyP', r,
       modelo: r.pasa_gate && r.anomalia_prevista ? { anomalia_prevista: r.anomalia_prevista, r2_loyo: r.r2_loyo } : null };
   }
 
@@ -224,24 +224,24 @@
 
   const FACTORES_ORDEN = ['epoca', 'cosecha', 'temperatura', 'agua', 'ph', 'textura', 'drenaje', 'pendiente'];
   const FACTORES_NOMBRE = {
-    epoca: 'época de siembra', cosecha: 'ventana de cosecha', temperatura: 'temperatura del ciclo',
-    agua: 'agua del ciclo', ph: 'pH', textura: 'textura', drenaje: 'drenaje', pendiente: 'pendiente',
+    epoca: 'sowing window', cosecha: 'harvest window', temperatura: 'cycle temperature',
+    agua: 'cycle water', ph: 'pH', textura: 'texture', drenaje: 'drainage', pendiente: 'slope',
   };
   const COMPONENTES_NOMBRE = {
-    ingreso: 'Mayor rendimiento',
-    rapidez: 'Menor espera a siembra',
-    salud_suelo: 'Mejor salud de suelo',
-    ahorro_insumos: 'Ahorro de insumos',
-    resiliencia: 'Resiliencia climática',
-    cumplimiento: 'Cumplimiento',
+    ingreso: 'Higher yield',
+    rapidez: 'Shorter wait to sow',
+    salud_suelo: 'Better soil health',
+    ahorro_insumos: 'Input savings',
+    resiliencia: 'Climate resilience',
+    cumplimiento: 'Compliance',
   };
   const COMPONENTES_DESC = {
-    ingreso: 'Prioriza rinde esperado y margen económico',
-    rapidez: 'Siembra inmediata en ventana óptima y ciclo más corto',
-    salud_suelo: 'Rastrojo, rotación de familias y menor erosión',
-    ahorro_insumos: 'Aprovecha fijación de N y crédito del antecesor',
-    resiliencia: 'Cómo se sostiene en los peores años reales (NASA POWER)',
-    cumplimiento: 'Evita monocultivo y erosión en pendiente',
+    ingreso: 'Favors expected yield and gross margin',
+    rapidez: 'Sow right away in the optimal window, shorter cycle',
+    salud_suelo: 'Residue, rotating plant families and less erosion',
+    ahorro_insumos: 'Uses N fixation and the previous crop\'s N credit',
+    resiliencia: 'How it holds up in the worst real years (NASA POWER)',
+    cumplimiento: 'Avoids monoculture and erosion on slopes',
   };
 
   /* ---------- fechas (UTC) ---------- */
@@ -300,12 +300,12 @@
     if (pesos) for (const k of Object.keys(PESOS_DEFECTO)) {
       if (k in pesos) {
         const v = Number(pesos[k]);
-        if (!isFinite(v) || v < 0) throw new Error("Peso inválido para '" + k + "'");
+        if (!isFinite(v) || v < 0) throw new Error("Invalid weight for '" + k + "'");
         p[k] = v;
       }
     }
     let total = Object.values(p).reduce((a, b) => a + b, 0);
-    if (total <= 0) throw new Error('La suma de pesos debe ser mayor que 0');
+    if (total <= 0) throw new Error('The weights must add up to more than 0');
     for (const k in p) p[k] /= total;
     for (let it = 0; it < 5; it++) {
       let exceso = 0;
@@ -440,13 +440,13 @@
   function razon(k, siembra, t, p, lote) {
     const fmt = d => String(d.getUTCDate()).padStart(2, '0') + '/' + String(d.getUTCMonth() + 1).padStart(2, '0');
     switch (k) {
-      case 'epoca': return 'Fuera de la ventana de siembra (' + fmt(siembra) + ').';
-      case 'cosecha': return 'El ciclo no llega a completarse antes de la fecha de cosecha elegida.';
-      case 'temperatura': return 'Temperatura media esperada del ciclo (' + t.toFixed(1) + ' °C) fuera del rango tolerado.';
-      case 'agua': return 'Agua esperada del ciclo (' + Math.round(p) + ' mm) fuera del rango tolerado.';
-      case 'ph': return 'pH ' + lote.ph + ' fuera del rango tolerado.';
-      case 'pendiente': return 'Pendiente ' + lote.pendiente + ' % excede el límite del cultivo.';
-      default: return FACTORES_NOMBRE[k] + ' no apta.';
+      case 'epoca': return 'Outside the sowing window (' + fmt(siembra) + ').';
+      case 'cosecha': return 'The cycle cannot finish before the chosen harvest date.';
+      case 'temperatura': return 'Expected mean cycle temperature (' + t.toFixed(1) + ' °C) outside the tolerated range.';
+      case 'agua': return 'Expected cycle water (' + Math.round(p) + ' mm) outside the tolerated range.';
+      case 'ph': return 'pH ' + lote.ph + ' outside the tolerated range.';
+      case 'pendiente': return 'Slope ' + lote.pendiente + '% exceeds the crop\'s limit.';
+      default: return 'Unsuitable ' + FACTORES_NOMBRE[k] + '.';
     }
   }
 
@@ -466,10 +466,10 @@
   function saludSuelo(cid, lote) {
     const c = CULTIVOS[cid], ant = antecesor(lote);
     let div, nota;
-    if (!ant) { div = .7; nota = 'sin historial de antecesor'; }
-    else if (ant === cid) { div = 0; nota = 'repite el cultivo del ciclo anterior'; }
-    else if (CULTIVOS[ant].familia === c.familia) { div = .5; nota = 'misma familia botánica que el antecesor'; }
-    else { div = 1; nota = 'rota la familia botánica respecto del antecesor'; }
+    if (!ant) { div = .7; nota = 'no previous-crop history'; }
+    else if (ant === cid) { div = 0; nota = 'repeats the previous cycle\'s crop'; }
+    else if (CULTIVOS[ant].familia === c.familia) { div = .5; nota = 'same plant family as the previous crop'; }
+    else { div = 1; nota = 'rotates the plant family relative to the previous crop'; }
     const pw = clamp(lote.pendiente / 8, .25, 1);
     const eros = 1 - pw * (1 - c.erosion);
     return [clamp(.30 * c.rastrojo + .25 * eros + .15 * c.raiz + .30 * div), nota];
@@ -529,14 +529,14 @@
     return res;
   }
   function textoResiliencia(r) {
-    if (r.fuente !== 'NASA POWER') return 'Resiliencia: sin serie anual para esta zona, se usa un supuesto (tolerancias del catálogo).';
-    const partes = ['Resiliencia: en los ' + r.peores + ' peores de ' + r.n + ' años reales de NASA POWER mantiene ' + Math.round(100 * r.valor) +
-      ' % de aptitud climática (promedio de todos los años: ' + Math.round(100 * r.media) + ' %).'];
+    if (r.fuente !== 'NASA POWER') return 'Resilience: no annual series for this area, so an assumption is used (catalog tolerances).';
+    const partes = ['Resilience: in the worst ' + r.peores + ' of ' + r.n + ' real NASA POWER years it keeps ' + Math.round(100 * r.valor) +
+      '% climate suitability (average across all years: ' + Math.round(100 * r.media) + '%).'];
     const q = [];
-    if (r.falta_agua) q.push(r.falta_agua + ' con menos agua que la óptima');
-    if (r.exceso_agua) q.push(r.exceso_agua + ' con exceso de lluvia');
-    if (q.length) partes.push('Años de ' + r.n + ': ' + q.join(', ') + '.');
-    if (r.fuera_limites) partes.push(r.fuera_limites + ' fuera de los límites tolerados (peor: ' + r.peor + ').');
+    if (r.falta_agua) q.push(r.falta_agua + ' with less water than optimal');
+    if (r.exceso_agua) q.push(r.exceso_agua + ' with excess rain');
+    if (q.length) partes.push('Years out of ' + r.n + ': ' + q.join(', ') + '.');
+    if (r.fuera_limites) partes.push(r.fuera_limites + ' outside the tolerated limits (worst: ' + r.peor + ').');
     return partes.join(' ');
   }
   // Resumen del clima de la zona por campaña (julio a junio), para mostrar de dónde sale la resiliencia.
@@ -552,11 +552,11 @@
   function cumplimiento(c, cid, hist, pend) {
     let f = 1; const m = [];
     if (hist.length >= 2 && hist[hist.length - 1] === cid && hist[hist.length - 2] === cid) {
-      f = Math.min(f, .5); m.push('R1: tercer ciclo consecutivo del mismo cultivo (monocultivo).');
+      f = Math.min(f, .5); m.push('R1: third consecutive cycle of the same crop (monoculture).');
     } else if (hist.length >= 1 && hist[hist.length - 1] === cid && c.tipo === 'comercial') {
-      f = Math.min(f, .8); m.push('R1: repite el cultivo del ciclo anterior.');
+      f = Math.min(f, .8); m.push('R1: repeats the previous cycle\'s crop.');
     }
-    if (pend > 5 && c.erosion < .4) { f = Math.min(f, .7); m.push('R2: pendiente > 5 % con baja protección contra la erosión.'); }
+    if (pend > 5 && c.erosion < .4) { f = Math.min(f, .7); m.push('R2: slope > 5% with low erosion protection.'); }
     return [f, m];
   }
 
@@ -577,7 +577,7 @@
     }
     const margen = margenUsd(cid, lote.zona, rend);
     const ec = econDe(cid, lote.zona);
-    Object.assign(base, { rend_fuente: rb.fuente, rend_modelo: rendModelo, econ_fuente: ec ? 'observado · MAGyP' : 'ilustrativo',
+    Object.assign(base, { rend_fuente: rb.fuente, rend_modelo: rendModelo, econ_fuente: ec ? 'observed · MAGyP' : 'illustrative',
       estructura_usd_ha: ec ? ec.estructura_usd_ha : null });
     const bal = balanceNutrientes(cid, lote);
     const [salud, notaDiv] = saludSuelo(cid, lote);
@@ -610,16 +610,16 @@
     if (f.epoca < .7) {
       const [dias, cuando] = diasHastaVentana(siembra, c.siembra_opt);
       if (dias > 0 && dias <= 90) {
-        out.push('Conviene esperar: la ventana óptima de siembra empieza el ' +
-          String(cuando.getUTCDate()).padStart(2, '0') + '/' + String(cuando.getUTCMonth() + 1).padStart(2, '0') + ' (en ' + dias + ' días).');
-      } else out.push('La fecha elegida está en el borde de la ventana de siembra: aptitud reducida.');
+        out.push('Better to wait: the optimal sowing window starts on ' +
+          String(cuando.getUTCDate()).padStart(2, '0') + '/' + String(cuando.getUTCMonth() + 1).padStart(2, '0') + ' (in ' + dias + ' days).');
+      } else out.push('The chosen date is at the edge of the sowing window: reduced suitability.');
     }
-    if (f.cosecha < 1) out.push('La fecha de cosecha elegida deja poco margen para completar el ciclo.');
+    if (f.cosecha < 1) out.push('The chosen harvest date leaves little room to finish the cycle.');
     for (const m of e.motivos) out.push(m);
-    if (f.agua < .6) out.push('Agua esperada del ciclo en el borde del rango: riesgo hídrico.');
+    if (f.agua < .6) out.push('Expected cycle water at the edge of the range: water risk.');
     if (e.estructura_usd_ha != null && e.margen_usd_ha < e.estructura_usd_ha)
-      out.push('Margen bruto bajo: USD ' + Math.round(e.margen_usd_ha) + '/ha no cubre los gastos de estructura que MAGyP estima en USD ' +
-        Math.round(e.estructura_usd_ha) + '/ha. El margen neto sería negativo, y más con arrendamiento.');
+      out.push('Low gross margin: USD ' + Math.round(e.margen_usd_ha) + '/ha does not cover the overhead costs MAGyP estimates at USD ' +
+        Math.round(e.estructura_usd_ha) + '/ha. The net margin would be negative, even more so with land rent.');
     return out;
   }
 
@@ -628,15 +628,15 @@
     const f = e.apt.factores;
     const peor = Object.keys(f).reduce((a, k) => (f[k] < f[a] ? k : a), 'epoca');
     const partes = [
-      e.nombre + ': score ' + Math.round(e.score) + '/100, con aptitud de ' + Math.round(e.apt.indice * 100) + ' % para este lote en esta fecha.',
-      'Puntos fuertes: ' + ord.slice(0, 2).map(([k, v]) => COMPONENTES_NOMBRE[k] + ' (' + Math.round(v) + ')').join(' y ') + '.',
-      'Punto más débil: ' + COMPONENTES_NOMBRE[ord[ord.length - 1][0]].toLowerCase() + ' (' + Math.round(ord[ord.length - 1][1]) + ').',
-      'Factor de aptitud más limitante: ' + FACTORES_NOMBRE[peor] + ' (' + Math.round(f[peor] * 100) + ' %).',
-      'Rotación: ' + e.notaDiv + '.',
+      e.nombre + ': score ' + Math.round(e.score) + '/100, with ' + Math.round(e.apt.indice * 100) + '% suitability for this plot on this date.',
+      'Strengths: ' + ord.slice(0, 2).map(([k, v]) => COMPONENTES_NOMBRE[k] + ' (' + Math.round(v) + ')').join(' and ') + '.',
+      'Weakest point: ' + COMPONENTES_NOMBRE[ord[ord.length - 1][0]].toLowerCase() + ' (' + Math.round(ord[ord.length - 1][1]) + ').',
+      'Most limiting suitability factor: ' + FACTORES_NOMBRE[peor] + ' (' + Math.round(f[peor] * 100) + '%).',
+      'Rotation: ' + e.notaDiv + '.',
       textoResiliencia(e.resil),
     ];
-    if (e.balance.credito_antecesor_n) partes.push('El antecesor deja ~' + e.balance.credito_antecesor_n + ' kg N/ha disponibles para este ciclo.');
-    if (e.tipo === 'cobertura') partes.push('Es un cultivo de cobertura: su valor está en el suelo y en el ahorro de insumos del ciclo siguiente, no en el ingreso directo.');
+    if (e.balance.credito_antecesor_n) partes.push('The previous crop leaves ~' + e.balance.credito_antecesor_n + ' kg N/ha available for this cycle.');
+    if (e.tipo === 'cobertura') partes.push('It is a cover crop: its value is in the soil and in input savings for the next cycle, not in direct income.');
     return partes.join(' ');
   }
 
@@ -677,12 +677,12 @@
     const out = { disponible: true, secuencia: seq, proximo: prox, nombre: CULTIVOS[prox].nombre, total: viables.length,
       mejor: mejor ? { cultivo: mejor.cultivo, nombre: mejor.nombre, score: mejor.score } : null };
     if (ev.descartado) return Object.assign(out, { viable: false, score: 0, idoneidad: 0, posicion: null, razones: ev.apt.razones,
-      nota: 'El próximo cultivo de tu rotación habitual no es viable en esta fecha.' });
+      nota: 'The next crop in your usual rotation is not viable on this date.' });
     const pos = viables.find(e => e.cultivo === prox).posicion;
     const idon = mejor && mejor.score > 0 ? Math.round(1000 * ev.score / mejor.score) / 10 : 0;
-    const nota = pos === 1 ? 'Tu rotación habitual coincide con la mejor opción.'
-      : idon >= 90 ? 'Tu rotación habitual está muy cerca de la mejor opción.'
-      : 'Hay ' + (pos - 1) + ' alternativa(s) con mejor puntaje para este lote y fecha.';
+    const nota = pos === 1 ? 'Your usual rotation matches the best option.'
+      : idon >= 90 ? 'Your usual rotation is very close to the best option.'
+      : (pos - 1) + ' alternative(s) score higher for this plot and date.';
     return Object.assign(out, { viable: true, score: ev.score, idoneidad: idon, posicion: pos, nota });
   }
 
@@ -773,10 +773,10 @@
     const componentes = {}, aporte = {};
     for (const k of Object.keys(comp)) { componentes[k] = Math.round(1000 * comp[k]) / 10; aporte[k] = 100 * aptMedia * pn[k] * comp[k]; }
     const alertas = [];
-    pasos.filter(p => !p.viable).forEach(p => alertas.push(p.nombre + ' (' + p.siembra.slice(0, 7) + '): no viable. ' + (p.razones[0] || '')));
-    pasos.filter(p => p.fallo).forEach(p => alertas.push(p.nombre + ' (' + p.siembra.slice(0, 7) + '): cosecha fallida por el clima del año. ' + p.fallo));
-    pasos.filter(p => p.viable && p.epoca < .7).forEach(p => alertas.push(p.nombre + ' se siembra fuera de la ventana óptima (' + p.siembra + ').'));
-    omitidos.forEach(o => alertas.push(o.nombre + ' no entra entre cultivos (' + o.fecha.slice(0, 7) + '): queda barbecho.'));
+    pasos.filter(p => !p.viable).forEach(p => alertas.push(p.nombre + ' (' + p.siembra.slice(0, 7) + '): not viable. ' + (p.razones[0] || '')));
+    pasos.filter(p => p.fallo).forEach(p => alertas.push(p.nombre + ' (' + p.siembra.slice(0, 7) + '): harvest failed because of that year\'s weather. ' + p.fallo));
+    pasos.filter(p => p.viable && p.epoca < .7).forEach(p => alertas.push(p.nombre + ' is sown outside the optimal window (' + p.siembra + ').'));
+    omitidos.forEach(o => alertas.push(o.nombre + ' does not fit between crops (' + o.fecha.slice(0, 7) + '): left as fallow.'));
     const motivos = [...new Set(ok.flatMap(p => p.motivos))];
     return {
       secuencia: seq, pasos, inicio: fmtISO(inicio), fin: fmtISO(fin), horizonte_dias: H,
@@ -795,8 +795,8 @@
   }
 
   // Eventos del clima diario sumados en los cultivos de una rotación, y la causa principal de cada caída de aptitud.
-  const CAUSAS = { agua: 'lluvia del ciclo', temperatura: 'temperatura media', calor: 'golpes de calor', helada: 'heladas',
-    seca: 'rachas secas en el período crítico', deficit: 'déficit hídrico (lluvia < demanda)' };
+  const CAUSAS = { agua: 'cycle rainfall', temperatura: 'mean temperature', calor: 'heat spikes', helada: 'frosts',
+    seca: 'dry spells in the critical period', deficit: 'water deficit (rain < demand)' };
   function causaPaso(p) {
     const f = { agua: p.f_agua, temperatura: p.f_temp };
     if (p.diario) Object.assign(f, p.diario.factores);
@@ -818,18 +818,18 @@
   function diferencias(r, base) {
     const I = r.indicadores, B = base.indicadores, out = [];
     const add = (d, u, pos, neg) => { if (d >= u) out.push(['+', pos]); else if (d <= -u) out.push(['-', neg]); };
-    add(I.cobertura_pct - B.cobertura_pct, 5, 'Suelo cubierto el ' + I.cobertura_pct + ' % del tiempo (actual: ' + B.cobertura_pct + ' %).',
-      'Suelo cubierto solo el ' + I.cobertura_pct + ' % del tiempo (actual: ' + B.cobertura_pct + ' %).');
-    add(I.familias - B.familias, 1, 'Más diversidad: ' + I.familias + ' familias botánicas (actual: ' + B.familias + ').',
-      'Menos diversidad: ' + I.familias + ' familias botánicas (actual: ' + B.familias + ').');
-    add(B.n_anual - I.n_anual, 15, 'Menos nitrógeno a reponer: ~' + I.n_anual + ' kg/ha/año (actual: ' + B.n_anual + ').',
-      'Más nitrógeno a reponer: ~' + I.n_anual + ' kg/ha/año (actual: ' + B.n_anual + ').');
-    add(I.margen_anual - B.margen_anual, 50, 'Mayor margen bruto: USD ' + I.margen_anual + '/ha/año (actual: ' + B.margen_anual + ').',
-      'Menor margen bruto: USD ' + I.margen_anual + '/ha/año (actual: ' + B.margen_anual + ').');
-    add(100 * (r.comp.resiliencia - base.comp.resiliencia), 5, 'Se sostiene mejor en los peores años climáticos reales (NASA POWER).',
-      'Sufre más en los peores años climáticos reales (NASA POWER).');
-    add(100 * (r.comp.cumplimiento - base.comp.cumplimiento), 5, 'Evita repetir el mismo cultivo.', 'Repite el mismo cultivo.');
-    if (I.cultivos_anio - B.cultivos_anio >= .4) out.push(['-', 'Más campañas por año: más trabajo y más complejidad de manejo.']);
+    add(I.cobertura_pct - B.cobertura_pct, 5, 'Soil covered ' + I.cobertura_pct + '% of the time (current: ' + B.cobertura_pct + '%).',
+      'Soil covered only ' + I.cobertura_pct + '% of the time (current: ' + B.cobertura_pct + '%).');
+    add(I.familias - B.familias, 1, 'More diversity: ' + I.familias + ' plant families (current: ' + B.familias + ').',
+      'Less diversity: ' + I.familias + ' plant families (current: ' + B.familias + ').');
+    add(B.n_anual - I.n_anual, 15, 'Less nitrogen to replace: ~' + I.n_anual + ' kg/ha/yr (current: ' + B.n_anual + ').',
+      'More nitrogen to replace: ~' + I.n_anual + ' kg/ha/yr (current: ' + B.n_anual + ').');
+    add(I.margen_anual - B.margen_anual, 50, 'Higher gross margin: USD ' + I.margen_anual + '/ha/yr (current: ' + B.margen_anual + ').',
+      'Lower gross margin: USD ' + I.margen_anual + '/ha/yr (current: ' + B.margen_anual + ').');
+    add(100 * (r.comp.resiliencia - base.comp.resiliencia), 5, 'Holds up better in the worst real climate years (NASA POWER).',
+      'Suffers more in the worst real climate years (NASA POWER).');
+    add(100 * (r.comp.cumplimiento - base.comp.cumplimiento), 5, 'Avoids repeating the same crop.', 'Repeats the same crop.');
+    if (I.cultivos_anio - B.cultivos_anio >= .4) out.push(['-', 'More seasons per year: more work and more complex management.']);
     return out;
   }
 

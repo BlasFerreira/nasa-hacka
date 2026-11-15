@@ -1,17 +1,17 @@
 {
-  "fuente": "NASA POWER (Prediction Of Worldwide Energy Resources), comunidad AG, resolución mensual",
+  "fuente": "NASA POWER (Prediction Of Worldwide Energy Resources), AG community, monthly resolution",
   "url": "https://power.larc.nasa.gov/",
   "parametros": {
-    "T2M": "Temperatura del aire a 2 m (°C)",
-    "PRECTOTCORR": "Precipitación corregida (mm/día, convertida a mm/mes)"
+    "T2M": "Air temperature at 2 m (°C)",
+    "PRECTOTCORR": "Corrected precipitation (mm/day, converted to mm/month)"
   },
   "periodo": "2001–2025",
   "descargado": "2026-11-14",
-  "nota": "temp/precip: promedio mensual de los años del período. serie: valores mensuales de cada año (null = sin dato). Son puntos de referencia de la zona, no del campo exacto.",
+  "nota": "temp/precip: monthly mean over the period. serie: monthly values for each year (null = no data). These are reference points for the area, not the exact farm.",
   "zonas": {
     "entre_rios": {
       "nombre": "Entre Ríos",
-      "referencia": "cerca de Paraná",
+      "referencia": "near Paraná",
       "lat": -31.73,
       "lon": -60.53,
       "temp": [
@@ -796,8 +796,8 @@
       }
     },
     "pampa_humeda": {
-      "nombre": "Pampa húmeda",
-      "referencia": "cerca de Pergamino",
+      "nombre": "Humid Pampas",
+      "referencia": "near Pergamino",
       "lat": -33.89,
       "lon": -60.57,
       "temp": [

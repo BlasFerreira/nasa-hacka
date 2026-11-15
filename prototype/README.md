@@ -36,7 +36,7 @@ Geospatial 3D twin of a field (Three.js r147, vendored in `src/vendor/` and embe
 
 ## Field Shift Copilot
 
-Floating button (bottom right) on every view, opening a side panel that keeps its history while you navigate. It is a **command assistant**: a local, deterministic interpreter (rules, synonyms and parameter extraction in Spanish; **no generative AI**, nothing leaves the browser). It recognises the intent and calls the app's real functions: the engine computes, the Copilot coordinates.
+Floating button (bottom right) on every view, opening a side panel that keeps its history while you navigate. It is a **command assistant**: a local, deterministic interpreter (rules, synonyms and parameter extraction in English and Spanish; **no generative AI**, nothing leaves the browser). It recognises the intent and calls the app's real functions: the engine computes, the Copilot coordinates.
 
 - Explain: why a rotation is recommended (`compararRotaciones` and `compararEscenarios`: points, what adds most, differences and climate test), why a plot is stressed in Climate Twin (cycle factors from the engine), and which data sources are used.
 - Climate scenarios: 2022/23 drought, heat wave (+0 to +5 °C), rain change (−60 to +100 %), drought + heat and the usual climate. Evaluated with `twinEvaluar`, `twinAgg` and `twinCritico`, with a comparison against the usual climate. Hypothetical scenarios are labelled as such, and out-of-range values are rejected.
