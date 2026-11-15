@@ -7,8 +7,9 @@ Field Shift helps a farmer explore which crops and rotations fit a field, combin
 ## Status
 
 - **Working:** interactive MVP. Pick a plot, a sowing date and a priority, and get a ranked recommendation with the reasons behind it.
-- **Simulated:** climate and the crop catalog are illustrative. No real NASA data is connected yet.
-- **Next:** NASA POWER, GPM/IMERG and SMAP; a comparison of 3 rotations over about 25 years of historical climate; a yield-response model only if it beats a trend-only baseline.
+- **Real data:** NASA POWER climate (monthly, 2001-2025) and MAGyP yields and margins.
+- **Illustrative:** the crop catalog, soils and rotation effects (to be replaced with cited parameters).
+- **Next:** a second NASA product (MODIS/VIIRS NDVI, SMAP), a reproducible yield model, 25-year climate scenarios and the submission package. See [`docs/hitos.md`](docs/hitos.md) for the full status and task list.
 
 ## Run
 
