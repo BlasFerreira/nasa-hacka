@@ -513,6 +513,38 @@ details.lote-det > .form { padding-top: 0; }
 .g-line-l { background: var(--c-suelo); height: 3px !important; }
 .adv-notas { margin: 10px 0 0; padding-left: 18px; font-size: 14px; display: grid; gap: 4px; }
 
+/* Optimizar el campo */
+.opt-card { padding: 16px; display: grid; gap: 12px; }
+.opt-card h2 { font-size: 16px; font-weight: 600; }
+.opt-row { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.opt-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.opt-chips button { border: 1px solid var(--border); background: var(--surface); border-radius: 999px; padding: 4px 10px; font-size: 13px; cursor: pointer; }
+.opt-chips button[aria-pressed="false"] { text-decoration: line-through; color: var(--muted); background: var(--surface-2); }
+.opt-chips button i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.opt-prog { height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; border: 1px solid var(--border); }
+.opt-prog > i { display: block; height: 100%; background: var(--primary); transition: width .2s; }
+.opt-tabs { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); }
+.opt-tabs button { border: 0; background: transparent; border-radius: 9px; padding: 8px 14px; font-weight: 600; font-size: 14px; color: var(--muted); cursor: pointer; text-align: left; }
+.opt-tabs button small { display: block; font-weight: 400; font-size: 12px; }
+.opt-tabs button[aria-selected="true"] { background: var(--surface); color: var(--primary); box-shadow: 0 1px 3px rgb(0 0 0 / .12); }
+.opt-maps-card { padding: 16px; display: grid; gap: 12px; }
+.opt-camp { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.opt-camp button { border: 1px solid var(--border); background: var(--surface); border-radius: 10px; padding: 6px 12px; font-weight: 600; cursor: pointer; min-height: 36px; }
+.opt-camp button[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+.opt-maps { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 760px) { .opt-maps { grid-template-columns: 1fr; } }
+.opt-maps figure { margin: 0; display: grid; gap: 6px; }
+.opt-maps figcaption { font-weight: 600; font-size: 14px; }
+.opt-map { height: 300px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); background: var(--surface-2); isolation: isolate; }
+.opt-map .leaflet-interactive { transition: fill .45s ease, fill-opacity .45s ease; }
+.opt-plan td.cambio { background: color-mix(in srgb, var(--primary) 10%, var(--surface)); font-weight: 600; }
+.opt-plan td, .opt-plan th { text-align: left; vertical-align: top; }
+.opt-plan small { display: block; color: var(--muted); font-weight: 400; }
+.opt-cmp td.pos { color: var(--good); font-weight: 600; } .opt-cmp td.neg { color: var(--bad); font-weight: 600; }
+.opt-exp { margin: 0; padding-left: 18px; display: grid; gap: 8px; font-size: 14px; }
+.opt-borr { display: grid; gap: 6px; font-size: 13px; }
+.opt-borr li { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
 /* Pestañas */
 .tabs { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); align-self: flex-start; max-width: 100%; }
 .tabs button { border: 0; background: transparent; border-radius: 7px; padding: 6px 14px; font-weight: 500; color: var(--muted); cursor: pointer; min-height: 32px; }
@@ -730,6 +762,21 @@ select.add { width: auto; min-height: 26px; padding: 1px 6px; font-size: 12px; b
         <div class="stack" id="results" aria-live="polite"></div>
       </div>
     </div>
+    </div>
+
+    <!-- Optimizar el campo completo. Los mapas son fijos (no se regeneran) para no destruir Leaflet en cada render. -->
+    <div class="stack" id="view-opt" hidden>
+      <div id="opt-conf"></div>
+      <div id="opt-res-top"></div>
+      <section class="card opt-maps-card" id="opt-maps-card" hidden>
+        <div class="opt-camp" id="opt-camp"></div>
+        <div class="opt-maps">
+          <figure><figcaption>Plan actual</figcaption><div class="opt-map" id="opt-map-a"></div></figure>
+          <figure><figcaption>Propuesta</figcaption><div class="opt-map" id="opt-map-b"></div></figure>
+        </div>
+        <div class="tl-legend" id="opt-ley"></div>
+      </section>
+      <div id="opt-res"></div>
     </div>
 
     <!-- Recorrido: el campo de 60 ha, paso a paso. Es mundo.html embebido, para no salir de la app. -->
@@ -1794,6 +1841,7 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
     const [v, id] = location.hash.replace(/^#\/?/, '').split('/');
     if (esLote(v) && lotesPlano.some(x => x.lote.id === id)) return { vista: v, sel: id };
     if (v === 'campo' && campoDe(id)) return { vista: 'campo', campo: id };
+    if (v === 'optimizar' && campoDe(id)) return { vista: 'optimizar', campo: id };
     if (v === 'recorrido') return { vista: 'recorrido' };
     return { vista: 'inicio' };
   }
@@ -1906,6 +1954,14 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
   function renderCtx() {
     let k, h1, sub, der;
     $('ctx').dataset.vista = esLote(state.vista) ? state.vista : '';
+    if (state.vista === 'optimizar') {
+      const c = campoDe(state.campo);
+      $('ctx').innerHTML = '<div class="ctx-l"><div class="ctx-k">' + migas([['Resumen general', '#/inicio'], [c.nombre, '#/campo/' + c.id], ['Optimizar']]) + '</div>' +
+        '<h1 id="page-h1" tabindex="-1">Optimizar ' + esc(c.nombre) + '</h1><p class="ctx-s">' + esc(c.provincia + ' · ' + nLotes(c.lotes.length) + ' · ' + haDe(c.lotes) +
+        ' ha · busca la mejor combinación de rotaciones para todos los lotes juntos, en 3 campañas') + '</p></div>' +
+        '<div class="ctx-r"><a class="btn" href="#/campo/' + c.id + '">Volver al campo</a></div>';
+      return;
+    }
     if (esLote(state.vista)) {
       const { campo, lote } = actual(), v = state.vista, info = VISTA_INFO[v];
       k = migas([['Resumen general', '#/inicio'], [campo.nombre, '#/campo/' + campo.id], [lote.nombre]]);
@@ -2922,6 +2978,7 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
     }).join('');
     const tabla = '<section class="card"><div class="card-pad rank-head"><h2>' + (c ? 'Lotes del campo' : 'Tus lotes') + '</h2>' +
       '<span class="hint">Ordenados por mejora posible · tocá un lote para ver la comparación</span>' +
+      (c && c.lotes.length ? '<a class="btn primary" href="#/optimizar/' + c.id + '">Optimizar mi campo</a>' : '') +
       (c && !state.nuevo ? '<button class="btn" type="button" data-nuevo-btn="' + c.id + '">+ Nuevo lote</button>' : '') + '</div>' +
       '<div class="tbl-wrap"><table class="dash-tbl"><thead><tr><th class="izq">Lote</th><th>ha</th><th class="izq">Rotación actual</th><th>Pts</th>' +
       '<th class="izq">Mejor alternativa</th><th>Pts</th><th>Mejora</th><th>Suelo cubierto</th></tr></thead><tbody>' + filasT + '</tbody></table></div></section>';
@@ -3363,6 +3420,292 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
     ir('#/campo/' + campo.id);
   }
 
+  /* ---------- optimizar el campo completo ----------
+     Cada lote tiene un conjunto de rotaciones candidatas (evaluadas con el motor: evaluarRotacion). Lo que acopla a
+     los lotes es el riesgo del campo: todos viven el mismo año, así que el margen del campo en un año malo es el
+     percentil 10 de la SUMA de los lotes, tramo por tramo, en las secuencias reales de 3 campañas. Diversificar baja
+     ese riesgo y solo se ve evaluando la combinación. Búsqueda determinística: enumeración completa de las
+     combinaciones de candidatas (o haz si son demasiadas), con desempates fijos. No garantiza el óptimo global:
+     explora solo las candidatas preseleccionadas por lote. */
+  const OPT_COM = ['soja', 'maiz_temprano', 'maiz_tardio', 'girasol', 'sorgo', 'trigo', 'cebada'];
+  const OPT_COB = ['vicia', 'avena', 'centeno', 'crotalaria', 'mijo'];
+  const CROP_COL = { soja: '#16a34a', maiz_temprano: '#f97316', maiz_tardio: '#c2410c', girasol: '#eab308', sorgo: '#9333ea', trigo: '#2563eb',
+    cebada: '#0891b2', cobertura: '#5eead4', barbecho: '#a1a1aa' };
+  const MAX_COMB = 60000, HAZ = 400, MAX_CUOTA = 0.7;
+  const opt = { campo: null, corriendo: false, prog: 0, msg: '', res: null, est: 'equilibrado', camp: 0, mapas: null,
+    excluir: new Set(), coberturas: true, diversificar: true, fijos: new Set() };
+  const q = (a, p) => { const b = a.slice().sort((x, y) => x - y), i = p * (b.length - 1), lo = Math.floor(i); return lo + 1 < b.length ? b[lo] + (b[lo + 1] - b[lo]) * (i - lo) : b[lo]; };
+  const firma = r => r.pasos.map(p => p.cultivo).join('>');
+  // Campaña argentina de una siembra: lo sembrado de abril de un año a marzo del siguiente (trigo de junio 2027 = 2027/28).
+  const campDeD = d => d.getUTCFullYear() - (d.getUTCMonth() < 3 ? 1 : 0);
+  // Qué hay en el lote en cada campaña del plan: cultivos comerciales y coberturas sembrados en esa campaña.
+  function porCampania(r, c0) {
+    const out = [0, 1, 2].map(() => ({ com: [], cob: [] }));
+    for (const p of r.pasos) { const k = campDeD(M.parseFecha(p.siembra)) - c0; if (k >= 0 && k < 3 && p.viable) out[k][p.tipo === 'cobertura' ? 'cob' : 'com'].push(p.cultivo); }
+    return out;
+  }
+  const etiquetaCamp = x => x.com.length ? x.com.map(c => M.CULTIVOS[c].nombre).join(' / ') + (x.cob.length ? ' + cobertura' : '') : (x.cob.length ? 'Cobertura (' + x.cob.map(c => M.CULTIVOS[c].nombre).join(', ') + ')' : 'Barbecho');
+  const colorCamp = x => x.com.length ? CROP_COL[x.com[0]] : x.cob.length ? CROP_COL.cobertura : CROP_COL.barbecho;
+  const espera = () => new Promise(r => setTimeout(r, 0));
+
+  function generarSecuencias() {
+    const C = OPT_COM.filter(c => !opt.excluir.has(c)), seqs = [];
+    for (const a of C) { seqs.push([a]); for (const b of C) if (b !== a) { seqs.push([a, b]); for (const c of C) if (c !== a && c !== b) seqs.push([a, b, c]); } }
+    return seqs;
+  }
+  function variantesCobertura(seq) {
+    const cobs = OPT_COB.filter(c => !opt.excluir.has(c)), inv = cobs.filter(c => ['vicia', 'avena', 'centeno'].includes(c)), ver = cobs.filter(c => ['crotalaria', 'mijo'].includes(c));
+    const verano = new Set(['soja', 'maiz_temprano', 'maiz_tardio', 'girasol', 'sorgo']), out = [];
+    for (const cb of inv) { const s = []; seq.forEach(c => { s.push(c); if (verano.has(c)) s.push(cb); }); if (s.length > seq.length) out.push(s); }
+    for (const cb of ver) { const s = []; seq.forEach(c => { s.push(c); if (!verano.has(c)) s.push(cb); }); if (s.length > seq.length) out.push(s); }
+    return out;
+  }
+  async function correrOptimizacion() {
+    const c = campoDe(state.campo), ini = M.parseFecha(state.siembra), c0 = campDeD(ini);
+    opt.corriendo = true; opt.res = null; opt.campo = c.id; opt.camp = 0;
+    const paso = (pr, msg) => { opt.prog = pr; opt.msg = msg; const b = $('opt-prog-b'); if (b) b.style.width = Math.round(100 * pr) + '%'; const t = $('opt-prog-t'); if (t) t.textContent = msg; };
+    renderOpt();
+    const lotes = c.lotes, cand = {}, stats = { generadas: 0, candidatas: 0 };
+    // 1. Candidatas por lote (clima promedio) y preselección diversa.
+    for (const [li, l] of lotes.entries()) {
+      paso(.05 + .45 * li / lotes.length, 'Evaluando rotaciones posibles en ' + l.nombre + '…'); await espera();
+      const base = input(c, l), actualSeq = l.rotacion_habitual.slice();
+      const evalSeq = s => { const r = M.evaluarRotacion(base, s, ini, state.pesos); return r && r.pasos.length && r.pasos.every(p => p.viable) ? Object.assign(r, { seq: s }) : null; };
+      let pool = [];
+      if (opt.fijos.has(l.id)) pool = [evalSeq(actualSeq) || M.evaluarRotacion(base, actualSeq, ini, state.pesos)].map(r => Object.assign(r, { seq: actualSeq }));
+      else {
+        const vistos = new Set();
+        const add = r => { if (r && !vistos.has(firma(r))) { vistos.add(firma(r)); pool.push(r); } };
+        generarSecuencias().forEach(s => add(evalSeq(s)));
+        if (opt.coberturas) pool.slice().sort((a, b) => b.score - a.score).slice(0, 25).forEach(r => variantesCobertura(r.seq).forEach(s => add(evalSeq(s))));
+        stats.generadas += pool.length;
+        const top = (k, f) => pool.slice().sort((a, b) => f(b) - f(a) || firma(a).localeCompare(firma(b))).slice(0, k);
+        const sel = new Map();
+        [top(5, r => r.score), top(5, r => r.indicadores.margen_anual), top(3, r => r.indicadores.cobertura_pct), top(3, r => r.comp.resiliencia)]
+          .flat().forEach(r => sel.set(firma(r), r));
+        const act = M.evaluarRotacion(base, actualSeq, ini, state.pesos); if (act) { act.seq = actualSeq; sel.set(firma(act), act); }
+        pool = [...sel.values()];
+      }
+      pool.forEach(r => { r.esActual = r.seq.join(',') === actualSeq.join(','); });
+      cand[l.id] = pool; stats.candidatas += pool.length;
+    }
+    // 2. Cada candidata en las secuencias reales de 3 campañas (mismas ventanas para todos los lotes).
+    const zid = climaLote(c, lotes[0]).zid, ventanas = Object.keys(M.ESCENARIOS[zid] || {}).filter(k => /^s\d{4}$/.test(k));
+    for (const [li, l] of lotes.entries()) {
+      paso(.5 + .35 * li / lotes.length, 'Probando las candidatas de ' + l.nombre + ' en ' + ventanas.length + ' tramos climáticos reales…'); await espera();
+      const base = input(c, l);
+      for (const r of cand[l.id]) {
+        r.vm = []; r.vs = [];
+        for (const v of ventanas) { const e = M.evaluarRotacion(Object.assign({}, base, { escenario: v }), r.seq, ini, state.pesos); r.vm.push(e ? e.indicadores.margen_anual : 0); r.vs.push(e ? e.score : 0); }
+        r.porCamp = porCampania(r, c0);
+      }
+    }
+    // 3. Combinaciones de candidatas entre lotes.
+    paso(.88, 'Combinando lotes…'); await espera();
+    const ha = lotes.map(l => l.superficie), HA = ha.reduce((a, b) => a + b, 0), nv = ventanas.length;
+    const total = lotes.reduce((p, l) => p * cand[l.id].length, 1);
+    const cuota = combo => { // mayor proporción de hectáreas de un mismo cultivo comercial en alguna campaña
+      let mx = 0;
+      for (let k = 0; k < 3; k++) { const h = {}; combo.forEach((r, i) => { const cc = r.porCamp[k].com[0]; if (cc) h[cc] = (h[cc] || 0) + ha[i]; }); for (const v of Object.values(h)) mx = Math.max(mx, v / HA); }
+      return mx;
+    };
+    const medir = combo => {
+      const m = Array(nv).fill(0), sc = Array(nv).fill(0);
+      combo.forEach((r, i) => { for (let w = 0; w < nv; w++) { m[w] += r.vm[w] * ha[i]; sc[w] += r.vs[w] * ha[i] / HA; } });
+      return { combo, med: q(m, .5), malo: q(m, .1), score: q(sc, .5), cuota: cuota(combo),
+        cob: combo.reduce((a, r, i) => a + r.indicadores.cobertura_pct * ha[i], 0) / HA,
+        n: combo.reduce((a, r, i) => a + r.indicadores.n_anual * ha[i], 0),
+        dist: [0, 1, 2].map(k => new Set(combo.map(r => r.porCamp[k].com[0]).filter(Boolean)).size) };
+    };
+    let todos = [];
+    if (total <= MAX_COMB) {
+      const rec = (i, acc) => { if (i === lotes.length) { todos.push(medir(acc.slice())); return; } for (const r of cand[lotes[i].id]) { acc.push(r); rec(i + 1, acc); acc.pop(); } };
+      rec(0, []);
+    } else { // haz: se agregan lotes de mayor a menor superficie y se conservan las mejores parciales por puntaje
+      let haz = [[]];
+      for (const l of lotes) { haz = haz.flatMap(h => cand[l.id].map(r => h.concat([r]))).map(h => ({ h, s: h.reduce((a, r) => a + r.score, 0) }))
+        .sort((a, b) => b.s - a.s).slice(0, HAZ).map(x => x.h); }
+      todos = haz.map(medir);
+    }
+    const restringe = opt.diversificar && lotes.length > 1;
+    let validas = restringe ? todos.filter(t => t.cuota <= MAX_CUOTA + 1e-9) : todos;
+    const relajada = restringe && !validas.length;
+    if (relajada) validas = todos;
+    const nz = (k) => { const v = validas.map(t => t[k]), lo = Math.min(...v), hi = Math.max(...v); return t => hi > lo ? (t[k] - lo) / (hi - lo) : 1; };
+    const nScore = nz('score'), nMalo = nz('malo'), wR = M.normalizarPesos(state.pesos).resiliencia;
+    const desempate = (a, b) => a.combo.map(firma).join('|').localeCompare(b.combo.map(firma).join('|'));
+    const mejor = f => validas.slice().sort((a, b) => f(b) - f(a) || desempate(a, b))[0];
+    const actualCombo = medir(lotes.map(l => cand[l.id].find(r => r.esActual) || cand[l.id][0]));
+    const props = {
+      equilibrado: mejor(t => (1 - wR) * nScore(t) + wR * nMalo(t)),
+      margen: mejor(t => t.med + 1e-6 * t.malo),
+      resiliencia: mejor(t => t.malo + 1e-6 * t.med),
+    };
+    opt.res = { lotes: lotes.map(l => l.id), ha, HA, actual: actualCombo, props, c0, nv, ventanas: ventanas.length,
+      rango: ventanas.length ? [parseInt(ventanas[0].slice(1), 10), parseInt(ventanas[ventanas.length - 1].slice(1), 10) + 2] : null,
+      stats: Object.assign(stats, { combinaciones: total, evaluadas: todos.length, validas: validas.length, metodo: total <= MAX_COMB ? 'todas' : 'haz', relajada }),
+      wR, pesos: Object.assign({}, state.pesos), siembra: state.siembra };
+    opt.corriendo = false; paso(1, '');
+    renderOpt();
+  }
+
+  function configOptHTML(c) {
+    const crop = k => '<button type="button" data-ex="' + k + '" aria-pressed="' + !opt.excluir.has(k) + '"><i style="background:' + (CROP_COL[k] || CROP_COL.cobertura) + '"></i>' + esc(M.CULTIVOS[k].nombre) + '</button>';
+    return '<section class="card opt-card"><h2>Antes de optimizar</h2>' +
+      '<div><span class="section-label">Prioridades</span><div class="w-presets" role="group" aria-label="Prioridades" style="margin-top:6px">' + presetsHTML() + '</div>' +
+      '<span class="hint">Las mismas del resto de la app. El plan equilibrado las usa; el peso de la resiliencia decide cuánto importa el año malo del campo.</span></div>' +
+      '<div><span class="section-label">Cultivos permitidos</span> <span class="hint">tocá para excluir</span><div class="opt-chips" style="margin-top:6px">' + OPT_COM.map(crop).join('') + '</div></div>' +
+      '<div class="opt-row"><label class="chk"><input type="checkbox" id="opt-cob"' + (opt.coberturas ? ' checked' : '') + '> Permitir cultivos de cobertura</label>' +
+      (opt.coberturas ? '<div class="opt-chips">' + OPT_COB.map(crop).join('') + '</div>' : '') + '</div>' +
+      '<div class="opt-row"><label class="chk"><input type="checkbox" id="opt-div"' + (opt.diversificar ? ' checked' : '') + '> Diversificar: ningún cultivo en más del ' + Math.round(100 * MAX_CUOTA) + ' % de las hectáreas por campaña</label></div>' +
+      '<div><span class="section-label">Mantener la rotación actual en</span><div class="opt-row" style="margin-top:6px">' + c.lotes.map(l =>
+        '<label class="chk"><input type="checkbox" data-fijo="' + l.id + '"' + (opt.fijos.has(l.id) ? ' checked' : '') + '> ' + esc(l.nombre) + '</label>').join('') + '</div></div>' +
+      '<div class="opt-row"><button class="btn primary" type="button" id="opt-run"' + (opt.corriendo ? ' disabled' : '') + '>' + (opt.res ? 'Volver a optimizar' : 'Optimizar mi campo') + '</button>' +
+      (opt.res && !opt.corriendo && JSON.stringify(opt.res.pesos) !== JSON.stringify(state.pesos) ? '<span class="hint">Cambiaste las prioridades: volvé a optimizar para actualizar.</span>' : '') + '</div>' +
+      (opt.corriendo ? '<div class="opt-prog"><i id="opt-prog-b" style="width:' + Math.round(100 * opt.prog) + '%"></i></div><span class="hint" id="opt-prog-t" aria-live="polite">' + esc(opt.msg) + '</span>' : '') +
+      '</section>';
+  }
+  const ESTR = {
+    equilibrado: { t: 'Plan equilibrado', d: 'Según tus prioridades' },
+    margen: { t: 'Mayor margen', d: 'Margen típico del campo' },
+    resiliencia: { t: 'Mayor resiliencia', d: 'Margen del campo en un año malo' },
+  };
+  const usd = v => 'USD ' + Math.round(v).toLocaleString('es-AR');
+  function resultadosOptHTML(c) {
+    const R = opt.res, P = R.props[opt.est], A = R.actual, lotes = R.lotes.map(id => c.lotes.find(l => l.id === id));
+    const iguales = (a, b) => a.combo.map(firma).join('|') === b.combo.map(firma).join('|');
+    // Pestañas de estrategia (sin repetir propuestas idénticas).
+    const tabs = '<div class="opt-tabs" role="tablist" aria-label="Propuestas">' + Object.keys(ESTR).map(k => {
+      const igual = Object.keys(ESTR).find(j => j !== k && Object.keys(ESTR).indexOf(j) < Object.keys(ESTR).indexOf(k) && iguales(R.props[j], R.props[k]));
+      return '<button type="button" role="tab" data-est="' + k + '" aria-selected="' + (opt.est === k) + '">' + ESTR[k].t + '<small>' + (igual ? 'igual a «' + ESTR[igual].t + '»' : ESTR[k].d) + '</small></button>';
+    }).join('') + '</div>';
+    // Plan lote × campaña.
+    const camps = [0, 1, 2].map(k => (R.c0 + k) + '/' + String(R.c0 + k + 1).slice(2));
+    const plan = '<div class="esc-tab-wrap"><table class="esc-tab opt-plan"><thead><tr><th>Lote</th>' + camps.map(x => '<th>' + x + '</th>').join('') + '</tr></thead><tbody>' +
+      lotes.map((l, i) => '<tr><td><b>' + esc(l.nombre) + '</b><small>' + l.superficie + ' ha</small></td>' + [0, 1, 2].map(k => {
+        const a = etiquetaCamp(A.combo[i].porCamp[k]), b = etiquetaCamp(P.combo[i].porCamp[k]);
+        return '<td class="' + (a !== b ? 'cambio' : '') + '">' + esc(b) + (a !== b ? '<small>antes: ' + esc(a) + '</small>' : '') + '</td>';
+      }).join('') + '</tr>').join('') + '</tbody></table></div>';
+    // Indicadores del campo (ponderados por superficie).
+    const fila = (n, a, b, fmt, mejorAlto, nota) => { const d = b - a, cls = Math.abs(d) < 1e-9 ? '' : ((d > 0) === mejorAlto ? 'pos' : 'neg');
+      return '<tr><td>' + n + (nota ? '<small>' + nota + '</small>' : '') + '</td><td class="num">' + fmt(a) + '</td><td class="num">' + fmt(b) + '</td><td class="num ' + cls + '">' + (d > 0 ? '+' : d < 0 ? '−' : '±') + fmt(Math.abs(d)).replace(/^USD /, 'USD ') + '</td></tr>'; };
+    const pct = v => Math.round(v) + ' %', kg = v => Math.round(v).toLocaleString('es-AR') + ' kg/año', pts = v => Math.round(v) + ' pts', cu = v => Math.round(100 * v) + ' %';
+    const cmp = '<div class="esc-tab-wrap"><table class="esc-tab opt-cmp"><thead><tr><th>Indicador del campo</th><th>Actual</th><th>Propuesto</th><th>Diferencia</th></tr></thead><tbody>' +
+      fila('Margen bruto típico', A.med, P.med, usd, true, 'por año, mediana de ' + R.nv + ' tramos reales') +
+      fila('Margen bruto en un año malo', A.malo, P.malo, usd, true, '1 de cada 10 tramos, sumando todos los lotes') +
+      fila('Puntaje según tus prioridades', A.score, P.score, pts, true, 'ponderado por hectárea, mediana') +
+      fila('Suelo cubierto', A.cob, P.cob, pct, true, 'promedio ponderado por hectárea') +
+      fila('Nitrógeno a reponer', A.n, P.n, kg, false, 'todo el campo') +
+      fila('Mayor peso de un solo cultivo', A.cuota, P.cuota, cu, false, '% de las hectáreas en una campaña') +
+      '</tbody></table></div>';
+    // Explicaciones con números del evaluador.
+    const exp = [];
+    lotes.forEach((l, i) => {
+      const a = A.combo[i], b = P.combo[i];
+      if (firma(a) === firma(b)) { exp.push('<li><b>' + esc(l.nombre) + '</b>: se mantiene tu rotación actual (' + esc(a.seq.map(x => M.CULTIVOS[x].nombre).join(' → ')) + ').</li>'); return; }
+      const dM = q(b.vm, .5) - q(a.vm, .5), dMalo = q(b.vm, .1) - q(a.vm, .1), dC = b.indicadores.cobertura_pct - a.indicadores.cobertura_pct;
+      const partes = ['margen típico ' + (dM >= 0 ? '+' : '−') + usd(Math.abs(dM)) + '/ha/año', 'en un año malo ' + (dMalo >= 0 ? '+' : '−') + usd(Math.abs(dMalo)) + '/ha/año'];
+      if (Math.abs(dC) >= 3) partes.push('suelo cubierto ' + a.indicadores.cobertura_pct + ' → ' + b.indicadores.cobertura_pct + ' %');
+      const porque = dM < 0 ? ' Este lote gana menos que con tu rotación actual: el plan lo acepta porque se evalúa todo el campo junto (puntaje según tus prioridades' +
+        (opt.diversificar && R.lotes.length > 1 ? ', regla de diversificación' : '') + ' y margen del campo en un año malo).' : '';
+      exp.push('<li><b>' + esc(l.nombre) + '</b>: se propone evaluar <b>' + esc(b.seq.map(x => M.CULTIVOS[x].nombre).join(' → ')) + '</b> en lugar de ' +
+        esc(a.seq.map(x => M.CULTIVOS[x].nombre).join(' → ')) + '. Según el evaluador, con el suelo registrado y los supuestos actuales: ' + partes.join(', ') + '.' + porque + '</li>');
+    });
+    for (let k = 0; k < 3; k++) {
+      const h = combo => { const o = {}; combo.forEach((r, i) => { const cc = r.porCamp[k].com[0]; if (cc) o[cc] = (o[cc] || 0) + R.ha[i]; }); return o; };
+      const ha0 = h(A.combo), ha1 = h(P.combo), top0 = Object.entries(ha0).sort((x, y) => y[1] - x[1])[0], top1 = Object.entries(ha1).sort((x, y) => y[1] - x[1])[0];
+      // Solo si de verdad baja la concentración: el cultivo con más hectáreas de la propuesta ocupa menos que el de hoy.
+      if (top0 && top1 && top0[1] / R.HA > .5 && top1[1] < top0[1] - 1e-9) exp.push('<li>En ' + camps[k] + ', el cultivo con más superficie ocupa ' + Math.round(100 * top1[1] / R.HA) +
+        ' % del campo (' + esc(M.CULTIVOS[top1[0]].nombre) + ') en lugar de ' + Math.round(100 * top0[1] / R.HA) + ' % (' + esc(M.CULTIVOS[top0[0]].nombre) + '): el riesgo queda repartido entre más cultivos.</li>');
+    }
+    if (Math.abs(P.malo - A.malo) >= 1) exp.push('<li>En el año malo del campo (1 de cada 10 tramos reales) el margen total pasa de ' + usd(A.malo) + ' a ' + usd(P.malo) +
+      ' por año. Se calcula sumando todos los lotes en el mismo tramo climático, así que cuenta que una sequía golpea a todos a la vez.</li>');
+    const st = R.stats;
+    const metodo = '<p class="hint">' + 'Se generaron ' + st.generadas + ' rotaciones posibles, se preseleccionaron ' + st.candidatas + ' candidatas en total (mejor puntaje, mayor margen, más cobertura y más resiliencia por lote, más la actual) y se ' +
+      (st.metodo === 'todas' ? 'evaluaron todas sus ' + st.evaluadas.toLocaleString('es-AR') + ' combinaciones' : 'exploraron ' + st.evaluadas + ' de ' + st.combinaciones.toLocaleString('es-AR') + ' combinaciones (búsqueda en haz)') +
+      ' en ' + R.nv + ' tramos de 3 campañas reales de NASA POWER' + (R.rango ? ' (' + R.rango[0] + '/' + String(R.rango[0] + 1).slice(2) + ' a ' + R.rango[1] + '/' + String(R.rango[1] + 1).slice(2) + ')' : '') + '. ' +
+      (st.relajada ? 'Ninguna combinación cumplía la regla de diversificación, así que se mostró la mejor sin esa regla. ' : '') +
+      'Es la mejor alternativa encontrada dentro de esas candidatas, no el óptimo garantizado. Suelo, requisitos de cultivo y coberturas son ilustrativos; clima de NASA POWER y precios y rindes de MAGyP. No es una predicción verificada.</p>';
+    const borradores = leerBorradores().filter(b => b.campo === c.id);
+    const borr = '<div class="opt-row"><button class="btn" type="button" id="opt-save">Guardar esta propuesta como borrador</button><span class="hint">No cambia tus lotes ni tu rotación actual.</span></div>' +
+      (borradores.length ? '<ul class="opt-borr">' + borradores.map((b, i) => '<li><b>' + esc(b.titulo) + '</b><span class="hint">' + esc(b.fecha) + '</span><span class="hint">' + esc(b.resumen) + '</span><button class="btn" type="button" data-borr-del="' + b.id + '">Borrar</button></li>').join('') + '</ul>' : '');
+    return { top: '<section class="card opt-card"><h2>Propuestas para ' + esc(c.nombre) + '</h2>' + tabs + '</section>',
+      res: '<section class="card opt-card"><h2>Plan por lote y campaña</h2>' + plan + '</section>' +
+        '<section class="card opt-card"><h2>Resultados del campo</h2>' + cmp + '</section>' +
+        '<section class="card opt-card"><h2>Qué cambia y por qué</h2><ul class="opt-exp">' + exp.join('') + '</ul>' + metodo + borr + '</section>' };
+  }
+  function leerBorradores() { try { return JSON.parse(localStorage.getItem('fieldshift.borradores.v1') || '[]'); } catch (e) { return []; } }
+  function escribirBorradores(b) { try { localStorage.setItem('fieldshift.borradores.v1', JSON.stringify(b)); } catch (e) { /* sin almacenamiento */ } }
+
+  // Mapas antes / después (instancias propias de Leaflet, creadas una vez).
+  function mapasOpt(c) {
+    if (!window.L) return null;
+    if (!opt.mapas) {
+      const crear = id => { const m = L.map(id, { zoomSnap: 0, scrollWheelZoom: false, attributionControl: false, zoomControl: false });
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18 }).addTo(m); return m; };
+      const a = crear('opt-map-a'), b = crear('opt-map-b');
+      let sinc = false; const link = (x, y) => x.on('move', () => { if (sinc) return; sinc = true; y.setView(x.getCenter(), x.getZoom(), { animate: false }); sinc = false; });
+      link(a, b); link(b, a);
+      opt.mapas = { a, b, capas: { a: {}, b: {} }, campo: null };
+    }
+    const mp = opt.mapas;
+    if (mp.campo !== c.id) {
+      for (const lado of ['a', 'b']) { Object.values(mp.capas[lado]).forEach(p => p.remove()); mp.capas[lado] = {}; }
+      for (const l of c.lotes) { const pts = poligono(c, l.geo); if (!pts) continue;
+        for (const lado of ['a', 'b']) { const p = L.polygon(pts, { color: '#fff', weight: 2, fillOpacity: .7, fillColor: CROP_COL.barbecho }).addTo(mp[lado]);
+          p.bindTooltip('', { permanent: true, direction: 'center', className: 'lote-lbl' }); mp.capas[lado][l.id] = p; } }
+      const all = c.lotes.flatMap(l => poligono(c, l.geo) || []);
+      if (all.length) { mp.a.fitBounds(L.latLngBounds(all), { padding: [20, 20] }); }
+      mp.campo = c.id;
+    }
+    setTimeout(() => { mp.a.invalidateSize(false); mp.b.invalidateSize(false); }, 0);
+    return mp;
+  }
+  function pintarMapasOpt(c) {
+    const R = opt.res, P = R.props[opt.est], A = R.actual, k = opt.camp, mp = mapasOpt(c);
+    const usados = new Set();
+    R.lotes.forEach((id, i) => {
+      const l = c.lotes.find(x => x.id === id);
+      for (const [lado, combo] of [['a', A.combo], ['b', P.combo]]) {
+        const x = combo[i].porCamp[k], p = mp && mp.capas[lado][id];
+        usados.add(x.com.length ? x.com[0] : x.cob.length ? 'cobertura' : 'barbecho');
+        if (p) { p.setStyle({ fillColor: colorCamp(x) }); p.setTooltipContent(esc(l.nombre.replace(/^Lote /, '')) + ' · ' + esc(etiquetaCamp(x))); }
+      }
+    });
+    $('opt-camp').innerHTML = '<span class="section-label">Campaña</span>' + [0, 1, 2].map(j => '<button type="button" data-camp="' + j + '" aria-pressed="' + (j === k) + '">' +
+      (R.c0 + j) + '/' + String(R.c0 + j + 1).slice(2) + '</button>' + (j < 2 ? '<span aria-hidden="true">→</span>' : '')).join('');
+    $('opt-ley').innerHTML = [...usados].map(u => '<span><i style="background:' + CROP_COL[u] + '"></i>' + (M.CULTIVOS[u] ? esc(M.CULTIVOS[u].nombre) : u === 'cobertura' ? 'Solo cobertura' : 'Barbecho') + '</span>').join('') +
+      (mp ? '' : '<span>El mapa necesita conexión: la tabla de abajo muestra el mismo plan.</span>');
+    $('opt-camp').querySelectorAll('[data-camp]').forEach(b => b.addEventListener('click', () => { opt.camp = +b.dataset.camp; pintarMapasOpt(c); }));
+  }
+
+  function renderOpt() {
+    const c = campoDe(state.campo);
+    if (opt.campo !== c.id && !opt.corriendo) { opt.res = null; opt.fijos = new Set(); opt.campo = c.id; }
+    $('opt-conf').innerHTML = configOptHTML(c);
+    const tiene = opt.res && !opt.corriendo;
+    $('opt-maps-card').hidden = !tiene;
+    if (tiene) { const h = resultadosOptHTML(c); $('opt-res-top').innerHTML = h.top; $('opt-res').innerHTML = h.res; pintarMapasOpt(c); }
+    else { $('opt-res-top').innerHTML = ''; $('opt-res').innerHTML = opt.corriendo ? '' : '<div class="card empty">Elegí tus prioridades y restricciones y tocá «Optimizar mi campo». El cálculo corre en tu navegador y tarda unos segundos.</div>'; }
+    // Eventos.
+    const conf = $('opt-conf');
+    conf.querySelectorAll('[data-wp]').forEach(b => b.addEventListener('click', () => { state.wPreset = b.dataset.wp; state.pesos = Object.assign({}, WEIGHT_PRESETS[b.dataset.wp].w); renderWeightPresets(); renderWeights(); renderOpt(); }));
+    conf.querySelectorAll('[data-ex]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.ex; if (opt.excluir.has(k)) opt.excluir.delete(k); else opt.excluir.add(k); renderOpt(); }));
+    conf.querySelectorAll('[data-fijo]').forEach(b => b.addEventListener('change', () => { if (b.checked) opt.fijos.add(b.dataset.fijo); else opt.fijos.delete(b.dataset.fijo); }));
+    if ($('opt-cob')) $('opt-cob').addEventListener('change', e => { opt.coberturas = e.target.checked; renderOpt(); });
+    if ($('opt-div')) $('opt-div').addEventListener('change', e => { opt.diversificar = e.target.checked; });
+    if ($('opt-run')) $('opt-run').addEventListener('click', () => { if (!opt.corriendo) correrOptimizacion(); });
+    $('opt-res-top').querySelectorAll('[data-est]').forEach(b => b.addEventListener('click', () => { opt.est = b.dataset.est; renderOpt(); }));
+    if ($('opt-save')) $('opt-save').addEventListener('click', () => {
+      const R = opt.res, P = R.props[opt.est], b = leerBorradores();
+      b.unshift({ id: 'b' + Date.now().toString(36), campo: c.id, titulo: ESTR[opt.est].t + ' · ' + c.nombre, fecha: new Date().toLocaleString('es-AR'),
+        resumen: 'margen típico ' + usd(P.med) + '/año · año malo ' + usd(P.malo) + '/año',
+        plan: R.lotes.map((id, i) => ({ lote: id, rotacion: P.combo[i].seq })), pesos: R.pesos, siembra: R.siembra });
+      escribirBorradores(b.slice(0, 20)); renderOpt();
+    });
+    $('opt-res').querySelectorAll('[data-borr-del]').forEach(x => x.addEventListener('click', () => { escribirBorradores(leerBorradores().filter(b => b.id !== x.dataset.borrDel)); renderOpt(); }));
+  }
+
   /* ---------- render general ---------- */
   function renderResults() {
     if (state.vista === 'rotaciones') renderRotaciones(); else renderCultivo();
@@ -3375,6 +3718,14 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
     updateMapa();
   }
   function render() {
+    const opt = state.vista === 'optimizar';
+    $('view-opt').hidden = !opt;
+    if (opt) {
+      $('map-holder').appendChild($('mapcard'));
+      $('view-dash').hidden = true; $('view-lote').hidden = true; $('view-recorrido').hidden = true;
+      renderMenu(); renderCtx(); renderOpt();
+      return;
+    }
     const rec = state.vista === 'recorrido';
     $('view-recorrido').hidden = !rec;
     if (rec) {
