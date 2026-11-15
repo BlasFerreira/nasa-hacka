@@ -32,6 +32,7 @@ python -m unittest discover -s tests -v       # pipeline tests
 
 - `prototype/`: MVP, recommendation engine and demo deck
 - `docs/`: action plan, functional document, datasets
+- `wiki/`: project knowledge base in [Open Knowledge Format (OKF) v0.2](https://github.com/GoogleCloudPlatform/open-knowledge-format) (start at `wiki/index.md`). Rebuild indexes with `python tools/okf_wiki.py index`, validate with `python tools/okf_wiki.py check` (needs `pip install pyyaml`)
 - `CLAUDE.md`: project guide and working rules
 
 ## Principles
