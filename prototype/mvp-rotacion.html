@@ -179,8 +179,8 @@ a.btn { color: inherit; text-decoration: none; display: inline-flex; align-items
 .chart figcaption b { color: var(--text); font-weight: 600; }
 .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
 .chart .grid { stroke: var(--border); stroke-width: 1; }
-.chart .ax { fill: var(--muted); font-size: 11px; font-family: var(--font); }
-.chart .dl { fill: var(--text); font-size: 11px; font-weight: 600; font-family: var(--mono); }
+.chart .ax { fill: var(--muted); font-size: 12px; font-family: var(--font); }
+.chart .dl { fill: var(--text); font-size: 12px; font-weight: 600; font-family: var(--mono); }
 .chart .bar { fill: var(--c-lluvia); }
 .chart .line { fill: none; stroke: var(--c-temp); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 .chart .pt { fill: var(--c-temp); stroke: var(--surface); stroke-width: 2; }
@@ -232,7 +232,7 @@ hr { border: 0; border-top: 1px solid var(--border); width: 100%; margin: 0; }
 .w-row { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: center; }
 .w-row .nm { display: flex; align-items: center; gap: 8px; font-size: 13px; }
 .w-row .nm i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; flex: none; }
-.w-row .sub-hint { grid-column: 1 / -1; font-size: 11.5px; color: var(--muted); margin-top: -2px; }
+.w-row .sub-hint { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); margin-top: -2px; }
 .w-row input { grid-column: 1 / -1; }
 
 /* Resultado: rotación actual */
@@ -437,7 +437,7 @@ body { padding-bottom: env(safe-area-inset-bottom); }
 .esc-tab-wrap { overflow-x: auto; margin-top: 10px; }
 .esc-tab { font-size: 13px; min-width: 420px; }
 .esc-tab td, .esc-tab th { padding: 8px 6px; }
-.esc-tab th small { display: block; font-family: var(--mono); font-weight: 400; }
+.esc-tab th small { display: block; font-family: var(--mono); font-weight: 400; font-size: 12px; }
 .esc-tab td.cur, .esc-tab th.cur { background: var(--surface-2); }
 .esc-tab .rcell { display: flex; align-items: center; gap: 8px; }
 .esc-tab .neg { color: var(--bad); }
@@ -582,6 +582,28 @@ details.card.foot.sobre > summary b { font-weight: 600; }
   .dash-tbl .sub.m-ha { display: inline; margin-left: 6px; }
   .dash-tbl td[data-l]::before { content: attr(data-l); display: block; font: 500 11px var(--font); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px; }
 }
+/* UX 2: aclaraciones de tabla en su línea, twin en celular, objetivos táctiles de 40 px, pie del twin */
+#view-opt:not([hidden]) { padding-bottom: 88px; }
+.opt-cmp td small { display: block; color: var(--muted); font-weight: 400; font-size: 12px; margin-top: 1px; }
+body.twin-on .equipo h2 { color: #A7BACB; }
+body.twin-on .equipo { border-top-color: #1e3549; }
+@media (max-width: 640px) {
+  .tw-stage .tw-tr { left: 8px; right: 8px; top: 8px; display: flex; justify-content: center; }
+  .tw-stage .tw-tl { top: 62px; left: 8px; max-width: calc(100% - 16px); }
+  body .w-presets button, body .indice button, body #w-reset { min-height: 40px !important; padding-left: 12px; padding-right: 12px; }
+  body .main select { min-height: 40px !important; -webkit-appearance: none; appearance: none; padding: 8px 30px 8px 10px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2356627d' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 10px center; color: var(--text); font-size: 14px; }
+  body .tw-side input[type="checkbox"] { width: 22px; height: 22px; }
+  body #weights input[type="range"] { height: 28px; }
+  body details.sobre > summary, body .main details > summary { padding-top: 10px; padding-bottom: 10px; }
+  body #opt-conf input[type="checkbox"] { width: 22px; height: 22px; }
+  .ctx-k a { display: inline-block; padding: 10px 0; }
+  .dash-tbl td.lt a { display: inline-block; padding: 9px 0; }
+  .map-ctl button { min-height: 40px; }
+  #opt-conf button, #opt-conf label { min-height: 40px; }
+  body .tw-ctrl input[type="range"] { height: 28px; background-size: 100% 6px; background-repeat: no-repeat; background-position: center; }
+  .equipo-lista a { min-height: 44px; }
+}
 /* Climate Twin 3.1 */
 .tw-haze { position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0; transition: opacity .6s ease;
   background: linear-gradient(180deg, transparent 0%, rgb(255 170 90 / .10) 45%, rgb(255 140 70 / .16) 70%, transparent 100%); background-size: 100% 220%; }
@@ -651,7 +673,7 @@ body.twin-on .ctx .btn:hover { border-color: #59C9E8; color: #59C9E8; }
 .tw-bl { left: 12px; bottom: 12px; display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; max-width: 62%; padding: 6px 10px; border-radius: 10px;
   background: rgb(7 20 33 / .66); backdrop-filter: blur(8px); font-size: 12.5px; color: var(--text); }
 .tw-bl span { display: inline-flex; align-items: center; gap: 6px; } .tw-bl i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
-.tw-bl .tw-ln { color: var(--muted); font-size: 11.5px; }
+.tw-bl .tw-ln { color: var(--muted); font-size: 12.5px; }
 .tw-br { right: 12px; bottom: 12px; display: flex; gap: 6px; align-items: center; }
 .tw-cb { width: 34px; height: 34px; border-radius: 9px; border: 1px solid rgb(41 66 89 / .9); background: rgb(7 20 33 / .72); color: var(--text); font-size: 16px; cursor: pointer; backdrop-filter: blur(8px); }
 .tw-cb:hover { border-color: var(--primary); color: var(--primary); }
@@ -686,7 +708,7 @@ body.twin-on .ctx .btn:hover { border-color: #59C9E8; color: #59C9E8; }
   color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 4px 24px 4px 10px; min-height: 32px; font: 600 13px var(--font); cursor: pointer; }
 .tw-sparkw { position: relative; }
 .tw-spark { width: 100%; display: block; cursor: pointer; }
-.tw-meses { display: grid; grid-template-columns: repeat(12, 1fr); padding: 0 4px; font: 500 11px var(--mono); color: #7f95a9; margin-top: 2px; }
+.tw-meses { display: grid; grid-template-columns: repeat(12, 1fr); padding: 0 4px; font: 500 12px var(--mono); color: #7f95a9; margin-top: 2px; }
 .tw-meses span { border-left: 1px solid #1e3549; padding-left: 4px; }
 .tw-ley1 { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: #A7BACB; margin-top: 4px; }
 .tw-ley1 span { display: inline-flex; align-items: center; gap: 6px; } .tw-ley1 i { width: 12px; height: 8px; border-radius: 2px; display: inline-block; }
@@ -723,7 +745,7 @@ details.tw-mini summary { cursor: pointer; font-size: 12.5px; color: var(--muted
 .tw-kv { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 13.5px; }
 .tw-kv > span { color: var(--muted); } .tw-kv > b { font-family: var(--mono); font-weight: 500; text-align: right; }
 .tw-kv i { font-style: normal; font-size: 12px; } .tw-kv i.up { color: var(--good); } .tw-kv i.dn { color: var(--bad); } .tw-kv i.eq { color: var(--muted); }
-.tw-ks { grid-column: 1 / -1; font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--primary) !important; margin-top: 6px; }
+.tw-ks { grid-column: 1 / -1; font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: var(--primary) !important; margin-top: 6px; }
 .tw-ks em { font-style: normal; text-transform: none; letter-spacing: 0; color: var(--muted); }
 .tw-lk { all: unset; cursor: pointer; color: var(--text); text-decoration: underline dotted; text-underline-offset: 3px; }
 .tw-lotebox { border-top: 1px solid var(--border); padding-top: 10px; display: grid; gap: 8px; }
@@ -750,7 +772,7 @@ details.tw-why ul { margin: 8px 0 6px; padding-left: 18px; display: grid; gap: 4
 .dk-grupo button[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); }
 .dk-kpis { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-left: auto; }
 .dk-kpi { display: grid; line-height: 1.15; }
-.dk-kpi small { font-size: 11px; color: var(--muted); }
+.dk-kpi small { font-size: 12px; color: var(--muted); }
 .dk-kpi b { font-size: 15px; font-family: var(--mono); }
 .dk-kpi em { font-style: normal; font-size: 12px; font-family: var(--mono); }
 .dk-kpi em.pos { color: var(--good); } .dk-kpi em.neg { color: var(--bad); }
@@ -772,7 +794,7 @@ details.tw-why ul { margin: 8px 0 6px; padding-left: 18px; display: grid; gap: 4
 .radar .rd-pol { stroke-width: 2; }
 .radar .rd-dash { stroke-dasharray: 5 4; stroke-width: 1.6; }
 .dna-tab small { display: block; color: var(--muted); font-weight: 400; }
-.dna-tab td, .dna-tab th { text-align: left; } .dna-tab td.num { text-align: right; }
+.dna-tab td, .dna-tab th { text-align: left; } .dna-tab td.num, .dna-tab th.num { text-align: right; }
 .dna-tab td.pos { color: var(--good); font-weight: 600; } .dna-tab td.neg { color: var(--bad); font-weight: 600; }
 .dna-lotes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
 .dna-lote { display: grid; gap: 4px; justify-items: center; border: 1px solid var(--border); background: var(--surface); border-radius: 12px; padding: 8px; cursor: pointer; text-align: center; }
@@ -3204,7 +3226,7 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
   /* ---------- rutas ----------
      #/inicio · #/campo/<campo> · #/rotaciones/<lote> · #/cultivo/<lote> · #/recorrido
      Van en el hash para que funcionen el botón atrás, los links directos y GitHub Pages sin servidor. */
-  const VISTAS_LOTE = { rotaciones: 'Comparar rotaciones', cultivo: 'Próximo cultivo' };
+  const VISTAS_LOTE = { rotaciones: 'Plan a 3 años', cultivo: 'Qué sembrar ahora' };
   const esLote = v => v === 'rotaciones' || v === 'cultivo';
   const vistaAnalisis = () => esLote(state.vista) ? state.vista : 'rotaciones';
   const hrefLote = (id, v) => '#/' + (v || vistaAnalisis()) + '/' + id;
@@ -3257,7 +3279,7 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
     let h = '<a class="nav-item" href="#/inicio"' + pag(v === 'inicio') + '>' + ICON.inicio + '<span>Resumen general</span></a>';
     h += '<a class="nav-item" href="#/recorrido"' + pag(v === 'recorrido') + '>' + ICON.recorrido + '<span>Recorrido: el campo hectárea por hectárea<small>60 ha, paso a paso</small></span></a>';
     // «Mis campos» también se pliega (cerrado por defecto). Usa el mismo manejador que la flecha de cada campo.
-    const camposAbiertos = state.expand.__campos === true;
+    const camposAbiertos = state.expand.__campos !== false;
     h += '<button class="nav-label nav-sec" type="button" data-tog="__campos" aria-expanded="' + camposAbiertos + '" aria-controls="nav-l-__campos">' +
       '<span>Mis campos <small>(' + CAMPOS.length + ')</small></span>' + ICON.chev + '</button>';
     h += '<div id="nav-l-__campos"' + (camposAbiertos ? '' : ' hidden') + '>';
@@ -3282,6 +3304,10 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
     const { campo, lote } = actual();
     h += '<div class="nav-label">Análisis del lote</div><p class="nav-ctx">' + esc(lote.nombre) + ' · ' + esc(campo.nombre) + '</p>';
     h += Object.keys(VISTAS_LOTE).map(k => '<a class="nav-item" href="' + hrefLote(state.sel, k) + '"' + pag(v === k) + '>' + ICON[k] + '<span>' + VISTAS_LOTE[k] + '</span></a>').join('');
+    const cH = state.vista === 'campo' || state.vista === 'optimizar' || state.vista === 'twin' ? campoDe(state.campo) : campo;
+    h += '<div class="nav-label">Herramientas del campo</div><p class="nav-ctx">' + esc(cH.nombre) + '</p>' +
+      '<a class="nav-item" href="#/optimizar/' + cH.id + '"' + pag(v === 'optimizar') + '>' + ICON.campo + '<span>Optimizar mi campo<small>la mejor combinación para todos los lotes</small></span></a>' +
+      '<a class="nav-item" href="#/climate-twin/' + cH.id + '"' + pag(v === 'twin') + '>' + ICON.recorrido + '<span>Climate Twin 3D<small>el campo bajo un evento climático</small></span></a>';
     h += '<button class="btn nav-reset" type="button" id="reset-datos">Restaurar lotes de ejemplo</button>';
     $('nav').innerHTML = h;
   }
@@ -3324,8 +3350,8 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
   const presetsHTML = () => Object.keys(WEIGHT_PRESETS).map(k =>
     '<button type="button" class="btn" data-wp="' + k + '" aria-pressed="' + (state.wPreset === k) + '">' + WEIGHT_PRESETS[k].t + '</button>').join('');
   const VISTA_INFO = {
-    rotaciones: { tab: 'Plan a 3 años', ey: 'Comparar rotaciones', q: '¿Qué plan te conviene para los próximos 3 años?' },
-    cultivo: { tab: 'Qué sembrar ahora', ey: 'Próximo cultivo', q: '¿Qué te conviene sembrar ahora?' },
+    rotaciones: { tab: 'Plan a 3 años', ey: 'Plan a 3 años', q: '¿Qué plan te conviene para los próximos 3 años?' },
+    cultivo: { tab: 'Qué sembrar ahora', ey: 'Qué sembrar ahora', q: '¿Qué te conviene sembrar ahora?' },
   };
   function renderCtx() {
     let k, h1, sub, der;
@@ -5132,7 +5158,7 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
     const iL = R.lotes.indexOf(opt_dna.lote), lS = lotes[iL];
     const detalle = '<div class="dna-det"><h3 class="sec">' + esc(lS.nombre) + ' · ' + camp + '</h3>' +
       '<p class="hint">Actual: ' + esc(nombreRot(A.combo[iL])) + ' · Propuesta: ' + esc(nombreRot(P.combo[iL])) + ' · Suelo registrado: ' + esc(NOMBRE_TEX[lS.textura]) + ', drenaje ' + esc(lS.drenaje) + ', pH ' + lS.ph + ' (ilustrativo).</p>' +
-      '<div class="esc-tab-wrap"><table class="esc-tab dna-tab"><thead><tr><th>Dimensión</th><th>Actual</th><th>Propuesto</th><th>Diferencia</th></tr></thead><tbody>' +
+      '<div class="esc-tab-wrap"><table class="esc-tab dna-tab"><thead><tr><th>Dimensión</th><th class="num">Actual</th><th class="num">Propuesto</th><th class="num">Diferencia</th></tr></thead><tbody>' +
       DNA_DIM.map(d => { const a = da.porLote[iL][d.k], b = dp.porLote[iL][d.k], dd = a == null || b == null ? null : b - a;
         return '<tr><td>' + d.t + '</td><td class="num">' + fmt(a) + '</td><td class="num">' + fmt(b) + '</td><td class="num ' + (dd > 0 ? 'pos' : dd < 0 ? 'neg' : '') + '">' + (dd == null ? '—' : (dd > 0 ? '+' : dd < 0 ? '−' : '±') + Math.abs(dd)) + '</td></tr>'; }).join('') +
       '</tbody></table></div></div>';
@@ -5141,7 +5167,7 @@ window.TEAM = [{"nombre":"MarcosVollert","linkedin":"https://github.com/MarcosVo
       '<div class="dna-pair"><figure><figcaption><i style="background:' + COL_A + '"></i>DNA actual</figcaption>' + radarSVG([{ v: da.campo, col: COL_A, t: 'Actual' }], 300, true) + '</figure>' +
       '<figure><figcaption><i style="background:' + COL_P + '"></i>DNA propuesto <span class="hint">(línea punteada: actual)</span></figcaption>' +
       radarSVG([{ v: da.campo, col: COL_A, dash: true, t: 'Actual' }, { v: dp.campo, col: COL_P, t: 'Propuesto' }], 300, true) + '</figure></div>' +
-      '<div class="esc-tab-wrap"><table class="esc-tab dna-tab"><thead><tr><th>Dimensión</th><th>Actual</th><th>Propuesto</th><th>Diferencia</th><th>De dónde sale</th></tr></thead><tbody>' + filas + '</tbody></table></div>' + sinDiario +
+      '<div class="esc-tab-wrap"><table class="esc-tab dna-tab"><thead><tr><th>Dimensión</th><th class="num">Actual</th><th class="num">Propuesto</th><th class="num">Diferencia</th><th>De dónde sale</th></tr></thead><tbody>' + filas + '</tbody></table></div>' + sinDiario +
       '<h3 class="sec">¿Por qué cambió tu DNA?</h3>' + (porque.length ? '<ul class="opt-exp">' + porque.join('') + '</ul>' : '<p class="hint">Sin diferencias en esta campaña.</p>') +
       '<p class="hint">Las dimensiones salen del mismo motor que el resto de la app. Suelo, nutrientes y requisitos de cultivo usan parámetros ilustrativos; agua y calor usan clima observado de NASA POWER con umbrales supuestos. Es un perfil comparativo, no una medición del lote.</p>' +
       '<h3 class="sec">DNA por lote</h3><p class="hint">Tocá un lote para ver el detalle. Línea punteada: actual; color: propuesta.</p><div class="dna-lotes">' + lotesG + '</div>' + detalle;
@@ -5963,7 +5989,7 @@ float fsVeg = 0.0; vec2 fsOa = vec2(0.0), fsOb = vec2(0.0); float fsB = 0.0;
     const resumen = '<div class="tw-kv">' +
       '<span class="tw-ks">Escenario <em>' + (s.tipo === 'dia' ? 'acumulado desde el 1/7' : 'promedio mensual') + '</em></span>' + kv('Lluvia', Math.round(lluviaAc) + ' mm') + (calorAc != null ? kv('Días de calor extremo', calorAc, '≥ ' + coma1(D.umbral) + ' °C, percentil 90 del verano de la celda') : '') +
       (s.tipo === 'dia' ? kv('Humedad radicular hoy', coma1(s.gwet[t]), 'GWETROOT de NASA POWER (0–1), modelado para toda la celda') : '') +
-      '<span class="tw-ks">Campo <em>' + (s.tipo === 'dia' ? 'hoy' : 'este mes') + '</em></span>' + kv('En período crítico', lotesBtn(enCrit)) + (s.tipo === 'dia' ? kv('Expuestos', lotesBtn(expuestos), 'Calor extremo hoy o racha seca ≥ ' + M.UMBRALES.seca_dias + ' días en período crítico') : '') +
+      '<span class="tw-ks">Campo <em>' + (s.tipo === 'dia' ? 'hoy' : 'este mes') + '</em></span>' + kv('En período crítico', lotesBtn(enCrit)) + (s.tipo === 'dia' ? kv('Con evento hoy', lotesBtn(expuestos), 'Calor extremo hoy o racha seca ≥ ' + M.UMBRALES.seca_dias + ' días en período crítico') : '') +
       '<span class="tw-ks">Plan ' + (B ? 'actual vs. optimizado' : planNombre(tw.est)) + ' <em>campaña completa</em></span>' +
       kv('Margen', usd(A.margen) + (B ? dif(A.margen, B.margen, usd) : '')) + kv('Suelo cubierto', Math.round(A.cob) + ' %' + (B ? dif(A.cob, B.cob, v => Math.round(v) + ' %') : '')) +
       kv('Aptitud media', Math.round(A.apt) + ' %' + (B ? dif(A.apt, B.apt, v => Math.round(v) + ' %') : ''), 'Aptitud de los cultivos según el motor, ponderada por hectárea') + '</div>';
