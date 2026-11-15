@@ -306,6 +306,22 @@ body.map-fs { overflow: hidden; }
 .area-h:active { cursor: grabbing; }
 .area-h.mover { background: #38bdf8; border-color: #fff; border-radius: 50%; display: grid; place-items: center; color: #082f49; }
 .area-h.mover svg { width: 16px; height: 16px; stroke: currentColor; }
+/* Globo con el resultado de la selección (punto o rectángulo). */
+.area-pop .leaflet-popup-content-wrapper { border-radius: 12px; box-shadow: 0 6px 22px rgb(0 0 0 / .4); border-top: 3px solid #fc3d21; }
+.area-pop .leaflet-popup-content { margin: 10px 14px 10px; font-family: var(--font); color: #0b1530; line-height: 1.35; }
+.area-pop .pp-h { font-size: 12px; font-weight: 600; color: #0b3d91; margin-bottom: 4px; padding-right: 14px; }
+.area-pop .pp-w { margin-top: 6px; padding: 6px 8px; border-radius: 8px; background: #eef3fc; }
+.area-pop .pp-wt { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #0b3d91; margin-bottom: 2px; }
+.area-pop .pp-l { margin: 0; padding-left: 16px; font-size: 12px; color: #1f2d4d; }
+.area-pop .pp-l li { margin: 2px 0; }
+.area-pop .pp-r { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: #fc3d21; }
+.area-pop .pp-a { font-size: 12px; margin-top: 6px; padding: 6px 8px; border-radius: 8px; background: #fff4e5; border: 1px solid #f5c98b; color: #7a4a00; }
+.area-pop .pp-b { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.area-pop .pp-b .nm { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+.area-pop .pp-b .mono { font-family: var(--mono); font-size: 14px; font-weight: 600; color: #0b3d91; }
+.area-pop .pp-s { font-size: 12px; color: #3b4a6b; margin-top: 3px; }
+.area-pop .pp-f { font-size: 11px; color: #6b7a99; margin-top: 6px; padding-top: 5px; border-top: 1px solid #e3e8f2; }
+.area-pop a.leaflet-popup-close-button { width: 28px; height: 28px; font-size: 20px; line-height: 26px; }
 /* Marcador del punto seleccionado con un clic. */
 .punto-h { background: #fc3d21; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 1px 8px rgb(0 0 0 / .6); cursor: grab; display: grid; place-items: center; }
 .punto-h i { width: 8px; height: 8px; border-radius: 50%; background: #fff; display: block; }
@@ -2329,7 +2345,7 @@ window.TEAM = [{"nombre":"Integrante 1","linkedin":"","rol":"","avatar":"/team/i
     b.setAttribute('aria-pressed', String(on)); b.textContent = on ? 'Cancelar' : 'Seleccionar área';
     $('map').classList.toggle('dibujando', on);
     if (on) {
-      quitarManijas(); quitarPunto();
+      cerrarPopup(); quitarManijas(); quitarPunto();
       mapa.m.dragging.disable();
       $('area-res').hidden = false;
       $('area-res').innerHTML = '<p class="sub">Arrastrá sobre el mapa para marcar el área. En pantallas táctiles, tocá dos esquinas opuestas. Después podés ajustarla.</p>';
@@ -2344,7 +2360,7 @@ window.TEAM = [{"nombre":"Integrante 1","linkedin":"","rol":"","avatar":"/team/i
     else area.rect = L.rectangle(b, { color: '#38bdf8', weight: 2.5, fillColor: '#38bdf8', fillOpacity: .18, interactive: false }).addTo(mapa.m);
   }
   function borrarArea() {
-    quitarManijas(); quitarPunto();
+    cerrarPopup(); quitarManijas(); quitarPunto();
     if (area.rect) { area.rect.remove(); area.rect = null; }
     area.b = null; $('area-res').hidden = true; $('area-res').innerHTML = '';
   }
@@ -2362,9 +2378,9 @@ window.TEAM = [{"nombre":"Integrante 1","linkedin":"","rol":"","avatar":"/team/i
         icon: L.divIcon({ className: 'punto-h', html: '<i></i>', iconSize: [t, t], iconAnchor: [t / 2, t / 2] }),
       }).addTo(mapa.m);
       area.pin.on('drag', () => { area.punto = area.pin.getLatLng(); pedirAnalisis(); });
-      area.pin.on('dragend', () => { area.punto = area.pin.getLatLng(); analizarArea(); });
+      area.pin.on('dragend', () => { area.punto = area.pin.getLatLng(); analizarArea(true); });
     }
-    analizarArea();
+    analizarArea(true);
   }
   function terminarArea(b) {
     area.fin = Date.now();
@@ -2372,7 +2388,7 @@ window.TEAM = [{"nombre":"Integrante 1","linkedin":"","rol":"","avatar":"/team/i
     setDibujo(false);
     area.b = b; dibujarRect(b);
     crearManijas();
-    analizarArea();
+    analizarArea(true);
   }
 
   /* ---------- rectángulo editable: 4 esquinas para cambiar el tamaño y un punto central para mover ---------- */
@@ -2407,7 +2423,7 @@ window.TEAM = [{"nombre":"Integrante 1","linkedin":"","rol":"","avatar":"/team/i
       h.rol = rol;
       h.on('dragstart', () => { h._b0 = L.latLngBounds(area.b.getSouthWest(), area.b.getNorthEast()); });
       h.on('drag', () => moverManija(h));
-      h.on('dragend', () => { moverManija(h); posManijas(); analizarArea(); });
+      h.on('dragend', () => { moverManija(h); posManijas(); analizarArea(true); });
       area.hand.push(h);
     }
     posManijas();
@@ -2441,7 +2457,16 @@ window.TEAM = [{"nombre":"Integrante 1","linkedin":"","rol":"","avatar":"/team/i
     document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && enFull()) setFull(false); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && enFull() && !document.fullscreenElement) setFull(false); });
   }
-  function analizarArea() {
+  /* Globo sobre el mapa con el resultado resumido. Se abre al elegir (abrir = true) y se actualiza solo mientras se edita. */
+  function cerrarPopup() { if (area.pop) area.pop.remove(); }
+  function mostrarPopup(ll, html, abrir, esRect) {
+    if (!mapa.m) return;
+    if (!area.pop) area.pop = L.popup({ className: 'area-pop', maxWidth: 270, minWidth: 210, autoPan: true, autoPanPadding: [16, 16], closeOnClick: false, autoClose: false, keepInView: true });
+    area.pop.options.offset = L.point(0, esRect ? -4 : -18);
+    area.pop.setLatLng(ll).setContent(html);
+    if (abrir && !mapa.m.hasLayer(area.pop)) mapa.m.openPopup(area.pop);
+  }
+  function analizarArea(abrir) {
     const b = area.b, pt = area.punto; if (!b && !pt) return;
     let c, ha = null;
     if (b) {
@@ -2479,6 +2504,27 @@ window.TEAM = [{"nombre":"Integrante 1","linkedin":"","rol":"","avatar":"/team/i
       '<p class="sub">' + ajuste + '</p>' +
       '<div><button class="btn" type="button" id="area-x">Borrar selección</button></div>';
     $('area-x').addEventListener('click', borrarArea);
+    // Globo: la recomendación de un vistazo (qué sembrar, por qué, qué tener en cuenta y las alternativas).
+    let porque = '';
+    if (best) {
+      const comps = Object.entries(best.componentes).sort((x, y) => y[1] - x[1]), f = best.apt.factores;
+      const fuertes = comps.slice(0, 2).map(([k, v]) => M.COMPONENTES_NOMBRE[k] + ' ' + Math.round(v)).join(' · ');
+      const [kd, vd] = comps[comps.length - 1], peor = Object.keys(f).reduce((a, k) => (f[k] < f[a] ? k : a), Object.keys(f)[0]);
+      porque = '<ul class="pp-l"><li><b>Fuerte en:</b> ' + esc(fuertes) + '</li>' +
+        '<li><b>Punto débil:</b> ' + esc(M.COMPONENTES_NOMBRE[kd]) + ' ' + Math.round(vd) + '</li>' +
+        '<li><b>Lo que más limita la aptitud:</b> ' + esc(M.FACTORES_NOMBRE[peor]) + ' (' + Math.round(f[peor] * 100) + ' %)</li>' +
+        (best.tipo === 'cobertura' ? '<li>Es un cultivo de cobertura: cuida el suelo, no da ingreso directo.</li>' : '') + '</ul>';
+    }
+    const pop = '<div class="pp"><div class="pp-h">' + titulo + '</div>' + (best
+      ? '<div class="pp-r">Recomendación: sembrar</div>' +
+        '<div class="pp-b"><span class="nm">' + esc(best.nombre) + '</span><span class="mono">' + Math.round(best.score) + '/100</span></div>' +
+        '<div class="pp-s">Sembrar hoy (' + fmtF(hoy) + ') · aptitud ' + Math.round(best.aptitud_pct) + ' % · cosecha est. ' + fmtF(best.cosecha_estimada) + '</div>' +
+        '<div class="pp-w"><div class="pp-wt">Por qué</div>' + porque + '</div>' +
+        (best.alertas.length ? '<div class="pp-a">' + esc(best.alertas[0]) + '</div>' : '') +
+        (r.top.length > 1 ? '<div class="pp-s"><b>Alternativas:</b> ' + r.top.slice(1).map(e => esc(e.nombre) + ' ' + Math.round(e.score)).join(' · ') + '</div>' : '')
+      : '<div class="pp-a">No hay recomendación: ningún cultivo del catálogo es viable para sembrar hoy en ' + lugar + '. Probá otra fecha o ubicación.</div>') +
+      '<div class="pp-f">Estimación del prototipo · suelo simulado · clima NASA POWER · la decisión es del productor</div></div>';
+    mostrarPopup(b ? L.latLng(b.getNorth(), b.getCenter().lng) : pt, pop, abrir, !!b);
   }
   function initArea(m) {
     $('btn-area').addEventListener('click', () => { if (dib.modo) dibujoFin(); setDibujo(!area.activo); });
