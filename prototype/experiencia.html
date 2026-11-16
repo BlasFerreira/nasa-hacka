@@ -231,7 +231,7 @@ table tr{opacity:0;transform:translateY(8px);transition:.5s cubic-bezier(.2,.8,.
 #team-panel ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
 #team-panel .p{display:flex;align-items:center;gap:14px;padding:10px 14px 10px 10px;border:1px solid rgba(255,255,255,.18);border-radius:14px;color:#fff;text-decoration:none;background:rgba(255,255,255,.05)}
 #team-panel a.p:hover{background:rgba(255,255,255,.12);border-color:#fff}
-#team-panel .p img,#team-panel .p .ini{width:56px;height:56px;border-radius:50%;object-fit:cover;flex:none;background:#0b3d91;display:grid;place-items:center;font-weight:600}
+#team-panel .p img,#team-panel .p .ini{width:68px;height:68px;border-radius:50%;object-fit:cover;flex:none;background:#0b3d91;display:grid;place-items:center;font-weight:600}
 #team-panel .p b{display:block;font-size:16px}
 #team-panel .p small{display:block;color:#aab6d3;font-size:13px}
 #team-panel .p .in{width:18px;height:18px;fill:#7db4ff;margin-left:auto;flex:none}
@@ -380,7 +380,7 @@ table tr{opacity:0;transform:translateY(8px);transition:.5s cubic-bezier(.2,.8,.
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function ini(n) { return n.split(/\s+/).filter(Boolean).slice(0, 2).map(function (p) { return p[0].toUpperCase(); }).join(''); }
   document.getElementById('team-list').innerHTML = TEAM.map(function (p) {
-    var cuerpo = (p.avatar ? '<img src="' + esc(p.avatar) + '" alt="" width="56" height="56" loading="lazy">' : '<span class="ini" aria-hidden="true">' + esc(ini(p.nombre)) + '</span>') +
+    var cuerpo = (p.avatar ? '<img src="' + esc(p.avatar) + '" alt="" width="68" height="68" loading="lazy">' : '<span class="ini" aria-hidden="true">' + esc(ini(p.nombre)) + '</span>') +
       '<span><b>' + esc(p.nombre) + '</b>' + (p.rol ? '<small>' + esc(p.rol) + '</small>' : '') + '</span>';
     return '<li>' + (p.linkedin
       ? '<a class="p" href="' + esc(p.linkedin) + '" target="_blank" rel="noopener noreferrer" aria-label="' + esc(p.nombre) + ' on ' + (esGH(p.linkedin) ? 'GitHub' : 'LinkedIn') + ' (opens in a new tab)">' + cuerpo + (esGH(p.linkedin) ? GH : IN) + '</a>'

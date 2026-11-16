@@ -391,7 +391,7 @@ body.map-fs { overflow: hidden; }
 .equipo-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
 .equipo-lista a, .equipo-lista .pers { display: flex; align-items: center; gap: 10px; padding: 6px 14px 6px 6px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); text-decoration: none; min-height: 44px; }
 .equipo-lista a:hover { border-color: #0b3d91; box-shadow: 0 1px 6px rgb(11 61 145 / .18); }
-.equipo-lista img, .equipo-lista .ini { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex: none; background: #0b3d91; color: #fff; display: grid; place-items: center; font-size: 13px; font-weight: 600; }
+.equipo-lista img, .equipo-lista .ini { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; flex: none; background: #0b3d91; color: #fff; display: grid; place-items: center; font-size: 17px; font-weight: 600; }
 .equipo-lista b { display: block; font-weight: 600; font-size: 14px; line-height: 1.2; }
 .equipo-lista small { display: block; color: var(--muted); font-size: 12px; line-height: 1.2; }
 .equipo-lista .in { width: 16px; height: 16px; fill: #0a66c2; flex: none; }
@@ -6750,7 +6750,7 @@ float fsVeg = 0.0; vec2 fsOa = vec2(0.0), fsOb = vec2(0.0); float fsB = 0.0;
     const esGH = u => /(^|\/\/)(www\.)?github\.com\//i.test(u);
     // Con enlace (LinkedIn o GitHub) la persona es un enlace; sin enlace se muestra igual, sin link.
     $('equipo-lista').innerHTML = eq.map(p => {
-      const cuerpo = (p.avatar ? '<img src="' + esc(p.avatar) + '" alt="" width="36" height="36" loading="lazy">' : '<span class="ini" aria-hidden="true">' + esc(ini(p.nombre)) + '</span>') +
+      const cuerpo = (p.avatar ? '<img src="' + esc(p.avatar) + '" alt="" width="52" height="52" loading="lazy">' : '<span class="ini" aria-hidden="true">' + esc(ini(p.nombre)) + '</span>') +
         '<span><b>' + esc(p.nombre) + '</b>' + (p.rol ? '<small>' + esc(p.rol) + '</small>' : '') + '</span>';
       return '<li>' + (p.linkedin
         ? '<a href="' + esc(p.linkedin) + '" target="_blank" rel="noopener noreferrer" aria-label="' + esc(p.nombre) + ' on ' + (esGH(p.linkedin) ? 'GitHub' : 'LinkedIn') + ' (opens in a new tab)">' + cuerpo + (esGH(p.linkedin) ? GH : IN) + '</a>'
