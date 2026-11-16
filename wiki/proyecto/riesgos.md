@@ -24,6 +24,6 @@ sources:
 | Cola de Earthdata/AppEEARS lenta | NASA POWER no requiere login y alcanza como plan B |
 | El modelo no pasa el gate | El motor usa el índice de aptitud climática y lo dice |
 | Datos de una región usados en otra | Entrenamiento por zona; no extrapolar fuera de Argentina |
-| Marca NASA en el material | Confirmar con la guía antes de enviar (FS-23) |
+| Marca NASA en el material | Logo reemplazado en app y landing; verificar que el deck tampoco lo use (FS-23) |
 | Olvidar reconstruir el HTML | Vercel sirve el HTML commiteado: correr `node prototype/src/build.js` antes de commitear |
 | El LLM (futuro chat) inventa datos | Limitarlo a datos del modelo, exigir citas, permitir «no hay dato» |

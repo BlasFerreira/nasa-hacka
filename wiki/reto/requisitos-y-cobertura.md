@@ -28,10 +28,10 @@ sources:
 | Prioridades del productor | hecho | 6 pesos ajustables | Restricciones de agua y maquinaria |
 | ≥3 rotaciones, incluida la actual | hecho | Comparador de 3 rotaciones | — |
 | Por qué, evidencia, beneficios, riesgos | parcial | Tarjetas de evidencia e incertidumbre | Procedencia en el esquema (FS-13) |
-| Escenarios de clima | parcial | [Stress test](/motor/stress-test.md) con 22 ventanas de 3 campañas reales | Filtro ENSO, sliders |
+| Escenarios de clima | parcial | [Stress test](/motor/stress-test.md) con 22 ventanas de 3 campañas reales y [qué-pasaría-si de riego](/motor/riego-que-pasaria-si.md) | Filtro ENSO, sliders |
 | Calor, helada, lluvia extrema, ET, humedad | parcial | [Eventos diarios](/motor/clima-diario-y-eventos.md) con POWER | Vegetación (NDVI) |
 | Armonizar resoluciones | parcial | Agregación por departamento y campaña en el [pipeline](/pipeline/pipeline-rendimiento.md) | Sumar NDVI/SMAP a la misma grilla |
-| Mapa interactivo | parcial | Selección de área y punto, popup con recomendación | Capas de datos |
+| Mapa interactivo | parcial | Selección de área y punto, popup con recomendación y [Climate Twin 3D](/app/climate-twin-3d.md) con capas de estrés | Capa de NDVI o anomalía |
 | Explicar términos científicos | parcial | Esta wiki tiene el [glosario](/glosario/evapotranspiracion.md) | Glosario dentro de la app (FS-16) |
 | Apoyar, no reemplazar | parcial | Presente en textos | Visible en cada resultado (FS-19) |
-| Entrega | falta | Deck con marcadores | Ver [entrega](/reto/entrega.md) |
+| Entrega | parcial | Deck final, README con [declaración de IA](/proyecto/declaracion-de-ia.md), licencia MIT | Formulario de Space Apps: ver [entrega](/reto/entrega.md) |

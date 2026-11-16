@@ -30,7 +30,7 @@ sources:
 | 6 | **Sin Docker** | Vercel no ejecuta contenedores y no hace falta un servidor |
 | 7 | **Sin escenarios de clima futuro** | Las proyecciones CMIP6 de NASA POWER devolvieron solo valores de relleno (-999) para Argentina (probado el 2026-11-14) |
 | 8 | **Se quitó GitHub Pages y el chequeo de CI** | Pages nunca se habilitó; el chequeo fallaba por diferencias de fin de línea |
-| 9 | **Se mantiene el logo de NASA** | Decisión del equipo; la guía del reto restringe el uso de la marca. Riesgo abierto (FS-23) |
+| 9 | **Se reemplazó el logo de NASA por el emblema de Field Shift** | La guía del reto restringe el uso de la marca de NASA en contenido de equipos. Resuelto en app y landing; verificar el deck (FS-23) |
 | 10 | **Datos crudos fuera de git** (~100 MB) | Se regeneran con el pipeline; los procesados sí se versionan |
 
 Detalle formal de D1 y D2 en `docs/decisions.md`.

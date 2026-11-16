@@ -28,3 +28,7 @@ Vista `#/optimizar/<campo>`, que se abre desde el resumen del campo:
 # Salida
 
 Tres propuestas: balanceada según las prioridades, mayor margen típico y mayor margen en el año malo. Mapas antes/después por campaña, plan lote × campaña, indicadores ponderados por área y explicaciones con los números del evaluador. Restricciones: excluir cultivos, exigir cobertura, mantener la rotación de un lote. Los lotes y sus rotaciones actuales nunca se modifican.
+
+# Perfil y navegación
+
+Cada propuesta se perfila con el [DNA del campo](/motor/adn-del-campo.md) (seis dimensiones). Un dock fijo en la parte inferior permite cambiar de propuesta y de campaña sin perder el contexto, y el [Copilot](/app/copilot.md) tiene puntos de entrada desde esta vista.

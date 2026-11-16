@@ -8,12 +8,12 @@ Base de conocimiento del proyecto en formato OKF v0.2: un concepto por archivo, 
 
 # Secciones
 
-* [Proyecto](proyecto/) - 8 conceptos
+* [Proyecto](proyecto/) - 9 conceptos
 * [El reto de NASA Space Apps](reto/) - 4 conceptos
 * [Datos](datos/) - 22 conceptos
 * [Modelo de rendimiento](modelo/) - 6 conceptos
-* [Motor de recomendación](motor/) - 7 conceptos
-* [Aplicación y despliegue](app/) - 5 conceptos
+* [Motor de recomendación](motor/) - 9 conceptos
+* [Aplicación y despliegue](app/) - 7 conceptos
 * [Pipeline de datos](pipeline/) - 2 conceptos
 * [Glosario](glosario/) - 16 conceptos
 * [Referencias y convenciones](referencias/) - 3 conceptos

@@ -8,5 +8,5 @@
 * [MODIS y VIIRS](modis-viirs.md) - Índices de vegetación de 250 a 1000 m con alta frecuencia temporal y series desde 2000.
 * [NLDAS y GLDAS](nldas-gldas.md) - Sistemas de asimilación con temperatura, lluvia, humedad de suelo y ET en grilla, subdiarios.
 * [NASA POWER](power.md) - Clima, radiación y agroclimatología diaria y mensual por punto, sin login; el dataset principal del proyecto.
-* [SMAP (Soil Moisture Active Passive)](smap.md) - Humedad del suelo superficial y de raíces desde satélite, cada 2–3 días; útil para estrés hídrico.
+* [SMAP (Soil Moisture Active Passive)](smap.md) - Producto satelital y modelado de humedad superficial y de zona radicular; L4 entrega estimaciones globales a 9 km cada 3 horas.
 * [SRTM](srtm.md) - Elevación global; pendiente, escurrimiento y riesgo de erosión.
